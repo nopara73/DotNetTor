@@ -3,12 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace DotNetTor
+namespace DotNetTor.SocksPort.Net
 {
-    public class Class1
-    {
-        public Class1()
-        {
-        }
-    }
+	public enum RequestType
+	{ 
+		HTTP,
+		HTTPS
+	}
 }
