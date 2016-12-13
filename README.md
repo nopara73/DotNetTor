@@ -2,5 +2,5 @@
 Minimal TOR implementation in .NET Core
 
 ##Acknowledgement
-The SocksPort stuff of this project is built upon a part of the [SocketToMe](https://github.com/joelverhagen/SocketToMe) project.  
-The ControlPort stuff of this project is built upon a part of the [Tor.NET](https://github.com/sharpbrowser/Tor.NET) project.
+The SocksPort stuff in this project modified a part of the [SocketToMe](https://github.com/joelverhagen/SocketToMe) project.  
+The ControlPort stuff in this project modified a part of the [Tor.NET](https://github.com/sharpbrowser/Tor.NET) project.
