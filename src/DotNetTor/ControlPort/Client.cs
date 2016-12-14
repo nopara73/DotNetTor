@@ -1,4 +1,5 @@
 ﻿using DotNetTor.ControlPort.Commands;
+using System;
 
 namespace DotNetTor.ControlPort
 {
@@ -19,7 +20,14 @@ namespace DotNetTor.ControlPort
 		/// </summary>
 		public bool ChangeCircuit()
 		{
-			return Command<CommandResponse>.DispatchAndReturn<SignalNewCircuitCommand>(_address, _controlPort, _password);
+			try
+			{
+				return Command<CommandResponse>.DispatchAndReturn<SignalNewCircuitCommand>(_address, _controlPort, _password);
+			}
+			catch (Exception ex)
+			{
+				throw new TorException(ex.Message, ex);
+			}
 		}
 	}
 }

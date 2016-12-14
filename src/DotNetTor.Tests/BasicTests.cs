@@ -22,13 +22,15 @@ namespace DotNetTor.Tests
 		public void CanDoBasicRequest()
 		{
 			var requestUri = "http://api.qbit.ninja/whatisit/what%20is%20my%20future";
-			var socksPortClient = new SocksPort.Client(HostAddress, SocksPort);
-			var handler = socksPortClient.GetHandlerFromRequestUri(requestUri);
-			using (var httpClient = new HttpClient(handler))
+			using (var socksPortClient = new SocksPort.Client(HostAddress, SocksPort))
 			{
-				var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
+				var handler = socksPortClient.GetHandlerFromRequestUri(requestUri);
+				using (var httpClient = new HttpClient(handler))
+				{
+					var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
 
-				Assert.Equal(content, "\"Good question Holmes !\"");
+					Assert.Equal(content, "\"Good question Holmes !\"");
+				}
 			}
 		}
 
@@ -48,13 +50,15 @@ namespace DotNetTor.Tests
 			}
 
 			// 2. Get TOR IP
-			var socksPortClient = new SocksPort.Client(HostAddress, SocksPort);
-			var handler = socksPortClient.GetHandlerFromDomain("icanhazip.com");
-			using (var httpClient = new HttpClient(handler))
+			using (var socksPortClient = new SocksPort.Client(HostAddress, SocksPort))
 			{
-				var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
-				var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out torIp);
-				Assert.True(gotIp);
+				var handler = socksPortClient.GetHandlerFromDomain("icanhazip.com");
+				using (var httpClient = new HttpClient(handler))
+				{
+					var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
+					var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out torIp);
+					Assert.True(gotIp);
+				}
 			}
 
 			Assert.NotEqual(realIp, torIp);
@@ -66,29 +70,30 @@ namespace DotNetTor.Tests
 			var requestUri = "http://icanhazip.com/";
 			IPAddress torIp;
 			IPAddress changedIp;
-			
+
 			// 1. Get TOR IP
-			var socksPortClient = new SocksPort.Client(HostAddress, SocksPort);
-			var handler = socksPortClient.GetHandlerFromDomain("icanhazip.com");
-			using (var httpClient = new HttpClient(handler))
+			using (var socksPortClient = new SocksPort.Client(HostAddress, SocksPort))
 			{
-				var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
-				var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out torIp);
-				Assert.True(gotIp);
-			}
+				var handler = socksPortClient.GetHandlerFromDomain("icanhazip.com");
+				using (var httpClient = new HttpClient(handler))
+				{
+					var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
+					var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out torIp);
+					Assert.True(gotIp);
+				}
 
-			// 2. Change TOR IP
-			var controlPortClient = new ControlPort.Client(HostAddress, ControlPort, ControlPortPassword);
-			controlPortClient.ChangeCircuit();
+				// 2. Change TOR IP
+				var controlPortClient = new ControlPort.Client(HostAddress, ControlPort, ControlPortPassword);
+				controlPortClient.ChangeCircuit();
 
-			// 3. Get changed TOR IP
-			socksPortClient = new SocksPort.Client(HostAddress, SocksPort);
-			handler = socksPortClient.GetHandlerFromRequestUri(requestUri);
-			using (var httpClient = new HttpClient(handler))
-			{
-				var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
-				var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out changedIp);
-				Assert.True(gotIp);
+				// 3. Get changed TOR IP
+				handler = socksPortClient.GetHandlerFromRequestUri(requestUri);
+				using (var httpClient = new HttpClient(handler))
+				{
+					var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
+					var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out changedIp);
+					Assert.True(gotIp);
+				}
 			}
 
 			Assert.NotEqual(changedIp, torIp);
@@ -98,13 +103,15 @@ namespace DotNetTor.Tests
 		public void CanDoHttps()
 		{
 			var requestUri = "https://slack.com/api/api.test";
-			var socksPortClient = new SocksPort.Client(HostAddress, SocksPort);
-			var handler = socksPortClient.GetHandlerFromRequestUri(requestUri);
-			using (var httpClient = new HttpClient(handler))
+			using (var socksPortClient = new SocksPort.Client(HostAddress, SocksPort))
 			{
-				var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
+				var handler = socksPortClient.GetHandlerFromRequestUri(requestUri);
+				using (var httpClient = new HttpClient(handler))
+				{
+					var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
 
-				Assert.Equal(content, "{\"ok\":true}");
+					Assert.Equal(content, "{\"ok\":true}");
+				}
 			}
 		}
 	}
