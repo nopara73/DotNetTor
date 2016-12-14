@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net.Http;
 
-namespace DotNetCore.Example
+namespace DotNetTor.Example
 {
     public class Program
     {
@@ -24,7 +24,7 @@ namespace DotNetCore.Example
 		private static void DoSomeRandomRequest()
 		{
 			var requestUri = "http://api.qbit.ninja/transactions/38d4cfeb57d6685753b7a3b3534c3cb576c34ca7344cd4582f9613ebf0c2b02a?format=json";
-			var socksPortClient = new DotNetTor.SocksPort.Client();
+			var socksPortClient = new SocksPort.Client();
 			var handler = socksPortClient.GetHandlerFromRequestUri(requestUri);
 			using (var httpClient = new HttpClient(handler))
 			{
@@ -45,7 +45,7 @@ namespace DotNetCore.Example
 			}
 
 			// 2. Get TOR IP
-			var socksPortClient = new DotNetTor.SocksPort.Client();
+			var socksPortClient = new SocksPort.Client();
 			var handler = socksPortClient.GetHandlerFromDomain("icanhazip.com");
 			using (var httpClient = new HttpClient(handler))
 			{
@@ -58,7 +58,7 @@ namespace DotNetCore.Example
 			controlPortClient.ChangeCircuit();
 
 			// 4. Get changed TOR IP
-			socksPortClient = new DotNetTor.SocksPort.Client();
+			socksPortClient = new SocksPort.Client();
 			handler = socksPortClient.GetHandlerFromRequestUri(requestUri);
 			using (var httpClient = new HttpClient(handler))
 			{
