@@ -14,8 +14,8 @@ namespace DotNetTor.Example
 		// Now the example should successfully run
 		public static void Main(string[] args)
 		{
-			RequestWith3Ip();
-			//DoSomeRandomRequest();
+			//RequestWith3Ip();
+			DoSomeRandomRequest();
 
 			Console.WriteLine("Press a key to exit..");
 			Console.ReadKey();
@@ -23,13 +23,13 @@ namespace DotNetTor.Example
 
 		private static void DoSomeRandomRequest()
 		{
-			var requestUri = "http://api.qbit.ninja/transactions/38d4cfeb57d6685753b7a3b3534c3cb576c34ca7344cd4582f9613ebf0c2b02a?format=json";
+			var request = "http://api.qbit.ninja/transactions/38d4cfeb57d6685753b7a3b3534c3cb576c34ca7344cd4582f9613ebf0c2b02a?format=json&headeronly=true";
 			using (var socksPortClient = new SocksPort.Client())
 			{
-				var handler = socksPortClient.GetHandlerFromRequestUri(requestUri);
+				var handler = socksPortClient.GetHandlerFromRequestUri(request);
 				using (var httpClient = new HttpClient(handler))
 				{
-					var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
+					var content = httpClient.GetAsync(request).Result.Content.ReadAsStringAsync().Result;
 					Console.WriteLine(content);
 				}
 			}

@@ -15,6 +15,7 @@ namespace DotNetTor.SocksPort
 
 		public Client(string address = "127.0.0.1", int socksPort = 9050)
 		{
+			Util.AssertPortOpen(address, socksPort);
 			try
 			{
 				_socksEndPoint = new IPEndPoint(IPAddress.Parse(address), socksPort);
@@ -24,7 +25,7 @@ namespace DotNetTor.SocksPort
 			{
 				throw new TorException("SocksPort client initialization failed.", ex);
 			}
-		}
+		}		
 
 		public NetworkHandler GetHandlerFromDomain(string domainName, RequestType requestType = RequestType.HTTP)
 		{
@@ -51,7 +52,7 @@ namespace DotNetTor.SocksPort
 			{ 
 				Uri uri = new Uri(requestUri);
 				_socket2Server = _socks5Client.ConnectToServer(_socksEndPoint);
-				_socket2Dest = _socks5Client.ConnectToDestination(_socket2Server, uri.Host, uri.Port);
+				_socket2Dest = _socks5Client.ConnectToDestination(_socket2Server, uri.DnsSafeHost, uri.Port);
 				return new NetworkHandler(_socket2Dest);				
 			}
 			catch (Exception ex)

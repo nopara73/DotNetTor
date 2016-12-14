@@ -1,4 +1,5 @@
-﻿using System.Net.Http;
+﻿using System;
+using System.Net.Http;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -49,7 +50,8 @@ namespace DotNetTor.SocksPort.Net
 			}
 			else
 			{
-				socket = await Tcp.ConnectToServerAsync(request.RequestUri.DnsSafeHost, request.RequestUri.Port).ConfigureAwait(false);
+				throw new Exception("Socket cannot be found");
+				//socket = await Tcp.ConnectToServerAsync(request.RequestUri.DnsSafeHost, request.RequestUri.Port).ConfigureAwait(false);
 			}
 
 			var stream = await _httpSocketClient.GetStreamAsync(socket, request).ConfigureAwait(false);

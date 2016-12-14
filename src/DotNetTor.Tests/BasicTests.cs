@@ -114,5 +114,51 @@ namespace DotNetTor.Tests
 				}
 			}
 		}
+
+		[Fact]
+		public void CanRequestALot()
+		{
+			string woTor;
+			string wTor;
+			var requestUri = "http://api.qbit.ninja/blocks/0000000000000000119fe3f65fd3038cbe8429ad2cf7c2de1e5e7481b34a01b4";
+			using (var socksPortClient = new SocksPort.Client(HostAddress, SocksPort))
+			{
+				var handler = socksPortClient.GetHandlerFromRequestUri(requestUri);
+				using (var httpClient = new HttpClient(handler))
+				{
+					wTor = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
+				}
+			}
+
+			using (var httpClient = new HttpClient())
+			{
+				woTor = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
+			}
+
+			Assert.Equal(woTor, wTor);
+		}
+		[Fact]
+		public void CanRequestInRow()
+		{
+			var firstRequest = "http://api.qbit.ninja/transactions/38d4cfeb57d6685753b7a3b3534c3cb576c34ca7344cd4582f9613ebf0c2b02a?format=json&headeronly=true";
+			using (var socksPortClient = new SocksPort.Client(HostAddress, SocksPort))
+			{
+				var handler = socksPortClient.GetHandlerFromRequestUri(firstRequest);
+				using (var httpClient = new HttpClient(handler))
+				{
+					var content = httpClient.GetAsync(firstRequest).Result.Content.ReadAsStringAsync().Result;
+					content = httpClient.GetAsync("http://api.qbit.ninja/balances/15sYbVpRh6dyWycZMwPdxJWD4xbfxReeHe?unspentonly=true").Result.Content.ReadAsStringAsync().Result;
+					content = httpClient.GetAsync("http://api.qbit.ninja/balances/akEBcY5k1dn2yeEdFnTMwdhVbHxtgHb6GGi?from=tip&until=336000").Result.Content.ReadAsStringAsync().Result;
+				}
+			}
+		}
+
+		[Fact]
+		public void ThrowsExcetpions()
+		{
+			Assert.Throws<TorException>(() => new SocksPort.Client("127.0.0.1", 9054));
+			Assert.Throws<TorException>(() => new ControlPort.Client("127.0.0.1", 9054));
+			Assert.Throws<TorException>(() => new ControlPort.Client(HostAddress, ControlPort, ControlPortPassword + "a"));
+		}
 	}
 }
