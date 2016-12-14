@@ -31,7 +31,7 @@ The ControlPort stuff in this project modified a part of the [Tor.NET](https://g
 4. Start tor, it will listen to the ports you set in the config file.
 
 ##Usage
-```
+```cs
 var requestUri = "http://icanhazip.com/"; // Gives back your IP
 
 // 1. Get your (real) IP, just like you normally do
