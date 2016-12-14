@@ -10,8 +10,8 @@ namespace DotNetTor.Test
     {
         public static void Main(string[] args)
 		{
-			//RequestWith3Ip();
-			DoSomeRandomRequest();
+			RequestWith3Ip();
+			//DoSomeRandomRequest();
 
 
 			Console.WriteLine("Press a key to exit..");
@@ -51,7 +51,7 @@ namespace DotNetTor.Test
 			}
 
 			// 3. Change TOR IP
-			var controlPortClient = new ControlPort.Client();
+			var controlPortClient = new ControlPort.Client(password: "ILoveBitcoin21");
 			controlPortClient.ChangeCircuit();
 
 			// 4. Get changed TOR IP
