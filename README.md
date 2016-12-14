@@ -5,6 +5,8 @@ Minimal TOR implementation in .NET Core
 The SocksPort stuff in this project modified a part of the [SocketToMe](https://github.com/joelverhagen/SocketToMe) project.  
 The ControlPort stuff in this project modified a part of the [Tor.NET](https://github.com/sharpbrowser/Tor.NET) project.
 
+## See detailed documentation on [CodeProject](https://www.codeproject.com/script/Articles/ArticleVersion.aspx?waid=225577&aid=1161078)
+
 ##Nuget
 1. Search for DotNetTor.
 2. Configure TOR properly
