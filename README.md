@@ -1,5 +1,5 @@
 # DotNetTor
-Minimal TOR library in .NET Core
+Minimal TOR quickstart library in .NET Core
 
 ##Acknowledgement
 The SocksPort stuff in this project modified a part of the [SocketToMe](https://github.com/joelverhagen/SocketToMe) project.  
