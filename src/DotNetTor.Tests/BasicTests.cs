@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using System.Net.Http;
 using Xunit;
 
@@ -159,6 +160,24 @@ namespace DotNetTor.Tests
 			Assert.Throws<TorException>(() => new SocksPort.Client("127.0.0.1", 9054));
 			Assert.Throws<TorException>(() => new ControlPort.Client("127.0.0.1", 9054));
 			Assert.Throws<TorException>(() => new ControlPort.Client(HostAddress, ControlPort, ControlPortPassword + "a"));
+			Assert.Throws<AggregateException>(() => new HttpClient().GetAsync("http://bitmixer2whesjgj.onion/order.php?addr1=16HGUokcXuJXn9yiV6uQ4N3umAWteE2cRR&pr1=33&time1=8&addr2=1F1Afwxr2xrs3ZQpf6ifqfNMxJWZt2JupK&pr2=67&time2=16&bitcode=AcOw&fee=0.6523").Wait());
+		}
+
+		[Fact]
+		public void CanRequestOnion()
+		{
+			var requestUri = "http://bitmixer2whesjgj.onion/order.php?addr1=16HGUokcXuJXn9yiV6uQ4N3umAWteE2cRR&pr1=33&time1=8&addr2=1F1Afwxr2xrs3ZQpf6ifqfNMxJWZt2JupK&pr2=67&time2=16&bitcode=AcOw&fee=0.6523";
+
+			using (var socksPortClient = new SocksPort.Client(HostAddress, SocksPort))
+			{
+				var handler = socksPortClient.GetHandlerFromRequestUri(requestUri);
+				using (var httpClient = new HttpClient(handler))
+				{
+					var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
+
+					Assert.Equal(content, "error=Invalid Bitcode");
+				}
+			}
 		}
 	}
 }

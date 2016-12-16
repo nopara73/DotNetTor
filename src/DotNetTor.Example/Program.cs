@@ -14,8 +14,8 @@ namespace DotNetTor.Example
 		// Now the example should successfully run
 		public static void Main(string[] args)
 		{
-			//RequestWith3Ip();
-			DoSomeRandomRequest();
+			RequestWith3Ip();
+			//DoSomeRandomRequest();			
 
 			Console.WriteLine("Press a key to exit..");
 			Console.ReadKey();
