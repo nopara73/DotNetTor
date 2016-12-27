@@ -22,7 +22,7 @@ The ControlPort stuff in this project modified a part of the [Tor.NET](https://g
 
 ##Configure TOR
 1. Download TOR Expert Bundle: https://www.torproject.org/download/download
-2. Download the torrc config file sample: https://svn.torproject.org/svn/tor/tags/tor-0_0_9_5/src/config/torrc.sample.in
+2. Download the torrc config file sample: pastebin.com/xncmpeAa
 3. Place torrc in the proper default location (depending on your OS) and edit it:
   - Optionally uncomment and edit the SocksPort, if you don't uncomment it will default to 9050 port anyway
   - Uncomment the default ControlPort 9051, optionally edit it
