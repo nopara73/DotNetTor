@@ -15,11 +15,11 @@ namespace DotNetTor.SocksPort.Net
 			{ AddressFamily.InterNetwork, "IPv4" },
 			{ AddressFamily.InterNetworkV6, "IPv6" }
 		};
-		public static Socket ConnectToServer(IPEndPoint endpoint, IEnumerable<AddressFamily> addressFamilies)
+		public static async Task<Socket> ConnectToServerAsync(IPEndPoint endpoint, IEnumerable<AddressFamily> addressFamilies)
 		{
 			ValidateEndpoint(endpoint, addressFamilies);
 			var tcpClient = new TcpClient();
-			tcpClient.ConnectAsync(endpoint.Address, endpoint.Port).Wait();
+			await tcpClient.ConnectAsync(endpoint.Address, endpoint.Port).ConfigureAwait(false);
 			return tcpClient.Client;
 		}
 		public static async Task<Socket> ConnectToServerAsync(string hostname, int port)

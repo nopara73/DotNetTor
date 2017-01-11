@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace DotNetTor.ControlPort
@@ -18,7 +19,7 @@ namespace DotNetTor.ControlPort
 		/// <typeparam name="TResponse">The type of the response generated from the command.</typeparam>
 		/// <param name="client">The client hosting the control connection port.</param>
 		/// <returns><c>true</c> if the command was created and dispatched successfully; otherwise, <c>false</c>.</returns>
-		public static bool DispatchAndReturn<TCommand>(string address, int controlPort, string password) where TCommand : Command<T>
+		public static bool DispatchAndReturn<TCommand>(IPEndPoint endpoint, string password) where TCommand : Command<T>
 		{
 			try
 			{
@@ -27,7 +28,7 @@ namespace DotNetTor.ControlPort
 				if (command == null)
 					return false;
 
-				T response = command.Dispatch(address, controlPort, password);
+				T response = command.Dispatch(endpoint, password);
 				return response.Success;
 			}
 			catch
@@ -41,11 +42,11 @@ namespace DotNetTor.ControlPort
 		/// </summary>
 		/// <param name="client">The client hosting the control connection port.</param>
 		/// <returns>A <typeparamref name="T"/> object instance containing the response data.</returns>
-		public T Dispatch(string address, int controlPort, string password)
+		public T Dispatch(IPEndPoint endpoint, string password)
 		{
 			try
 			{
-				using (Connection connection = new Connection(address, controlPort))
+				using (Connection connection = new Connection(endpoint))
 				{
 					if (!connection.Connect())
 						throw new Exception("A command could not be dispatched to a client because the command failed to connect to the control port");

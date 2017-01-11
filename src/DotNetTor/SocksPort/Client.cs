@@ -2,6 +2,7 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 
 namespace DotNetTor.SocksPort
 {
@@ -15,7 +16,6 @@ namespace DotNetTor.SocksPort
 
 		public Client(string address = "127.0.0.1", int socksPort = 9050)
 		{
-			Util.AssertPortOpen(address, socksPort);
 			try
 			{
 				_socksEndPoint = new IPEndPoint(IPAddress.Parse(address), socksPort);
@@ -25,10 +25,14 @@ namespace DotNetTor.SocksPort
 			{
 				throw new TorException("SocksPort client initialization failed.", ex);
 			}
-		}		
+		}
 
+		[Obsolete(Shared.SyncMethodDeprecated + ": ConnectAsync()")]
 		public NetworkHandler GetHandlerFromDomain(string domainName, RequestType requestType = RequestType.HTTP)
+			=> ConnectAsync(domainName, requestType).Result; // Task.Result is fine, because the method is obsolated
+		public async Task<NetworkHandler> ConnectAsync(string domainName, RequestType requestType)
 		{
+			await Util.AssertPortOpenAsync(_socksEndPoint).ConfigureAwait(false);
 			try
 			{
 				int port = 0;
@@ -37,7 +41,7 @@ namespace DotNetTor.SocksPort
 				else if (requestType == RequestType.HTTPS)
 					port = 443;
 
-				_socket2Server = _socks5Client.ConnectToServer(_socksEndPoint);
+				_socket2Server = await _socks5Client.ConnectToServerAsync(_socksEndPoint).ConfigureAwait(false);
 				_socket2Dest = _socks5Client.ConnectToDestination(_socket2Server, domainName, port);
 				return new NetworkHandler(_socket2Dest);
 			}
@@ -46,12 +50,16 @@ namespace DotNetTor.SocksPort
 				throw new TorException(ex.Message, ex);
 			}
 		}
-		public NetworkHandler GetHandlerFromRequestUri(string requestUri)
+
+		[Obsolete(Shared.SyncMethodDeprecated + ": ConnectAsync()")]
+		public NetworkHandler GetHandlerFromRequestUri(string requestUri) 
+			=> ConnectAsync(requestUri).Result; // .Result is fine, because the method is obsolated
+		public async Task<NetworkHandler> ConnectAsync(string requestUri)
 		{
 			try
 			{ 
 				Uri uri = new Uri(requestUri);
-				_socket2Server = _socks5Client.ConnectToServer(_socksEndPoint);
+				_socket2Server = await _socks5Client.ConnectToServerAsync(_socksEndPoint).ConfigureAwait(false);
 				_socket2Dest = _socks5Client.ConnectToDestination(_socket2Server, uri.DnsSafeHost, uri.Port);
 				return new NetworkHandler(_socket2Dest);				
 			}

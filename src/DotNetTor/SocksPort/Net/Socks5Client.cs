@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace DotNetTor.SocksPort.Net
 {
@@ -13,9 +14,9 @@ namespace DotNetTor.SocksPort.Net
 		private const byte SocksVersion = 0x05;
 		private const byte UsernamePasswordVersion = 0x01;
 
-		public Socket ConnectToServer(IPEndPoint endpoint)
+		public async Task<Socket> ConnectToServerAsync(IPEndPoint endpoint)
 		{
-			return Tcp.ConnectToServer(endpoint, new[] { AddressFamily.InterNetwork, AddressFamily.InterNetworkV6 });
+			return await Tcp.ConnectToServerAsync(endpoint, new[] { AddressFamily.InterNetwork, AddressFamily.InterNetworkV6 }).ConfigureAwait(false);
 		}
 		public Socket ConnectToDestination(Socket socket, string name, int port, NetworkCredential credential = null, Encoding credentialEncoding = null)
 		{

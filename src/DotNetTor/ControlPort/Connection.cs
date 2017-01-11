@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,50 +15,26 @@ namespace DotNetTor.ControlPort
 	/// </summary>
 	internal sealed class Connection : IDisposable
 	{
-		private readonly static string EOL = "\r\n";
-		private volatile bool disposed;
-		private StreamReader reader;
-		private Socket socket;
-		private NetworkStream stream;
-		private string _address;
-		private int _controlPort;
-		public string Address
-		{
-			get
-			{
-				return _address;
-			}
-
-			set
-			{
-				_address = value;
-			}
-		}
-		public int ControlPort
-		{
-			get
-			{
-				return _controlPort;
-			}
-
-			set
-			{
-				_controlPort = value;
-			}
-		}
+		private const string EOL = "\r\n";
+		private volatile bool _disposed;
+		private StreamReader _reader;
+		private Socket _socket;
+		private NetworkStream _stream;
+		private IPEndPoint _endpoint;
+		public string Address => _endpoint.Address.ToString();
+		public int ControlPort => _endpoint.Port;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Connection"/> class.
 		/// </summary>
 		/// <param name="client">The client hosting the control connection.</param>
-		public Connection(string address, int controlPort)
+		public Connection(IPEndPoint endpoint)
 		{
-			disposed = false;
-			reader = null;
-			socket = null;
-			stream = null;
-			_address = address;
-			_controlPort = controlPort;
+			_disposed = false;
+			_reader = null;
+			_socket = null;
+			_stream = null;
+			_endpoint = endpoint;
 		}
 
 		/// <summary>
@@ -85,33 +62,33 @@ namespace DotNetTor.ControlPort
 		/// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
 		private void Dispose(bool disposing)
 		{
-			if (disposed)
+			if (_disposed)
 				return;
 
 			if (disposing)
 			{
-				if (reader != null)
+				if (_reader != null)
 				{
-					reader.Dispose();
-					reader = null;
+					_reader.Dispose();
+					_reader = null;
 				}
 
-				if (stream != null)
+				if (_stream != null)
 				{
-					stream.Dispose();
-					stream = null;
+					_stream.Dispose();
+					_stream = null;
 				}
 
-				if (socket != null)
+				if (_socket != null)
 				{
-					if (socket.Connected)
-						socket.Shutdown(SocketShutdown.Both);
+					if (_socket.Connected)
+						_socket.Shutdown(SocketShutdown.Both);
 
-					socket.Dispose();
-					socket = null;
+					_socket.Dispose();
+					_socket = null;
 				}
 
-				disposed = true;
+				_disposed = true;
 			}
 		}
 
@@ -124,7 +101,7 @@ namespace DotNetTor.ControlPort
 		/// <returns><c>true</c> if the authentication succeeds; otherwise, <c>false</c>.</returns>
 		public bool Authenticate(string password)
 		{
-			if (disposed)
+			if (_disposed)
 				throw new ObjectDisposedException("this");
 
 			if (password == null)
@@ -147,42 +124,42 @@ namespace DotNetTor.ControlPort
 		/// <returns><c>true</c> if the connection succeeds; otherwise, <c>false</c>.</returns>
 		public bool Connect()
 		{
-			if (disposed)
+			if (_disposed)
 				throw new ObjectDisposedException("this");
 
 			try
 			{
-				socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-				socket.Connect(Address, ControlPort);
+				_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+				_socket.Connect(Address, ControlPort);
 
-				stream = new NetworkStream(socket, false);
-				stream.ReadTimeout = 2000;
+				_stream = new NetworkStream(_socket, false);
+				_stream.ReadTimeout = 2000;
 
-				reader = new StreamReader(stream);
+				_reader = new StreamReader(_stream);
 
 				return true;
 			}
 			catch
 			{
-				if (reader != null)
+				if (_reader != null)
 				{
-					reader.Dispose();
-					reader = null;
+					_reader.Dispose();
+					_reader = null;
 				}
 
-				if (stream != null)
+				if (_stream != null)
 				{
-					stream.Dispose();
-					stream = null;
+					_stream.Dispose();
+					_stream = null;
 				}
 
-				if (socket != null)
+				if (_socket != null)
 				{
-					if (socket.Connected)
-						socket.Shutdown(SocketShutdown.Both);
+					if (_socket.Connected)
+						_socket.Shutdown(SocketShutdown.Both);
 
-					socket.Dispose();
-					socket = null;
+					_socket.Dispose();
+					_socket = null;
 				}
 
 				return false;
@@ -195,14 +172,14 @@ namespace DotNetTor.ControlPort
 		/// <returns>A <see cref="ConnectionResponse"/> containing the response information.</returns>
 		public ConnectionResponse Read()
 		{
-			if (disposed)
+			if (_disposed)
 				throw new ObjectDisposedException("this");
-			if (socket == null || stream == null || reader == null)
+			if (_socket == null || _stream == null || _reader == null)
 				return new ConnectionResponse(StatusCode.Unknown);
 
 			try
 			{
-				string line = reader.ReadLine();
+				string line = _reader.ReadLine();
 
 				if (line == null)
 					return new ConnectionResponse(StatusCode.Unknown);
@@ -235,7 +212,7 @@ namespace DotNetTor.ControlPort
 
 				try
 				{
-					for (line = reader.ReadLine(); line != null; line = reader.ReadLine())
+					for (line = _reader.ReadLine(); line != null; line = _reader.ReadLine())
 					{
 						string temp1 = line.Trim();
 						string temp2 = temp1;
@@ -308,17 +285,17 @@ namespace DotNetTor.ControlPort
 		/// <returns><c>true</c> if the command is dispatched successfully; otherwise, <c>false</c>.</returns>
 		public bool Write(byte[] buffer)
 		{
-			if (disposed)
+			if (_disposed)
 				throw new ObjectDisposedException("this");
 			if (buffer == null || buffer.Length == 0)
 				throw new ArgumentNullException("buffer");
-			if (socket == null || stream == null || reader == null)
+			if (_socket == null || _stream == null || _reader == null)
 				return false;
 
 			try
 			{
-				stream.Write(buffer, 0, buffer.Length);
-				stream.Flush();
+				_stream.Write(buffer, 0, buffer.Length);
+				_stream.Flush();
 
 				return true;
 			}

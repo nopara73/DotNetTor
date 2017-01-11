@@ -1,6 +1,8 @@
-﻿using System;
+﻿using DotNetTor.SocksPort.Net;
+using System;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace DotNetTor.Tests
@@ -8,27 +10,22 @@ namespace DotNetTor.Tests
 	// 1. Download TOR Expert Bundle: https://www.torproject.org/download/download
 	// 2. Download the torrc config file sample: https://svn.torproject.org/svn/tor/tags/tor-0_0_9_5/src/config/torrc.sample.in
 	// 3. Place torrc in the proper default location (depending on your OS) and edit it:
-	//	- Uncomment the default ControlPort 9051
+	//	- Uncomment the default Shared.ControlPort 9051
 	//	- Uncomment and modify the password hash to HashedControlPassword 16:0978DBAF70EEB5C46063F3F6FD8CBC7A86DF70D2206916C1E2AE29EAF6
-	// 4. Run tor (it will run in the background and listen to the SocksPort 9050 and ControlPort 9051)
+	// 4. Run tor (it will run in the background and listen to the SocksPort 9050 and Shared.ControlPort 9051)
 	// Now the tests should successfully run
 	public class BasicTests
 	{
-		private const string HostAddress = "127.0.0.1";
-		private const int SocksPort = 9050;
-		private const int ControlPort = 9051;
-		private const string ControlPortPassword = "ILoveBitcoin21";
-
 		[Fact]
-		public void CanDoBasicRequest()
+		public async Task CanDoBasicRequestAsync()
 		{
 			var requestUri = "http://api.qbit.ninja/whatisit/what%20is%20my%20future";
-			using (var socksPortClient = new SocksPort.Client(HostAddress, SocksPort))
+			using (var socksPortClient = new SocksPort.Client(Shared.HostAddress, Shared.SocksPort))
 			{
-				var handler = socksPortClient.GetHandlerFromRequestUri(requestUri);
+				var handler = await socksPortClient.ConnectAsync(requestUri).ConfigureAwait(false);
 				using (var httpClient = new HttpClient(handler))
 				{
-					var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
+					var content = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
 
 					Assert.Equal(content, "\"Good question Holmes !\"");
 				}
@@ -36,7 +33,7 @@ namespace DotNetTor.Tests
 		}
 
 		[Fact]
-		private static void TorIpIsNotTheRealOne()
+		private static async Task TorIpIsNotTheRealOneAsync()
 		{
 			var requestUri = "http://icanhazip.com/";
 			IPAddress realIp;
@@ -45,18 +42,18 @@ namespace DotNetTor.Tests
 			// 1. Get real IP
 			using (var httpClient = new HttpClient())
 			{
-				var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
+				var content = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
 				var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out realIp);
 				Assert.True(gotIp);
 			}
 
 			// 2. Get TOR IP
-			using (var socksPortClient = new SocksPort.Client(HostAddress, SocksPort))
+			using (var socksPortClient = new SocksPort.Client(Shared.HostAddress, Shared.SocksPort))
 			{
-				var handler = socksPortClient.GetHandlerFromDomain("icanhazip.com");
+				var handler = await socksPortClient.ConnectAsync("icanhazip.com", RequestType.HTTP).ConfigureAwait(false);
 				using (var httpClient = new HttpClient(handler))
 				{
-					var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
+					var content = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
 					var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out torIp);
 					Assert.True(gotIp);
 				}
@@ -66,32 +63,32 @@ namespace DotNetTor.Tests
 		}
 
 		[Fact]
-		private static void CanChangeCircuit()
+		private static async Task CanChangeCircuitAsync()
 		{
 			var requestUri = "http://icanhazip.com/";
 			IPAddress torIp;
 			IPAddress changedIp;
 
 			// 1. Get TOR IP
-			using (var socksPortClient = new SocksPort.Client(HostAddress, SocksPort))
+			using (var socksPortClient = new SocksPort.Client(Shared.HostAddress, Shared.SocksPort))
 			{
-				var handler = socksPortClient.GetHandlerFromDomain("icanhazip.com");
+				var handler = await socksPortClient.ConnectAsync("icanhazip.com", RequestType.HTTP).ConfigureAwait(false);
 				using (var httpClient = new HttpClient(handler))
 				{
-					var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
+					var content = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
 					var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out torIp);
 					Assert.True(gotIp);
 				}
 
 				// 2. Change TOR IP
-				var controlPortClient = new ControlPort.Client(HostAddress, ControlPort, ControlPortPassword);
-				controlPortClient.ChangeCircuit();
+				var ControlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
+				await ControlPortClient.ChangeCircuitAsync().ConfigureAwait(false);
 
 				// 3. Get changed TOR IP
-				handler = socksPortClient.GetHandlerFromRequestUri(requestUri);
+				handler = await socksPortClient.ConnectAsync(requestUri).ConfigureAwait(false);
 				using (var httpClient = new HttpClient(handler))
 				{
-					var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
+					var content = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
 					var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out changedIp);
 					Assert.True(gotIp);
 				}
@@ -101,15 +98,15 @@ namespace DotNetTor.Tests
 		}
 
 		[Fact]
-		public void CanDoHttps()
+		public async Task CanDoHttpsAsync()
 		{
 			var requestUri = "https://slack.com/api/api.test";
-			using (var socksPortClient = new SocksPort.Client(HostAddress, SocksPort))
+			using (var socksPortClient = new SocksPort.Client(Shared.HostAddress, Shared.SocksPort))
 			{
-				var handler = socksPortClient.GetHandlerFromRequestUri(requestUri);
+				var handler = await socksPortClient.ConnectAsync(requestUri).ConfigureAwait(false);
 				using (var httpClient = new HttpClient(handler))
 				{
-					var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
+					var content = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
 
 					Assert.Equal(content, "{\"ok\":true}");
 				}
@@ -117,63 +114,71 @@ namespace DotNetTor.Tests
 		}
 
 		[Fact]
-		public void CanRequestALot()
+		public async Task CanRequestALotAsync()
 		{
 			string woTor;
 			string wTor;
 			var requestUri = "http://api.qbit.ninja/blocks/0000000000000000119fe3f65fd3038cbe8429ad2cf7c2de1e5e7481b34a01b4";
-			using (var socksPortClient = new SocksPort.Client(HostAddress, SocksPort))
+			using (var socksPortClient = new SocksPort.Client(Shared.HostAddress, Shared.SocksPort))
 			{
-				var handler = socksPortClient.GetHandlerFromRequestUri(requestUri);
+				var handler = await socksPortClient.ConnectAsync(requestUri).ConfigureAwait(false);
 				using (var httpClient = new HttpClient(handler))
 				{
-					wTor = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
+					wTor = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
 				}
 			}
 
 			using (var httpClient = new HttpClient())
 			{
-				woTor = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
+				woTor = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
 			}
 
 			Assert.Equal(woTor, wTor);
 		}
 		[Fact]
-		public void CanRequestInRow()
+		public async Task CanRequestInRowAsync()
 		{
 			var firstRequest = "http://api.qbit.ninja/transactions/38d4cfeb57d6685753b7a3b3534c3cb576c34ca7344cd4582f9613ebf0c2b02a?format=json&headeronly=true";
-			using (var socksPortClient = new SocksPort.Client(HostAddress, SocksPort))
+			using (var socksPortClient = new SocksPort.Client(Shared.HostAddress, Shared.SocksPort))
 			{
-				var handler = socksPortClient.GetHandlerFromRequestUri(firstRequest);
+				var handler = await socksPortClient.ConnectAsync(firstRequest).ConfigureAwait(false);
 				using (var httpClient = new HttpClient(handler))
 				{
-					var content = httpClient.GetAsync(firstRequest).Result.Content.ReadAsStringAsync().Result;
-					content = httpClient.GetAsync("http://api.qbit.ninja/balances/15sYbVpRh6dyWycZMwPdxJWD4xbfxReeHe?unspentonly=true").Result.Content.ReadAsStringAsync().Result;
-					content = httpClient.GetAsync("http://api.qbit.ninja/balances/akEBcY5k1dn2yeEdFnTMwdhVbHxtgHb6GGi?from=tip&until=336000").Result.Content.ReadAsStringAsync().Result;
+					var content = await (await httpClient.GetAsync(firstRequest).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
+					content = await (await httpClient.GetAsync("http://api.qbit.ninja/balances/15sYbVpRh6dyWycZMwPdxJWD4xbfxReeHe?unspentonly=true").ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
+					content = await (await httpClient.GetAsync("http://api.qbit.ninja/balances/akEBcY5k1dn2yeEdFnTMwdhVbHxtgHb6GGi?from=tip&until=336000").ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
 				}
 			}
 		}
 
 		[Fact]
-		public void ThrowsExcetpions()
+		public void ThrowsExcetpionsAsync()
 		{
-			Assert.Throws<TorException>(() => new SocksPort.Client("127.0.0.1", 9054));
-			Assert.Throws<TorException>(() => new ControlPort.Client("127.0.0.1", 9054));
-			Assert.Throws<TorException>(() => new ControlPort.Client(HostAddress, ControlPort, ControlPortPassword + "a"));
-			Assert.Throws<AggregateException>(() => new HttpClient().GetAsync("http://bitmixer2whesjgj.onion/order.php?addr1=16HGUokcXuJXn9yiV6uQ4N3umAWteE2cRR&pr1=33&time1=8&addr2=1F1Afwxr2xrs3ZQpf6ifqfNMxJWZt2JupK&pr2=67&time2=16&bitcode=AcOw&fee=0.6523").Wait());
+			Assert.ThrowsAsync<TorException>
+				(async () => 
+				await new SocksPort.Client("127.0.0.1", 9054).ConnectAsync("icanhazip.com", RequestType.HTTP).ConfigureAwait(false));
+			Assert.ThrowsAsync<TorException>(
+				async () => 
+				await new ControlPort.Client("127.0.0.1", 9054).ChangeCircuitAsync().ConfigureAwait(false));
+			Assert.ThrowsAsync<TorException>(
+				async () => 
+				await new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword + "a").ChangeCircuitAsync().ConfigureAwait(false));
+			Assert.ThrowsAsync<AggregateException>(
+				async () => 
+				await new HttpClient().GetAsync("http://bitmixer2whesjgj.onion/order.php?addr1=16HGUokcXuJXn9yiV6uQ4N3umAWteE2cRR&pr1=33&time1=8&addr2=1F1Afwxr2xrs3ZQpf6ifqfNMxJWZt2JupK&pr2=67&time2=16&bitcode=AcOw&fee=0.6523").ConfigureAwait(false));
 		}
 
 		[Fact]
-		public void CanRequestOnion()
+		public async Task CanRequestOnionAsync()
 		{
 			var requestUri = "http://bitmixer2whesjgj.onion/order.php?addr1=16HGUokcXuJXn9yiV6uQ4N3umAWteE2cRR&pr1=33&time1=8&addr2=1F1Afwxr2xrs3ZQpf6ifqfNMxJWZt2JupK&pr2=67&time2=16&bitcode=AcOw&fee=0.6523";
 
-			using (var socksPortClient = new SocksPort.Client(HostAddress, SocksPort))
+			using (var socksPortClient = new SocksPort.Client(Shared.HostAddress, Shared.SocksPort))
 			{
-				var handler = socksPortClient.GetHandlerFromRequestUri(requestUri);
+				var handler = await socksPortClient.ConnectAsync(requestUri).ConfigureAwait(false);
 				using (var httpClient = new HttpClient(handler))
 				{
-					var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
+					var content = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
 
 					Assert.Equal(content, "error=Invalid Bitcode");
 				}
