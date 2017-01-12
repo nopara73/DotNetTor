@@ -97,7 +97,7 @@ namespace DotNetTor.SocksPort.Net
 			while ((line = await reader.ReadLineAsync().ConfigureAwait(false)) != null && line != string.Empty)
 			{
 				pieces = line.Split(new[] { ":" }, 2, StringSplitOptions.None);
-				if (pieces[1].StartsWith(" "))
+				if (pieces[1].StartsWith(" ", StringComparison.Ordinal))
 				{
 					pieces[1] = pieces[1].Substring(1);
 				}

@@ -14,11 +14,11 @@ namespace DotNetTor.Example
 		//	- Uncomment and modify the password hash to HashedControlPassword 16:0978DBAF70EEB5C46063F3F6FD8CBC7A86DF70D2206916C1E2AE29EAF6
 		// 4. Run tor (it will run in the background and listen to the SocksPort 9050 and ControlPort 9051)
 		// Now the example should successfully run
-		private static void Main(string[] args)
+		private static void Main()
 		{
 			try
 			{
-				MainAsync(args).GetAwaiter().GetResult();
+				MainAsync().GetAwaiter().GetResult();
 			}
 			catch (Exception ex)
 			{
@@ -26,7 +26,7 @@ namespace DotNetTor.Example
 			}
 		}
 
-		private static async Task MainAsync(string[] args)
+		private static async Task MainAsync()
 		{
 			await RequestWith3IpAsync().ConfigureAwait(false);
 			await DoSomeRandomRequestAsync().ConfigureAwait(false);

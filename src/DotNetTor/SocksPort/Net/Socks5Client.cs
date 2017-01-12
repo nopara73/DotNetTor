@@ -51,7 +51,7 @@ namespace DotNetTor.SocksPort.Net
 				throw new Exception(message);
 			}
 
-			ValidateSocksVersion(socket, responseBuffer[0]);
+			ValidateSocksVersion(responseBuffer[0]);
 
 			if (responseBuffer[1] != (byte)ReplyType.Succeeded)
 			{
@@ -114,10 +114,10 @@ namespace DotNetTor.SocksPort.Net
 					break;
 
 				default:
-					string addressTypeNotImplementedMessage = string.Format(
-						"The provided address type '{0}' is not yet implemented.",
+					string addressTypeNotSupportedMessage = string.Format(
+						"The provided address type '{0}' is not supported.",
 						bindAddressType);
-					throw new NotImplementedException(addressTypeNotImplementedMessage);
+					throw new NotSupportedException(addressTypeNotSupportedMessage);
 			}
 
 			return socket;
@@ -181,7 +181,7 @@ namespace DotNetTor.SocksPort.Net
 				throw new Exception(message);
 			}
 
-			ValidateSocksVersion(socket, responseBuffer[0]);
+			ValidateSocksVersion(responseBuffer[0]);
 
 			if (responseBuffer[1] == (byte)AuthenticationMethod.NoAcceptableMethods)
 			{
@@ -240,7 +240,7 @@ namespace DotNetTor.SocksPort.Net
 			return responseBuffer;
 		}
 
-		private static void ValidateSocksVersion(Socket socket, byte version)
+		private static void ValidateSocksVersion(byte version)
 		{
 			if (version != SocksVersion)
 			{

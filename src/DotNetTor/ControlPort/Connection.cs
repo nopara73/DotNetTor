@@ -25,7 +25,6 @@ namespace DotNetTor.ControlPort
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Connection"/> class.
 		/// </summary>
-		/// <param name="client">The client hosting the control connection.</param>
 		public Connection(IPEndPoint endpoint)
 		{
 			_disposed = false;
@@ -193,14 +192,14 @@ namespace DotNetTor.ControlPort
 				line = line.Substring(3);
 
 				if (line.Length == 0)
-					return new ConnectionResponse((StatusCode)code, new List<string>() { "" });
+					return new ConnectionResponse((StatusCode)code, new List<string> { "" });
 
 				if (line[0] != '+' && line[0] != '-')
 				{
 					if (line[0] == ' ')
 						line = line.Substring(1);
 
-					return new ConnectionResponse((StatusCode)code, new List<string>() { line });
+					return new ConnectionResponse((StatusCode)code, new List<string> { line });
 				}
 
 				char id = line[0];
@@ -249,9 +248,9 @@ namespace DotNetTor.ControlPort
 		public bool Write(string command)
 		{
 			if (command == null)
-				throw new ArgumentNullException("command");
+				throw new ArgumentNullException(nameof(command));
 
-			if (!command.EndsWith(EOL))
+			if (!command.EndsWith(EOL, StringComparison.Ordinal))
 				command += EOL;
 
 			return Write(Encoding.ASCII.GetBytes(command));
@@ -266,11 +265,11 @@ namespace DotNetTor.ControlPort
 		public bool Write(string command, params object[] parameters)
 		{
 			if (command == null)
-				throw new ArgumentNullException("command");
+				throw new ArgumentNullException(nameof(command));
 
 			command = string.Format(command, parameters);
 
-			if (!command.EndsWith(EOL))
+			if (!command.EndsWith(EOL, StringComparison.Ordinal))
 				command += EOL;
 
 			return Write(Encoding.ASCII.GetBytes(command));
@@ -286,7 +285,7 @@ namespace DotNetTor.ControlPort
 			if (_disposed)
 				throw new ObjectDisposedException("this");
 			if (buffer == null || buffer.Length == 0)
-				throw new ArgumentNullException("buffer");
+				throw new ArgumentNullException(nameof(buffer));
 			if (_socket == null || _stream == null || _reader == null)
 				return false;
 

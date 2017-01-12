@@ -3,7 +3,7 @@
 	/// <summary>
 	/// An enumerator containing the status codes sent in response to commands.
 	/// </summary>
-	internal enum StatusCode : int
+	internal enum StatusCode
 	{
 		/// <summary>
 		/// This should never occur ideally, unless a response was malformed or incomplete.

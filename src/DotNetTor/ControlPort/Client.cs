@@ -9,8 +9,8 @@ namespace DotNetTor.ControlPort
 {
 	public class Client
 	{
-		private IPEndPoint _controlEndPoint;
-		private string _password;
+		private readonly IPEndPoint _controlEndPoint;
+		private readonly string _password;
 
 		public Client(string address = "127.0.0.1", int controlPort = 9051, string password = "")
 		{

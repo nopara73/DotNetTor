@@ -15,7 +15,6 @@ namespace DotNetTor.ControlPort
 		/// </summary>
 		/// <typeparam name="TCommand">The type of the command.</typeparam>
 		/// <typeparam name="TResponse">The type of the response generated from the command.</typeparam>
-		/// <param name="client">The client hosting the control connection port.</param>
 		/// <returns><c>true</c> if the command was created and dispatched successfully; otherwise, <c>false</c>.</returns>
 		public static bool DispatchAndReturn<TCommand>(IPEndPoint endpoint, string password) where TCommand : Command<T>
 		{
@@ -38,7 +37,6 @@ namespace DotNetTor.ControlPort
 		/// <summary>
 		/// Dispatches the command to the client control port and produces a <typeparamref name="T"/> response result.
 		/// </summary>
-		/// <param name="client">The client hosting the control connection port.</param>
 		/// <returns>A <typeparamref name="T"/> object instance containing the response data.</returns>
 		public T Dispatch(IPEndPoint endpoint, string password)
 		{

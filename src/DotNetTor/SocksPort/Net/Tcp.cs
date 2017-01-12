@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace DotNetTor.SocksPort.Net
 {
-	internal class Tcp
+	internal static class Tcp
 	{
 		private static readonly IDictionary<AddressFamily, string> AddressFamilyNames = new Dictionary<AddressFamily, string>
 		{
