@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -66,6 +64,7 @@ namespace DotNetTor.SocksPort.Helpers
 				_disposed = true;
 			}
 		}
+
 		public override int Read(byte[] buffer, int offset, int count)
 		{
 			if (_remaining <= 0)

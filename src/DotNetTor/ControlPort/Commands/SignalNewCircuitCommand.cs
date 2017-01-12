@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace DotNetTor.ControlPort.Commands
+﻿namespace DotNetTor.ControlPort.Commands
 {
 	/// <summary>
 	/// A class containing the command to generate a new circuit.
@@ -30,6 +25,6 @@ namespace DotNetTor.ControlPort.Commands
 			return new CommandResponse(false);
 		}
 
-		#endregion
+		#endregion Tor.Controller.Command<>
 	}
 }

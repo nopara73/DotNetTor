@@ -41,6 +41,7 @@ namespace DotNetTor.SocksPort.Net
 
 			return response;
 		}
+
 		private void ReadResponseBody(ByteStreamReader reader, HttpResponseMessage response)
 		{
 			HttpContent content = null;
@@ -74,6 +75,7 @@ namespace DotNetTor.SocksPort.Net
 				response.Content = content;
 			}
 		}
+
 		private async Task<HttpResponseMessage> ReadResponseHeadAsync(ByteStreamReader reader, HttpRequestMessage request)
 		{
 			// initialize the response
@@ -111,6 +113,7 @@ namespace DotNetTor.SocksPort.Net
 
 			return response;
 		}
+
 		public async Task<Stream> GetStreamAsync(Socket socket, HttpRequestMessage request)
 		{
 			Stream networkStream = new NetworkStream(socket);
@@ -132,6 +135,7 @@ namespace DotNetTor.SocksPort.Net
 
 			return networkStream;
 		}
+
 		public async Task SendRequestAsync(Stream networkStream, HttpRequestMessage request)
 		{
 			ValidateRequest(request);
@@ -148,6 +152,7 @@ namespace DotNetTor.SocksPort.Net
 				await networkStream.FlushAsync().ConfigureAwait(false);
 			}
 		}
+
 		private async Task<Stream> SendRequestHeadAsync(StreamWriter writer, HttpRequestMessage request)
 		{
 			var location = request.Method != ConnectMethod ? request.RequestUri.PathAndQuery : $"{request.RequestUri.DnsSafeHost}:{request.RequestUri.Port}";
@@ -209,14 +214,17 @@ namespace DotNetTor.SocksPort.Net
 
 			return contentStream;
 		}
+
 		private async Task WriteHeaderAsync(StreamWriter writer, string key, string value)
 		{
 			await WriteHeaderAsync(writer, new KeyValuePair<string, IEnumerable<string>>(key, new[] { value })).ConfigureAwait(false);
 		}
+
 		private async Task WriteHeaderAsync(StreamWriter writer, KeyValuePair<string, IEnumerable<string>> header)
 		{
 			await writer.WriteAsync($"{header.Key}: {string.Join(",", header.Value)}" + LineSeparator).ConfigureAwait(false);
 		}
+
 		private void ValidateRequest(HttpRequestMessage request)
 		{
 			if (request.RequestUri.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase) && request.RequestUri.Scheme.Equals("https", StringComparison.OrdinalIgnoreCase))

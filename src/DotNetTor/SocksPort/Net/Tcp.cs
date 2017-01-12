@@ -15,6 +15,7 @@ namespace DotNetTor.SocksPort.Net
 			{ AddressFamily.InterNetwork, "IPv4" },
 			{ AddressFamily.InterNetworkV6, "IPv6" }
 		};
+
 		public static async Task<Socket> ConnectToServerAsync(IPEndPoint endpoint, IEnumerable<AddressFamily> addressFamilies)
 		{
 			ValidateEndpoint(endpoint, addressFamilies);
@@ -22,12 +23,14 @@ namespace DotNetTor.SocksPort.Net
 			await tcpClient.ConnectAsync(endpoint.Address, endpoint.Port).ConfigureAwait(false);
 			return tcpClient.Client;
 		}
+
 		public static async Task<Socket> ConnectToServerAsync(string hostname, int port)
 		{
 			var tcpClient = new TcpClient();
 			await tcpClient.ConnectAsync(hostname, port).ConfigureAwait(false);
 			return tcpClient.Client;
 		}
+
 		private static void ValidateEndpoint(IPEndPoint endpoint, IEnumerable<AddressFamily> addressFamilies)
 		{
 			// endpoints can't be null

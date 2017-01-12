@@ -1,5 +1,4 @@
-﻿using System;
-using System.Net;
+﻿using System.Net;
 using System.Net.Http;
 using Xunit;
 
@@ -7,7 +6,7 @@ namespace DotNetTor.Tests
 {
 	// See BasicTests.cs for proper TOR configuration
 	public class ObsolateTests
-    {
+	{
 		[Fact]
 		public void CanDoBasicRequest()
 		{
@@ -141,6 +140,7 @@ namespace DotNetTor.Tests
 
 			Assert.Equal(woTor, wTor);
 		}
+
 		[Fact]
 		public void CanRequestInRow()
 		{

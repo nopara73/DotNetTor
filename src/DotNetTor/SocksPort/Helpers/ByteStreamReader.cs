@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -47,6 +46,7 @@ namespace DotNetTor.SocksPort.Helpers
 				_disposed = true;
 			}
 		}
+
 		public string ReadLine()
 		{
 			EnsureFirstRead();
@@ -181,7 +181,7 @@ namespace DotNetTor.SocksPort.Helpers
 			ArraySegment<byte> buffer;
 			if (!lineStream.TryGetBuffer(out buffer))
 				throw new Exception("Can't get buffer");
-			
+
 			var line = _encoding.GetString(buffer.ToArray(), 0, (int)lineStream.Length);
 			if (!_preserveLineEndings && lineFinished)
 			{

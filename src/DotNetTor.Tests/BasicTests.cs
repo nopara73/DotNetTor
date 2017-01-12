@@ -135,6 +135,7 @@ namespace DotNetTor.Tests
 
 			Assert.Equal(woTor, wTor);
 		}
+
 		[Fact]
 		public async Task CanRequestInRowAsync()
 		{
@@ -155,16 +156,16 @@ namespace DotNetTor.Tests
 		public void ThrowsExcetpionsAsync()
 		{
 			Assert.ThrowsAsync<TorException>
-				(async () => 
+				(async () =>
 				await new SocksPort.Client("127.0.0.1", 9054).ConnectAsync("icanhazip.com", RequestType.HTTP).ConfigureAwait(false));
 			Assert.ThrowsAsync<TorException>(
-				async () => 
+				async () =>
 				await new ControlPort.Client("127.0.0.1", 9054).ChangeCircuitAsync().ConfigureAwait(false));
 			Assert.ThrowsAsync<TorException>(
-				async () => 
+				async () =>
 				await new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword + "a").ChangeCircuitAsync().ConfigureAwait(false));
 			Assert.ThrowsAsync<AggregateException>(
-				async () => 
+				async () =>
 				await new HttpClient().GetAsync("http://bitmixer2whesjgj.onion/order.php?addr1=16HGUokcXuJXn9yiV6uQ4N3umAWteE2cRR&pr1=33&time1=8&addr2=1F1Afwxr2xrs3ZQpf6ifqfNMxJWZt2JupK&pr2=67&time2=16&bitcode=AcOw&fee=0.6523").ConfigureAwait(false));
 		}
 

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DotNetTor.SocksPort
 {
-	public class Client :IDisposable
+	public class Client : IDisposable
 	{
 		private IPEndPoint _socksEndPoint;
 		private Socks5Client _socks5Client;
@@ -30,6 +30,7 @@ namespace DotNetTor.SocksPort
 		[Obsolete(Shared.SyncMethodDeprecated + ": ConnectAsync()")]
 		public NetworkHandler GetHandlerFromDomain(string domainName, RequestType requestType = RequestType.HTTP)
 			=> ConnectAsync(domainName, requestType).Result; // Task.Result is fine, because the method is obsolated
+
 		public async Task<NetworkHandler> ConnectAsync(string domainName, RequestType requestType)
 		{
 			await Util.AssertPortOpenAsync(_socksEndPoint).ConfigureAwait(false);
@@ -52,16 +53,17 @@ namespace DotNetTor.SocksPort
 		}
 
 		[Obsolete(Shared.SyncMethodDeprecated + ": ConnectAsync()")]
-		public NetworkHandler GetHandlerFromRequestUri(string requestUri) 
+		public NetworkHandler GetHandlerFromRequestUri(string requestUri)
 			=> ConnectAsync(requestUri).Result; // .Result is fine, because the method is obsolated
+
 		public async Task<NetworkHandler> ConnectAsync(string requestUri)
 		{
 			try
-			{ 
+			{
 				Uri uri = new Uri(requestUri);
 				_socket2Server = await _socks5Client.ConnectToServerAsync(_socksEndPoint).ConfigureAwait(false);
 				_socket2Dest = _socks5Client.ConnectToDestination(_socket2Server, uri.DnsSafeHost, uri.Port);
-				return new NetworkHandler(_socket2Dest);				
+				return new NetworkHandler(_socket2Dest);
 			}
 			catch (Exception ex)
 			{

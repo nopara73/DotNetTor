@@ -18,6 +18,7 @@ namespace DotNetTor.SocksPort.Net
 		{
 			return await Tcp.ConnectToServerAsync(endpoint, new[] { AddressFamily.InterNetwork, AddressFamily.InterNetworkV6 }).ConfigureAwait(false);
 		}
+
 		public Socket ConnectToDestination(Socket socket, string name, int port, NetworkCredential credential = null, Encoding credentialEncoding = null)
 		{
 			ValidatePort(port, nameof(port));
@@ -30,6 +31,7 @@ namespace DotNetTor.SocksPort.Net
 
 			return Connect(socket, credential, credentialEncoding, AddressType.DomainName, addressBytes, port);
 		}
+
 		private Socket Connect(Socket socket, NetworkCredential credential, Encoding credentialEncoding, AddressType addressType, IEnumerable<byte> addressBytes, int port)
 		{
 			byte[] responseBuffer = Handshake(socket, credential, credentialEncoding);
@@ -120,6 +122,7 @@ namespace DotNetTor.SocksPort.Net
 
 			return socket;
 		}
+
 		private byte[] Handshake(Socket socket, NetworkCredential credential, Encoding credentialEncoding)
 		{
 			byte[] username = null;
@@ -236,6 +239,7 @@ namespace DotNetTor.SocksPort.Net
 
 			return responseBuffer;
 		}
+
 		private static void ValidateSocksVersion(Socket socket, byte version)
 		{
 			if (version != SocksVersion)
@@ -247,6 +251,7 @@ namespace DotNetTor.SocksPort.Net
 				throw new Exception(message);
 			}
 		}
+
 		private static void ValidatePort(int port, string paramName)
 		{
 			if (port > ushort.MaxValue || port < 1)
@@ -255,22 +260,26 @@ namespace DotNetTor.SocksPort.Net
 				throw new ArgumentException(message, paramName);
 			}
 		}
+
 		private enum AddressType : byte
 		{
 			IpV4 = 0x01,
 			DomainName = 0x03,
 			IpV6 = 0x04
 		}
+
 		private enum AuthenticationMethod : byte
 		{
 			NoAuthentication = 0x00,
 			UsernamePassword = 0x02,
 			NoAcceptableMethods = 0xFF
 		}
+
 		private enum CommandType : byte
 		{
 			Connect = 0x01
 		}
+
 		private enum ReplyType : byte
 		{
 			Succeeded = 0x00,

@@ -1,14 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
 namespace DotNetTor
 {
-    internal static class Util
-    {
+	internal static class Util
+	{
 		internal static async Task AssertPortOpenAsync(IPEndPoint ipEndPoint)
 		{
 			using (TcpClient tcpClient = new TcpClient())

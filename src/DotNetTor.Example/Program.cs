@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 
 namespace DotNetTor.Example
 {
-    public class Program
-    {
+	public class Program
+	{
 		// 1. Download TOR Expert Bundle: https://www.torproject.org/download/download
 		// 2. Download the torrc config file sample: https://svn.torproject.org/svn/tor/tags/tor-0_0_9_5/src/config/torrc.sample.in
 		// 3. Place torrc in the proper default location (depending on your OS) and edit it:
@@ -14,7 +14,7 @@ namespace DotNetTor.Example
 		//	- Uncomment and modify the password hash to HashedControlPassword 16:0978DBAF70EEB5C46063F3F6FD8CBC7A86DF70D2206916C1E2AE29EAF6
 		// 4. Run tor (it will run in the background and listen to the SocksPort 9050 and ControlPort 9051)
 		// Now the example should successfully run
-		static void Main(string[] args)
+		private static void Main(string[] args)
 		{
 			try
 			{
@@ -26,10 +26,10 @@ namespace DotNetTor.Example
 			}
 		}
 
-		static async Task MainAsync(string[] args)
+		private static async Task MainAsync(string[] args)
 		{
 			await RequestWith3IpAsync().ConfigureAwait(false);
-			await DoSomeRandomRequestAsync().ConfigureAwait(false);			
+			await DoSomeRandomRequestAsync().ConfigureAwait(false);
 
 			Console.WriteLine("Press a key to exit..");
 			Console.ReadKey();

@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 
 namespace DotNetTor.ControlPort
 {
-    public class Client
-    {
+	public class Client
+	{
 		private IPEndPoint _controlEndPoint;
 		private string _password;
 
@@ -19,7 +19,7 @@ namespace DotNetTor.ControlPort
 		}
 
 		private async Task AssertControlPortPasswordAsync()
-		{			
+		{
 			using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
 			{
 				await socket.ConnectAsync(_controlEndPoint).ConfigureAwait(false);
@@ -42,6 +42,7 @@ namespace DotNetTor.ControlPort
 		{
 			return ChangeCircuitAsync().Result; // Task.Result is fine, because the method is obsolated
 		}
+
 		/// <summary>
 		/// Cleans the current circuits in the tor application by requesting new circuits be generated.
 		/// </summary>

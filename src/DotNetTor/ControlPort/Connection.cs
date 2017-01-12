@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace DotNetTor.ControlPort
 {
@@ -92,7 +90,7 @@ namespace DotNetTor.ControlPort
 			}
 		}
 
-		#endregion
+		#endregion System.IDisposable
 
 		/// <summary>
 		/// Authenticates the connection by sending the password to the control port.
@@ -305,6 +303,7 @@ namespace DotNetTor.ControlPort
 			}
 		}
 	}
+
 	/// <summary>
 	/// A class containing information regarding a response received back from a control connection.
 	/// </summary>
@@ -360,6 +359,6 @@ namespace DotNetTor.ControlPort
 			get { return code == StatusCode.OK; }
 		}
 
-		#endregion
+		#endregion Properties
 	}
 }

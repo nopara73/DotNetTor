@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Threading.Tasks;
 
 namespace DotNetTor.ControlPort
 {
@@ -70,6 +68,7 @@ namespace DotNetTor.ControlPort
 		/// <returns>A <typeparamref name="T"/> object instance containing the response data.</returns>
 		protected abstract T Dispatch(Connection connection);
 	}
+
 	/// <summary>
 	/// A class containing information regarding the response received back through the control connection after receiving a command from a client.
 	/// </summary>
@@ -96,7 +95,7 @@ namespace DotNetTor.ControlPort
 			get { return success; }
 		}
 
-		#endregion
+		#endregion Properties
 	}
 
 	/// <summary>
