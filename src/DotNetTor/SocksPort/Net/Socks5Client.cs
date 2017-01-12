@@ -23,8 +23,8 @@ namespace DotNetTor.SocksPort.Net
 		{
 			ValidatePort(port, nameof(port));
 
-			byte[] nameBytes = Encoding.ASCII.GetBytes(name);
-			byte[] addressBytes = Enumerable.Empty<byte>()
+			var nameBytes = Encoding.ASCII.GetBytes(name);
+			var addressBytes = Enumerable.Empty<byte>()
 				.Concat(new[] { (byte)nameBytes.Length })
 				.Concat(nameBytes)
 				.ToArray();
@@ -36,7 +36,7 @@ namespace DotNetTor.SocksPort.Net
 		{
 			byte[] responseBuffer = Handshake(socket, credential, credentialEncoding);
 
-			byte[] requestBuffer = Enumerable.Empty<byte>()
+			var requestBuffer = Enumerable.Empty<byte>()
 				.Concat(new[] { SocksVersion, (byte)CommandType.Connect, (byte)0x00, (byte)addressType })
 				.Concat(addressBytes)
 				.Concat(BitConverter.GetBytes(IPAddress.HostToNetworkOrder((short)port)))
@@ -47,7 +47,7 @@ namespace DotNetTor.SocksPort.Net
 
 			if (read < 7)
 			{
-				string message = $"The SOCKS5 proxy responded with {read} bytes to the connect request. At least 7 bytes are expected.";
+				var message = $"The SOCKS5 proxy responded with {read} bytes to the connect request. At least 7 bytes are expected.";
 				throw new Exception(message);
 			}
 
@@ -55,26 +55,19 @@ namespace DotNetTor.SocksPort.Net
 
 			if (responseBuffer[1] != (byte)ReplyType.Succeeded)
 			{
-				string message = string.Format(
-					"The SOCKS5 proxy responded with a unsuccessful reply type '{0}' (0x{1:x2}).",
-					responseBuffer[1] >= (byte)ReplyType.Unassigned ? ReplyType.Unassigned : (ReplyType)responseBuffer[1],
-					responseBuffer[1]);
+				var message = $"The SOCKS5 proxy responded with a unsuccessful reply type '{(responseBuffer[1] >= (byte)ReplyType.Unassigned ? ReplyType.Unassigned : (ReplyType)responseBuffer[1])}' (0x{responseBuffer[1]:x2}).";
 				throw new Exception(message);
 			}
 
 			if (responseBuffer[2] != 0x00)
 			{
-				string message = string.Format(
-					"The SOCKS5 proxy responded with an unexpected reserved field value 0x{0:x2}. 0x00 was expected.",
-					responseBuffer[2]);
+				var message = $"The SOCKS5 proxy responded with an unexpected reserved field value 0x{responseBuffer[2]:x2}. 0x00 was expected.";
 				throw new Exception(message);
 			}
 
 			if (!Enum.GetValues(typeof(AddressType)).Cast<byte>().Contains(responseBuffer[3]))
 			{
-				string message = string.Format(
-					"The SOCKS5 proxy responded with an unexpected address type 0x{0:x2}.",
-					responseBuffer[3]);
+				var message = $"The SOCKS5 proxy responded with an unexpected address type 0x{responseBuffer[3]:x2}.";
 				throw new Exception(message);
 			}
 
@@ -86,9 +79,7 @@ namespace DotNetTor.SocksPort.Net
 				case AddressType.IpV4:
 					if (read != 10)
 					{
-						string message = string.Format(
-							"The SOCKS5 proxy responded with an unexpected number of bytes ({0} bytes) when the address is an IPv4 address. 10 bytes were expected.",
-							read);
+						var message = $"The SOCKS5 proxy responded with an unexpected number of bytes ({read} bytes) when the address is an IPv4 address. 10 bytes were expected.";
 						throw new Exception(message);
 					}
 					bindAddress = new IPAddress(responseBuffer.Skip(4).Take(4).ToArray());
@@ -104,9 +95,7 @@ namespace DotNetTor.SocksPort.Net
 				case AddressType.IpV6:
 					if (read != 22)
 					{
-						string message = string.Format(
-							"The SOCKS5 proxy responded with an unexpected number of bytes ({0} bytes) when the address is an IPv6 address. 22 bytes were expected.",
-							read);
+						var message = $"The SOCKS5 proxy responded with an unexpected number of bytes ({read} bytes) when the address is an IPv6 address. 22 bytes were expected.";
 						throw new Exception(message);
 					}
 					bindAddress = new IPAddress(responseBuffer.Skip(4).Take(16).ToArray());
@@ -114,9 +103,7 @@ namespace DotNetTor.SocksPort.Net
 					break;
 
 				default:
-					string addressTypeNotSupportedMessage = string.Format(
-						"The provided address type '{0}' is not supported.",
-						bindAddressType);
+					var addressTypeNotSupportedMessage = $"The provided address type '{bindAddressType}' is not supported.";
 					throw new NotSupportedException(addressTypeNotSupportedMessage);
 			}
 
@@ -135,10 +122,10 @@ namespace DotNetTor.SocksPort.Net
 				username = credentialEncoding.GetBytes(credential.UserName);
 				if (username.Length > byte.MaxValue)
 				{
-					string message = string.Format(
+					var message = string.Format(
 						CultureInfo.InvariantCulture,
 						messageFormat,
-						"username",
+						nameof(username),
 						username.Length,
 						byte.MaxValue);
 					throw new ArgumentException(message, nameof(credential));
@@ -147,10 +134,10 @@ namespace DotNetTor.SocksPort.Net
 				password = credentialEncoding.GetBytes(credential.Password);
 				if (password.Length > byte.MaxValue)
 				{
-					string message = string.Format(
+					var message = string.Format(
 						CultureInfo.InvariantCulture,
 						messageFormat,
-						"password",
+						nameof(password),
 						password.Length,
 						byte.MaxValue);
 					throw new ArgumentException(message, nameof(credential));
@@ -164,7 +151,7 @@ namespace DotNetTor.SocksPort.Net
 				authenticationMethods.Add(AuthenticationMethod.UsernamePassword);
 			}
 
-			byte[] requestBuffer = Enumerable.Empty<byte>()
+			var requestBuffer = Enumerable.Empty<byte>()
 				.Concat(new[] { SocksVersion, (byte)authenticationMethods.Count })
 				.Concat(authenticationMethods.Select(m => (byte)m))
 				.ToArray();
@@ -175,9 +162,7 @@ namespace DotNetTor.SocksPort.Net
 
 			if (read != 2)
 			{
-				string message = string.Format(
-					"The SOCKS5 proxy responded with {0} bytes, instead of 2, during the handshake.",
-					read);
+				var message = $"The SOCKS5 proxy responded with {read} bytes, instead of 2, during the handshake.";
 				throw new Exception(message);
 			}
 
@@ -190,9 +175,7 @@ namespace DotNetTor.SocksPort.Net
 
 			if (authenticationMethods.All(m => responseBuffer[1] != (byte)m))
 			{
-				string message = string.Format(
-					"The SOCKS5 proxy responded with 0x{0:x2}, which is an unexpected authentication method.",
-					responseBuffer[1]);
+				var message = $"The SOCKS5 proxy responded with 0x{responseBuffer[1]:x2}, which is an unexpected authentication method.";
 				throw new Exception(message);
 			}
 
@@ -213,26 +196,19 @@ namespace DotNetTor.SocksPort.Net
 
 				if (read != 2)
 				{
-					string message = string.Format(
-						"The SOCKS5 proxy responded with {0} bytes, instead of 2, during the username/password authentication.",
-						read);
+					var message = $"The SOCKS5 proxy responded with {read} bytes, instead of 2, during the username/password authentication.";
 					throw new Exception(message);
 				}
 
 				if (responseBuffer[0] != UsernamePasswordVersion)
 				{
-					string message = string.Format(
-						"The SOCKS5 proxy responded with 0x{0:x2}, instead of 0x{1:x2}, for the username/password authentication version number.",
-						responseBuffer[0],
-						UsernamePasswordVersion);
+					var message = $"The SOCKS5 proxy responded with 0x{responseBuffer[0]:x2}, instead of 0x{UsernamePasswordVersion:x2}, for the username/password authentication version number.";
 					throw new Exception(message);
 				}
 
 				if (responseBuffer[1] != 0)
 				{
-					string message = string.Format(
-						"The SOCKS5 proxy responded with 0x{0:x2}, instead of 0x00, indicating a failure in username/password authentication.",
-						responseBuffer[0]);
+					var message = $"The SOCKS5 proxy responded with 0x{responseBuffer[0]:x2}, instead of 0x00, indicating a failure in username/password authentication.";
 					throw new Exception(message);
 				}
 			}
@@ -244,10 +220,7 @@ namespace DotNetTor.SocksPort.Net
 		{
 			if (version != SocksVersion)
 			{
-				string message = string.Format(
-					"The SOCKS5 proxy responded with 0x{0:x2}, instead of 0x{1:x2}, for the SOCKS version number.",
-					version,
-					SocksVersion);
+				var message = $"The SOCKS5 proxy responded with 0x{version:x2}, instead of 0x{SocksVersion:x2}, for the SOCKS version number.";
 				throw new Exception(message);
 			}
 		}

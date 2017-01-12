@@ -9,7 +9,7 @@ namespace DotNetTor.SocksPort
 	public class Client : IDisposable
 	{
 		private IPEndPoint _socksEndPoint;
-		private Socks5Client _socks5Client;
+		private readonly Socks5Client _socks5Client;
 
 		private Socket _socket2Server;
 		private Socket _socket2Dest;
@@ -60,7 +60,7 @@ namespace DotNetTor.SocksPort
 		{
 			try
 			{
-				Uri uri = new Uri(requestUri);
+				var uri = new Uri(requestUri);
 				_socket2Server = await _socks5Client.ConnectToServerAsync(_socksEndPoint).ConfigureAwait(false);
 				_socket2Dest = _socks5Client.ConnectToDestination(_socket2Server, uri.DnsSafeHost, uri.Port);
 				return new NetworkHandler(_socket2Dest);

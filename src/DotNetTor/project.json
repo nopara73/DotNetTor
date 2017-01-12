@@ -10,6 +10,6 @@
     }
   },
   "buildOptions": {
-    "nowarn": [ "RECS0091", "RECS0022" ]
+    "nowarn": [ "CC0030", "CC0001", "CC0105" ]
   }
 }

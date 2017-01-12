@@ -33,7 +33,7 @@ namespace DotNetTor.SocksPort.Net
 
 		public NetworkHandler(GetSocket getSocket) : this()
 		{
-			_getSocketAsync = r => Task.FromResult(getSocket(r));
+			_getSocketAsync = r => Task.FromResult(getSocket?.Invoke(r));
 		}
 
 		public NetworkHandler(GetSocketAsync getSocketAsync) : this()

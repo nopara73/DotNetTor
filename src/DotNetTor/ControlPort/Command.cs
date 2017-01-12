@@ -13,6 +13,8 @@ namespace DotNetTor.ControlPort
 		/// <summary>
 		/// Creates a new <typeparamref name="TCommand"/> object instance and dispatches the command to the specified client.
 		/// </summary>
+		/// <param name="endpoint">todo: describe endpoint parameter on DispatchAndReturn</param>
+		/// <param name="password">todo: describe password parameter on DispatchAndReturn</param>
 		/// <typeparam name="TCommand">The type of the command.</typeparam>
 		/// <typeparam name="TResponse">The type of the response generated from the command.</typeparam>
 		/// <returns><c>true</c> if the command was created and dispatched successfully; otherwise, <c>false</c>.</returns>
@@ -20,7 +22,7 @@ namespace DotNetTor.ControlPort
 		{
 			try
 			{
-				TCommand command = Activator.CreateInstance<TCommand>();
+				var command = Activator.CreateInstance<TCommand>();
 
 				if (command == null)
 					return false;
@@ -37,6 +39,8 @@ namespace DotNetTor.ControlPort
 		/// <summary>
 		/// Dispatches the command to the client control port and produces a <typeparamref name="T"/> response result.
 		/// </summary>
+		/// <param name="endpoint">todo: describe endpoint parameter on Dispatch</param>
+		/// <param name="password">todo: describe password parameter on Dispatch</param>
 		/// <returns>A <typeparamref name="T"/> object instance containing the response data.</returns>
 		public T Dispatch(IPEndPoint endpoint, string password)
 		{

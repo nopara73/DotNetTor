@@ -18,7 +18,7 @@ namespace DotNetTor.ControlPort
 		private StreamReader _reader;
 		private Socket _socket;
 		private NetworkStream _stream;
-		private IPEndPoint _endpoint;
+		private readonly IPEndPoint _endpoint;
 		public string Address => _endpoint.Address.ToString();
 		public int ControlPort => _endpoint.Port;
 
@@ -129,8 +129,10 @@ namespace DotNetTor.ControlPort
 				_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 				_socket.Connect(Address, ControlPort);
 
-				_stream = new NetworkStream(_socket, false);
-				_stream.ReadTimeout = 2000;
+				_stream = new NetworkStream(_socket, false)
+				{
+					ReadTimeout = 2000
+				};
 
 				_reader = new StreamReader(_stream);
 
@@ -204,15 +206,15 @@ namespace DotNetTor.ControlPort
 
 				char id = line[0];
 
-				List<string> responses = new List<string>();
+				var responses = new List<string>();
 				responses.Add(line.Substring(1));
 
 				try
 				{
 					for (line = _reader.ReadLine(); line != null; line = _reader.ReadLine())
 					{
-						string temp1 = line.Trim();
-						string temp2 = temp1;
+						var temp1 = line.Trim();
+						var temp2 = temp1;
 
 						if (temp1.Length == 0)
 							continue;

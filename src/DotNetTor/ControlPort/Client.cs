@@ -23,13 +23,13 @@ namespace DotNetTor.ControlPort
 			using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
 			{
 				await socket.ConnectAsync(_controlEndPoint).ConfigureAwait(false);
-				byte[] command = Encoding.ASCII.GetBytes($"authenticate \"{_password}\"\r\n");
+				var command = Encoding.ASCII.GetBytes($"authenticate \"{_password}\"\r\n");
 				await Task.Run(() => socket.Send(command)).ConfigureAwait(false);
-				byte[] buffer = new byte[128];
+				var buffer = new byte[128];
 				int received = await Task.Run(() => socket.Receive(buffer)).ConfigureAwait(false);
 				if (received != 0)
 				{
-					string response = Encoding.ASCII.GetString(buffer, 0, received);
+					var response = Encoding.ASCII.GetString(buffer, 0, received);
 
 					if (!response.StartsWith("250", StringComparison.Ordinal))
 						throw new TorException("Possibly wrong TOR control port password");

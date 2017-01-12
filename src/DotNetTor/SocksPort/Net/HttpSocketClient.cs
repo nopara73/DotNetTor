@@ -30,7 +30,7 @@ namespace DotNetTor.SocksPort.Net
 
 		public async Task<HttpResponseMessage> ReceiveResponseAsync(Stream stream, HttpRequestMessage request)
 		{
-			ByteStreamReader reader = new ByteStreamReader(stream, BufferSize, false);
+			var reader = new ByteStreamReader(stream, BufferSize, false);
 
 			var response = await ReadResponseHeadAsync(reader, request).ConfigureAwait(false);
 
