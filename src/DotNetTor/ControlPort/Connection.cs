@@ -206,8 +206,7 @@ namespace DotNetTor.ControlPort
 
 				char id = line[0];
 
-				var responses = new List<string>();
-				responses.Add(line.Substring(1));
+				var responses = new List<string> {line.Substring(1)};
 
 				try
 				{
@@ -310,17 +309,14 @@ namespace DotNetTor.ControlPort
 	/// </summary>
 	internal sealed class ConnectionResponse
 	{
-		private readonly StatusCode code;
-		private readonly ReadOnlyCollection<string> responses;
-
 		/// <summary>
 		/// Initializes a new instance of the <see cref="ConnectionResponse"/> class.
 		/// </summary>
 		/// <param name="code">The status code returned by the control connection.</param>
 		public ConnectionResponse(StatusCode code)
 		{
-			this.code = code;
-			responses = new List<string>().AsReadOnly();
+			StatusCode = code;
+			Responses = new List<string>().AsReadOnly();
 		}
 
 		/// <summary>
@@ -330,8 +326,8 @@ namespace DotNetTor.ControlPort
 		/// <param name="responses">The responses received back from the control connection.</param>
 		public ConnectionResponse(StatusCode code, IList<string> responses)
 		{
-			this.code = code;
-			this.responses = new ReadOnlyCollection<string>(responses);
+			StatusCode = code;
+			Responses = new ReadOnlyCollection<string>(responses);
 		}
 
 		#region Properties
@@ -339,26 +335,17 @@ namespace DotNetTor.ControlPort
 		/// <summary>
 		/// Gets a read-only collection of responses received from the control connection.
 		/// </summary>
-		public ReadOnlyCollection<string> Responses
-		{
-			get { return responses; }
-		}
+		public ReadOnlyCollection<string> Responses { get; }
 
 		/// <summary>
 		/// Gets the status code returned with the response.
 		/// </summary>
-		public StatusCode StatusCode
-		{
-			get { return code; }
-		}
+		public StatusCode StatusCode { get; }
 
 		/// <summary>
 		/// Gets a value indicating whether the response was successful feedback.
 		/// </summary>
-		public bool Success
-		{
-			get { return code == StatusCode.OK; }
-		}
+		public bool Success => StatusCode == StatusCode.OK;
 
 		#endregion Properties
 	}

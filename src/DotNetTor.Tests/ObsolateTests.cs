@@ -78,10 +78,11 @@ namespace DotNetTor.Tests
 				}
 
 				// 2. Change TOR IP
-				var ControlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
-#pragma warning disable CS0618 // Type or member is obsolete
-				ControlPortClient.ChangeCircuit();
-#pragma warning restore CS0618 // Type or member is obsolete
+				var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
+
+#pragma warning disable 618
+				controlPortClient.ChangeCircuit();
+#pragma warning restore 618
 
 				// 3. Get changed TOR IP
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -89,8 +90,8 @@ namespace DotNetTor.Tests
 #pragma warning restore CS0618 // Type or member is obsolete
 				using (var httpClient = new HttpClient(handler))
 				{
-					var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
-					var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out changedIp);
+					string content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
+					bool gotIp = IPAddress.TryParse(content.Replace("\n", ""), out changedIp);
 					Assert.True(gotIp);
 				}
 			}
@@ -152,9 +153,9 @@ namespace DotNetTor.Tests
 #pragma warning restore CS0618 // Type or member is obsolete
 				using (var httpClient = new HttpClient(handler))
 				{
-					var content = httpClient.GetAsync(firstRequest).Result.Content.ReadAsStringAsync().Result;
-					content = httpClient.GetAsync("http://api.qbit.ninja/balances/15sYbVpRh6dyWycZMwPdxJWD4xbfxReeHe?unspentonly=true").Result.Content.ReadAsStringAsync().Result;
-					content = httpClient.GetAsync("http://api.qbit.ninja/balances/akEBcY5k1dn2yeEdFnTMwdhVbHxtgHb6GGi?from=tip&until=336000").Result.Content.ReadAsStringAsync().Result;
+					httpClient.GetAsync(firstRequest).Result.Content.ReadAsStringAsync().Wait();
+					httpClient.GetAsync("http://api.qbit.ninja/balances/15sYbVpRh6dyWycZMwPdxJWD4xbfxReeHe?unspentonly=true").Result.Content.ReadAsStringAsync().Wait();
+					httpClient.GetAsync("http://api.qbit.ninja/balances/akEBcY5k1dn2yeEdFnTMwdhVbHxtgHb6GGi?from=tip&until=336000").Result.Content.ReadAsStringAsync().Wait();
 				}
 			}
 		}

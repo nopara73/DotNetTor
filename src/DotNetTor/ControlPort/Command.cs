@@ -16,7 +16,6 @@ namespace DotNetTor.ControlPort
 		/// <param name="endpoint">todo: describe endpoint parameter on DispatchAndReturn</param>
 		/// <param name="password">todo: describe password parameter on DispatchAndReturn</param>
 		/// <typeparam name="TCommand">The type of the command.</typeparam>
-		/// <typeparam name="TResponse">The type of the response generated from the command.</typeparam>
 		/// <returns><c>true</c> if the command was created and dispatched successfully; otherwise, <c>false</c>.</returns>
 		public static bool DispatchAndReturn<TCommand>(IPEndPoint endpoint, string password) where TCommand : Command<T>
 		{
@@ -76,15 +75,13 @@ namespace DotNetTor.ControlPort
 	/// </summary>
 	internal class CommandResponse
 	{
-		private readonly bool success;
-
 		/// <summary>
 		/// Initializes a new instance of the <see cref="CommandResponse"/> class.
 		/// </summary>
 		/// <param name="success">A value indicating whether the command was received and processed successfully.</param>
 		public CommandResponse(bool success)
 		{
-			this.success = success;
+			Success = success;
 		}
 
 		#region Properties
@@ -92,10 +89,7 @@ namespace DotNetTor.ControlPort
 		/// <summary>
 		/// Gets a value indicating whether the command was received and processed successfully.
 		/// </summary>
-		public bool Success
-		{
-			get { return success; }
-		}
+		public bool Success { get; }
 
 		#endregion Properties
 	}

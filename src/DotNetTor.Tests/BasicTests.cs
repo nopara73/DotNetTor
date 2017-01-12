@@ -3,6 +3,7 @@ using System;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using DotNetTor.ControlPort;
 using Xunit;
 
 namespace DotNetTor.Tests
@@ -81,8 +82,8 @@ namespace DotNetTor.Tests
 				}
 
 				// 2. Change TOR IP
-				var ControlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
-				await ControlPortClient.ChangeCircuitAsync().ConfigureAwait(false);
+				var controlPortClient = new Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
+				await controlPortClient.ChangeCircuitAsync().ConfigureAwait(false);
 
 				// 3. Get changed TOR IP
 				handler = await socksPortClient.ConnectAsync(requestUri).ConfigureAwait(false);
@@ -145,33 +146,31 @@ namespace DotNetTor.Tests
 				var handler = await socksPortClient.ConnectAsync(firstRequest).ConfigureAwait(false);
 				using (var httpClient = new HttpClient(handler))
 				{
-					var content = await (await httpClient.GetAsync(firstRequest).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
-					content = await (await httpClient.GetAsync("http://api.qbit.ninja/balances/15sYbVpRh6dyWycZMwPdxJWD4xbfxReeHe?unspentonly=true").ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
-					content = await (await httpClient.GetAsync("http://api.qbit.ninja/balances/akEBcY5k1dn2yeEdFnTMwdhVbHxtgHb6GGi?from=tip&until=336000").ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
+					await (await httpClient.GetAsync(firstRequest).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
+					await (await httpClient.GetAsync("http://api.qbit.ninja/balances/15sYbVpRh6dyWycZMwPdxJWD4xbfxReeHe?unspentonly=true").ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
+					await (await httpClient.GetAsync("http://api.qbit.ninja/balances/akEBcY5k1dn2yeEdFnTMwdhVbHxtgHb6GGi?from=tip&until=336000").ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
 				}
 			}
 		}
 
 		[Fact]
-		public void ThrowsExcetpions()
+		public async Task ThrowsExcetpionsAsync()
 		{
 			var client = new SocksPort.Client("127.0.0.1", 9054);
-			Assert.ThrowsAsync<TorException>
-				(async () =>
-				await client.ConnectAsync("icanhazip.com", RequestType.HTTP).ConfigureAwait(false));
-			Assert.ThrowsAsync<TorException>(
-				async () =>
-				await new ControlPort.Client("127.0.0.1", 9054).ChangeCircuitAsync().ConfigureAwait(false));
-			Assert.ThrowsAsync<TorException>(
-				async () =>
-				await new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword + "a").ChangeCircuitAsync().ConfigureAwait(false));
-			using (var httpClient = new HttpClient())
-			{
-				Assert.ThrowsAsync<AggregateException>(
-					async () =>
-					await httpClient.GetAsync("http://bitmixer2whesjgj.onion/order.php?addr1=16HGUokcXuJXn9yiV6uQ4N3umAWteE2cRR&pr1=33&time1=8&addr2=1F1Afwxr2xrs3ZQpf6ifqfNMxJWZt2JupK&pr2=67&time2=16&bitcode=AcOw&fee=0.6523").ConfigureAwait(false));
-			}
 
+			await Assert.ThrowsAsync<TorException>(
+				async()=>
+				await client.ConnectAsync("icanhazip.com", RequestType.HTTP).ConfigureAwait(false)
+				).ConfigureAwait(false);
+
+			await Assert.ThrowsAsync<TorException>(
+				async () =>
+				await new Client("127.0.0.1", 9054).ChangeCircuitAsync().ConfigureAwait(false)
+				).ConfigureAwait(false);
+			await Assert.ThrowsAsync<TorException>(
+				async () =>
+					await new Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword + "a").ChangeCircuitAsync().ConfigureAwait(false)
+			).ConfigureAwait(false);
 		}
 
 		[Fact]

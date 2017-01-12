@@ -8,7 +8,7 @@ namespace DotNetTor.SocksPort
 {
 	public class Client : IDisposable
 	{
-		private IPEndPoint _socksEndPoint;
+		private readonly IPEndPoint _socksEndPoint;
 		private readonly Socks5Client _socks5Client;
 
 		private Socket _socket2Server;

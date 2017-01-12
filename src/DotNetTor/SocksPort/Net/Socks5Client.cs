@@ -71,40 +71,37 @@ namespace DotNetTor.SocksPort.Net
 				throw new Exception(message);
 			}
 
-			object bindAddress;
-			object bindPort;
 			var bindAddressType = (AddressType)responseBuffer[3];
-			switch (bindAddressType)
+			if (bindAddressType == AddressType.IpV4)
 			{
-				case AddressType.IpV4:
-					if (read != 10)
-					{
-						var message = $"The SOCKS5 proxy responded with an unexpected number of bytes ({read} bytes) when the address is an IPv4 address. 10 bytes were expected.";
-						throw new Exception(message);
-					}
-					bindAddress = new IPAddress(responseBuffer.Skip(4).Take(4).ToArray());
-					bindPort = IPAddress.NetworkToHostOrder(BitConverter.ToInt16(responseBuffer, 8));
-					break;
-
-				case AddressType.DomainName:
-					byte bindAddressLength = responseBuffer[4];
-					bindAddress = Encoding.ASCII.GetString(responseBuffer, 5, bindAddressLength);
-					bindPort = IPAddress.NetworkToHostOrder(BitConverter.ToInt16(responseBuffer, 5 + bindAddressLength));
-					break;
-
-				case AddressType.IpV6:
-					if (read != 22)
-					{
-						var message = $"The SOCKS5 proxy responded with an unexpected number of bytes ({read} bytes) when the address is an IPv6 address. 22 bytes were expected.";
-						throw new Exception(message);
-					}
-					bindAddress = new IPAddress(responseBuffer.Skip(4).Take(16).ToArray());
-					bindPort = IPAddress.NetworkToHostOrder(BitConverter.ToInt16(responseBuffer, 20));
-					break;
-
-				default:
-					var addressTypeNotSupportedMessage = $"The provided address type '{bindAddressType}' is not supported.";
-					throw new NotSupportedException(addressTypeNotSupportedMessage);
+				if (read != 10)
+				{
+					string message =
+						$"The SOCKS5 proxy responded with an unexpected number of bytes ({read} bytes) when the address is an IPv4 address. 10 bytes were expected.";
+					throw new Exception(message);
+				}
+				IPAddress.NetworkToHostOrder(BitConverter.ToInt16(responseBuffer, 8));
+			}
+			else if (bindAddressType == AddressType.DomainName)
+			{
+				byte bindAddressLength = responseBuffer[4];
+				Encoding.ASCII.GetString(responseBuffer, 5, bindAddressLength);
+				IPAddress.NetworkToHostOrder(BitConverter.ToInt16(responseBuffer, 5 + bindAddressLength));
+			}
+			else if (bindAddressType == AddressType.IpV6)
+			{
+				if (read != 22)
+				{
+					var message =
+						$"The SOCKS5 proxy responded with an unexpected number of bytes ({read} bytes) when the address is an IPv6 address. 22 bytes were expected.";
+					throw new Exception(message);
+				}
+				IPAddress.NetworkToHostOrder(BitConverter.ToInt16(responseBuffer, 20));
+			}
+			else
+			{
+				var addressTypeNotSupportedMessage = $"The provided address type '{bindAddressType}' is not supported.";
+				throw new NotSupportedException(addressTypeNotSupportedMessage);
 			}
 
 			return socket;
