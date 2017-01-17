@@ -3,7 +3,6 @@ using System;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using DotNetTor.ControlPort;
 using Xunit;
 
 namespace DotNetTor.Tests
@@ -64,6 +63,48 @@ namespace DotNetTor.Tests
 		}
 
 		[Fact]
+		private static async Task CanChangeCircuitMultipleTimesAsync()
+		{
+			var requestUri = "http://icanhazip.com/";
+			
+			using (var socksPortClient = new SocksPort.Client(Shared.HostAddress, Shared.SocksPort))
+			{
+				// 1. Get TOR IP
+				IPAddress currIp = await GetTorIpAsync(socksPortClient, requestUri).ConfigureAwait(false);
+				IPAddress prevIp;
+
+				var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
+				for (int i = 0; i < 5; i++)
+				{
+					prevIp = currIp;
+					// Change TOR IP
+
+					await controlPortClient.ChangeCircuitAsync().ConfigureAwait(false);
+
+					// Get changed TOR IP
+					currIp = await GetTorIpAsync(socksPortClient, requestUri).ConfigureAwait(false);
+
+					Assert.NotEqual(prevIp, currIp);
+				}
+				
+			}
+		}
+
+		private static async Task<IPAddress> GetTorIpAsync(SocksPort.Client socksPortClient, string requestUri)
+		{
+			IPAddress torIp;
+			var handler = await socksPortClient.ConnectAsync("icanhazip.com", RequestType.HTTP).ConfigureAwait(false);
+			using (var httpClient = new HttpClient(handler))
+			{
+				var content =
+					await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
+				var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out torIp);
+				Assert.True(gotIp);
+			}
+			return torIp;
+		}
+
+		[Fact]
 		private static async Task CanChangeCircuitAsync()
 		{
 			var requestUri = "http://icanhazip.com/";
@@ -82,7 +123,7 @@ namespace DotNetTor.Tests
 				}
 
 				// 2. Change TOR IP
-				var controlPortClient = new Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
+				var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
 				await controlPortClient.ChangeCircuitAsync().ConfigureAwait(false);
 
 				// 3. Get changed TOR IP
@@ -159,17 +200,17 @@ namespace DotNetTor.Tests
 			var client = new SocksPort.Client("127.0.0.1", 9054);
 
 			await Assert.ThrowsAsync<TorException>(
-				async()=>
+				async () =>
 				await client.ConnectAsync("icanhazip.com", RequestType.HTTP).ConfigureAwait(false)
 				).ConfigureAwait(false);
 
 			await Assert.ThrowsAsync<TorException>(
 				async () =>
-				await new Client("127.0.0.1", 9054).ChangeCircuitAsync().ConfigureAwait(false)
+				await new ControlPort.Client("127.0.0.1", 9054).ChangeCircuitAsync().ConfigureAwait(false)
 				).ConfigureAwait(false);
 			await Assert.ThrowsAsync<TorException>(
 				async () =>
-					await new Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword + "a").ChangeCircuitAsync().ConfigureAwait(false)
+					await new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword + "a").ChangeCircuitAsync().ConfigureAwait(false)
 			).ConfigureAwait(false);
 		}
 
