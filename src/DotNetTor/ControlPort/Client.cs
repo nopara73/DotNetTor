@@ -64,7 +64,6 @@ namespace DotNetTor.ControlPort
 			{
 				try
 				{
-					// TODO check what happens if no tor port is open or password is wrong (write tests for it, too)
 					// 1. CONNECT
 					await socket.ConnectAsync(_controlEndPoint).ConfigureAwait(false);
 
@@ -93,9 +92,12 @@ namespace DotNetTor.ControlPort
 						throw new TorException($"Couldn't change the circuit. {nameof(statusCode)}: {statusCode}");
 
 				}
+				catch (Exception ex)
+				{
+					throw new TorException("Couldn't change circuit", ex);
+				}
 				finally
 				{
-					// todo check without socket.connected (no tor port is open)
 					if(socket.Connected)
 						socket.Shutdown(SocketShutdown.Both);
 				}
