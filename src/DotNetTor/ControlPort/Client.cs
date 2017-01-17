@@ -1,5 +1,4 @@
-﻿using DotNetTor.ControlPort.Commands;
-using System;
+﻿using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -23,13 +22,16 @@ namespace DotNetTor.ControlPort
 			using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
 			{
 				await socket.ConnectAsync(_controlEndPoint).ConfigureAwait(false);
-				var command = Encoding.ASCII.GetBytes($"authenticate \"{_password}\"\r\n");
-				await Task.Run(() => socket.Send(command)).ConfigureAwait(false);
-				var buffer = new byte[128];
-				int received = await Task.Run(() => socket.Receive(buffer)).ConfigureAwait(false);
+				var command = new ArraySegment<byte>(Encoding.ASCII.GetBytes($"authenticate \"{_password}\"\r\n"));
+
+				await socket.SendAsync(command, SocketFlags.None).ConfigureAwait(false);
+
+				var buffer = new ArraySegment<byte>(new byte[128]);
+				var received = await socket.ReceiveAsync(buffer, SocketFlags.None).ConfigureAwait(false);
+
 				if (received != 0)
 				{
-					var response = Encoding.ASCII.GetString(buffer, 0, received);
+					var response = Encoding.ASCII.GetString(buffer.Array, 0, received);
 
 					if (!response.StartsWith("250", StringComparison.Ordinal))
 						throw new TorException("Possibly wrong TOR control port password");
@@ -38,27 +40,81 @@ namespace DotNetTor.ControlPort
 		}
 
 		[Obsolete(Shared.SyncMethodDeprecated)]
-		public bool ChangeCircuit()
+		public void ChangeCircuit()
 		{
-			return ChangeCircuitAsync().Result; // Task.Result is fine, because the method is obsolated
+			ChangeCircuitAsync().Wait(); // Task.Wait is fine, because the method is obsolated
 		}
 
-		/// <summary>
-		/// Cleans the current circuits in the tor application by requesting new circuits be generated.
-		/// </summary>
-		public async Task<bool> ChangeCircuitAsync()
+		public async Task<bool> TryChangeCircuitAsync()
 		{
-			await Util.AssertPortOpenAsync(_controlEndPoint).ConfigureAwait(false);
-			await AssertControlPortPasswordAsync().ConfigureAwait(false);
-
 			try
 			{
-				return Command<CommandResponse>.DispatchAndReturn<SignalNewCircuitCommand>(_controlEndPoint, _password);
+				await TryChangeCircuitAsync().ConfigureAwait(false);
+				return true;
+			}
+			catch (Exception)
+			{
+				return false;
+			}
+		}
+
+		public async Task ChangeCircuitAsync()
+		{
+			using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
+			{
+				try
+				{
+					// TODO check what happens if no tor port is open or password is wrong (write tests for it, too)
+					// 1. CONNECT
+					await socket.ConnectAsync(_controlEndPoint).ConfigureAwait(false);
+
+					// 2. AUTHENTICATE
+					var command = new ArraySegment<byte>(Encoding.ASCII.GetBytes($"authenticate \"{_password}\"\r\n"));
+					await socket.SendAsync(command, SocketFlags.None).ConfigureAwait(false);
+
+					var buffer = new ArraySegment<byte>(new byte[128]);
+					var received = await socket.ReceiveAsync(buffer, SocketFlags.None).ConfigureAwait(false);
+
+					var response = Encoding.ASCII.GetString(buffer.Array, 0, received);
+					var statusCode = GetStatusCode(response);
+					if (statusCode != StatusCode.OK)
+						throw new TorException($"Possibly wrong TOR control port password. {nameof(statusCode)}: {statusCode}");
+
+					// 3. CHANGE CIRCUIT
+					command = new ArraySegment<byte>(Encoding.ASCII.GetBytes("signal newnym\r\n"));
+					await socket.SendAsync(command, SocketFlags.None).ConfigureAwait(false);
+
+					buffer = new ArraySegment<byte>(new byte[128]);
+					received = await socket.ReceiveAsync(buffer, SocketFlags.None).ConfigureAwait(false);
+
+					response = Encoding.ASCII.GetString(buffer.Array, 0, received);
+					statusCode = GetStatusCode(response);
+					if (statusCode != StatusCode.OK)
+						throw new TorException($"Couldn't change the circuit. {nameof(statusCode)}: {statusCode}");
+
+				}
+				finally
+				{
+					// todo check without socket.connected (no tor port is open)
+					if(socket.Connected)
+						socket.Shutdown(SocketShutdown.Both);
+				}
+			}
+		}
+
+		private static StatusCode GetStatusCode(string response)
+		{
+			StatusCode statusCode;
+			try
+			{
+				statusCode = (StatusCode)int.Parse(response.Substring(0, 3));
 			}
 			catch (Exception ex)
 			{
-				throw new TorException(ex.Message, ex);
+				throw new TorException("Wrong response", ex);
 			}
+
+			return statusCode;
 		}
 	}
 }
