@@ -38,14 +38,12 @@ namespace DotNetTor.Example
 		private static async Task DoSomeRandomRequestAsync()
 		{
 			var request = "http://api.qbit.ninja/transactions/38d4cfeb57d6685753b7a3b3534c3cb576c34ca7344cd4582f9613ebf0c2b02a?format=json&headeronly=true";
-			using (var socksPortClient = new SocksPort.Client())
+
+			using (var handler = new SocksPortHandler())
+			using (var httpClient = new HttpClient(handler))
 			{
-				var handler = await socksPortClient.ConnectAsync().ConfigureAwait(false);
-				using (var httpClient = new HttpClient(handler))
-				{
-					var content = await (await httpClient.GetAsync(request).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
-					Console.WriteLine(content);
-				}
+				var content = await (await httpClient.GetAsync(request).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
+				Console.WriteLine(content);
 			}
 		}
 
@@ -61,13 +59,14 @@ namespace DotNetTor.Example
 			}
 
 			// 2. Get TOR IP
-			using (var socksPortClient = new SocksPort.Client())
+			using (var handler = new SocksPortHandler())
 			{
-				var handler = await socksPortClient.ConnectAsync().ConfigureAwait(false);
 				using (var httpClient = new HttpClient(handler))
 				{
-					var content = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
-					Console.WriteLine($"Your TOR IP: \t\t{ content}");
+					var content =
+						await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync()
+							.ConfigureAwait(false);
+					Console.WriteLine($"Your TOR IP: \t\t{content}");
 				}
 
 				// 3. Change TOR IP
@@ -75,10 +74,11 @@ namespace DotNetTor.Example
 				await controlPortClient.ChangeCircuitAsync().ConfigureAwait(false);
 
 				// 4. Get changed TOR IP
-				handler = await socksPortClient.ConnectAsync().ConfigureAwait(false);
 				using (var httpClient = new HttpClient(handler))
 				{
-					var content = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
+					var content =
+						await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync()
+							.ConfigureAwait(false);
 					Console.WriteLine($"Your other TOR IP: \t{content}");
 				}
 			}

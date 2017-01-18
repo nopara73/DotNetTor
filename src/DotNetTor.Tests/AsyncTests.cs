@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using DotNetTor.SocksPort.Net;
 using Xunit;
 
 namespace DotNetTor.Tests
@@ -40,28 +41,25 @@ namespace DotNetTor.Tests
 		private static async Task<List<string>> QBitTestAsync(int times)
 		{
 			var requestUri = "http://api.qbit.ninja/whatisit/what%20is%20my%20future";
-			using (var socksPortClient = new SocksPort.Client(Shared.HostAddress, Shared.SocksPort))
+			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
+			using (var httpClient = new HttpClient(handler))
 			{
-				var handler = await socksPortClient.ConnectAsync().ConfigureAwait(false);
-				using (var httpClient = new HttpClient(handler))
+				var tasks = new List<Task<HttpResponseMessage>>();
+				for (var i = 0; i < times; i++)
 				{
-					var tasks = new List<Task<HttpResponseMessage>>();
-					for (var i = 0; i < times; i++)
-					{
-						var task = httpClient.GetAsync(requestUri);
-						tasks.Add(task);
-					}
-
-					await Task.WhenAll(tasks).ConfigureAwait(false);
-
-					var contents = new List<string>();
-					foreach (var task in tasks)
-					{
-						contents.Add(await (await task.ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false));
-					}
-
-					return contents;
+					var task = httpClient.GetAsync(requestUri);
+					tasks.Add(task);
 				}
+
+				await Task.WhenAll(tasks).ConfigureAwait(false);
+
+				var contents = new List<string>();
+				foreach (var task in tasks)
+				{
+					contents.Add(await (await task.ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false));
+				}
+
+				return contents;
 			}
 		}
 	}

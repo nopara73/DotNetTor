@@ -5,6 +5,7 @@ using Xunit;
 namespace DotNetTor.Tests
 {
 	// See SocksPortTests.cs for proper TOR configuration
+#pragma warning disable CS0618 // Type or member is obsolete
 	public class ObsolateTests
 	{
 		[Fact]
@@ -13,9 +14,7 @@ namespace DotNetTor.Tests
 			var requestUri = "http://api.qbit.ninja/whatisit/what%20is%20my%20future";
 			using (var socksPortClient = new SocksPort.Client(Shared.HostAddress, Shared.SocksPort))
 			{
-#pragma warning disable CS0618 // Type or member is obsolete
 				var handler = socksPortClient.GetHandlerFromRequestUri(requestUri);
-#pragma warning restore CS0618 // Type or member is obsolete
 				using (var httpClient = new HttpClient(handler))
 				{
 					var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
@@ -43,9 +42,7 @@ namespace DotNetTor.Tests
 			// 2. Get TOR IP
 			using (var socksPortClient = new SocksPort.Client(Shared.HostAddress, Shared.SocksPort))
 			{
-#pragma warning disable CS0618 // Type or member is obsolete
 				var handler = socksPortClient.GetHandlerFromDomain("icanhazip.com");
-#pragma warning restore CS0618 // Type or member is obsolete
 				using (var httpClient = new HttpClient(handler))
 				{
 					var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
@@ -67,9 +64,7 @@ namespace DotNetTor.Tests
 			// 1. Get TOR IP
 			using (var socksPortClient = new SocksPort.Client(Shared.HostAddress, Shared.SocksPort))
 			{
-#pragma warning disable CS0618 // Type or member is obsolete
 				var handler = socksPortClient.GetHandlerFromDomain("icanhazip.com");
-#pragma warning restore CS0618 // Type or member is obsolete
 				using (var httpClient = new HttpClient(handler))
 				{
 					var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
@@ -79,15 +74,11 @@ namespace DotNetTor.Tests
 
 				// 2. Change TOR IP
 				var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
-
-#pragma warning disable 618
+				
 				controlPortClient.ChangeCircuit();
-#pragma warning restore 618
 
 				// 3. Get changed TOR IP
-#pragma warning disable CS0618 // Type or member is obsolete
 				handler = socksPortClient.GetHandlerFromRequestUri(requestUri);
-#pragma warning restore CS0618 // Type or member is obsolete
 				using (var httpClient = new HttpClient(handler))
 				{
 					string content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
@@ -105,9 +96,7 @@ namespace DotNetTor.Tests
 			var requestUri = "https://slack.com/api/api.test";
 			using (var socksPortClient = new SocksPort.Client(Shared.HostAddress, Shared.SocksPort))
 			{
-#pragma warning disable CS0618 // Type or member is obsolete
 				var handler = socksPortClient.GetHandlerFromRequestUri(requestUri);
-#pragma warning restore CS0618 // Type or member is obsolete
 				using (var httpClient = new HttpClient(handler))
 				{
 					var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
@@ -125,9 +114,7 @@ namespace DotNetTor.Tests
 			var requestUri = "http://api.qbit.ninja/blocks/0000000000000000119fe3f65fd3038cbe8429ad2cf7c2de1e5e7481b34a01b4";
 			using (var socksPortClient = new SocksPort.Client(Shared.HostAddress, Shared.SocksPort))
 			{
-#pragma warning disable CS0618 // Type or member is obsolete
 				var handler = socksPortClient.GetHandlerFromRequestUri(requestUri);
-#pragma warning restore CS0618 // Type or member is obsolete
 				using (var httpClient = new HttpClient(handler))
 				{
 					wTor = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
@@ -148,9 +135,7 @@ namespace DotNetTor.Tests
 			var firstRequest = "http://api.qbit.ninja/transactions/38d4cfeb57d6685753b7a3b3534c3cb576c34ca7344cd4582f9613ebf0c2b02a?format=json&headeronly=true";
 			using (var socksPortClient = new SocksPort.Client(Shared.HostAddress, Shared.SocksPort))
 			{
-#pragma warning disable CS0618 // Type or member is obsolete
 				var handler = socksPortClient.GetHandlerFromRequestUri(firstRequest);
-#pragma warning restore CS0618 // Type or member is obsolete
 				using (var httpClient = new HttpClient(handler))
 				{
 					httpClient.GetAsync(firstRequest).Result.Content.ReadAsStringAsync().Wait();
@@ -167,9 +152,7 @@ namespace DotNetTor.Tests
 
 			using (var socksPortClient = new SocksPort.Client(Shared.HostAddress, Shared.SocksPort))
 			{
-#pragma warning disable CS0618 // Type or member is obsolete
 				var handler = socksPortClient.GetHandlerFromRequestUri(requestUri);
-#pragma warning restore CS0618 // Type or member is obsolete
 				using (var httpClient = new HttpClient(handler))
 				{
 					var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
@@ -179,4 +162,5 @@ namespace DotNetTor.Tests
 			}
 		}
 	}
+#pragma warning restore CS0618 // Type or member is obsolete
 }
