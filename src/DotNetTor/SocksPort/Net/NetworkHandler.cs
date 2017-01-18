@@ -50,7 +50,7 @@ namespace DotNetTor.SocksPort.Net
 			}
 			else
 			{
-				throw new Exception("Socket cannot be found");
+				throw new TorException("Socket cannot be found");
 				//socket = await Tcp.ConnectToServerAsync(request.RequestUri.DnsSafeHost, request.RequestUri.Port).ConfigureAwait(false);
 			}
 
