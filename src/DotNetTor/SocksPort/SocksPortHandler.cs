@@ -39,9 +39,11 @@ namespace DotNetTor.SocksPort
 				// CONNECT TO DOMAIN DESTINATION IF NOT CONNECTED ALREADY
 				await EnsureConnectedToDest(request).ConfigureAwait(false);
 
-				var stream = await _httpSocketClient.GetStreamAsync(_socket, request).ConfigureAwait(false);
-				await _httpSocketClient.SendRequestAsync(stream, request).ConfigureAwait(false);
-				return await _httpSocketClient.ReceiveResponseAsync(stream, request).ConfigureAwait(false);
+				using (var stream = await _httpSocketClient.GetStreamAsync(_socket, request).ConfigureAwait(false))
+				{
+					await _httpSocketClient.SendRequestAsync(stream, request).ConfigureAwait(false);
+					return await _httpSocketClient.ReceiveResponseAsync(stream, request).ConfigureAwait(false);
+				}
 			}
 			catch (TorException)
 			{
