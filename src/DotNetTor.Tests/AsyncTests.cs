@@ -33,7 +33,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanDoRequestManyAsync()
 		{
-			var contents = await QBitTestAsync(10).ConfigureAwait(false);
+			var contents = await QBitTestAsync(30).ConfigureAwait(false);
 			foreach (var content in contents)
 			{
 				Assert.Equal(content, "\"Good question Holmes !\"");

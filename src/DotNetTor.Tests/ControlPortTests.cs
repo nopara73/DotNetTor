@@ -16,32 +16,30 @@ namespace DotNetTor.Tests
 	    {
 		    var requestUri = "http://icanhazip.com/";
 
-			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
-			{
-			    // 1. Get TOR IP
-			    IPAddress currIp = await GetTorIpAsync(handler, requestUri).ConfigureAwait(false);
-			    IPAddress prevIp;
+		    // 1. Get TOR IP
+		    IPAddress currIp = await GetTorIpAsync(requestUri).ConfigureAwait(false);
+		    IPAddress prevIp;
 
-			    var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
-			    for (int i = 0; i < 5; i++)
-			    {
-				    prevIp = currIp;
-				    // Change TOR IP
+		    var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
+		    for (int i = 0; i < 5; i++)
+		    {
+			    prevIp = currIp;
+			    // Change TOR IP
 
-				    await controlPortClient.ChangeCircuitAsync().ConfigureAwait(false);
+			    await controlPortClient.ChangeCircuitAsync().ConfigureAwait(false);
 
-				    // Get changed TOR IP
-				    currIp = await GetTorIpAsync(handler, requestUri).ConfigureAwait(false);
+			    // Get changed TOR IP
+			    currIp = await GetTorIpAsync(requestUri).ConfigureAwait(false);
 
-				    Assert.NotEqual(prevIp, currIp);
-			    }
-
+			    Assert.NotEqual(prevIp, currIp);
 		    }
 	    }
 
-	    private static async Task<IPAddress> GetTorIpAsync(SocksPortHandler handler, string requestUri)
+	    private static async Task<IPAddress> GetTorIpAsync(string requestUri)
 	    {
-		    IPAddress torIp;
+		    var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
+
+			IPAddress torIp;
 		    using (var httpClient = new HttpClient(handler))
 		    {
 			    var content =
@@ -60,27 +58,26 @@ namespace DotNetTor.Tests
 		    IPAddress changedIp;
 
 			// 1. Get TOR IP
-			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
+		    var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
+			using (var httpClient = new HttpClient(handler))
 			{
-			    using (var httpClient = new HttpClient(handler))
-			    {
-				    var content = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
-				    var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out torIp);
-				    Assert.True(gotIp);
-			    }
+				var content = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
+				var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out torIp);
+				Assert.True(gotIp);
+			}
 
-			    // 2. Change TOR IP
-			    var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
-			    await controlPortClient.ChangeCircuitAsync().ConfigureAwait(false);
+			// 2. Change TOR IP
+			var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
+			await controlPortClient.ChangeCircuitAsync().ConfigureAwait(false);
 
-			    // 3. Get changed TOR IP
-			    using (var httpClient = new HttpClient(handler))
-			    {
-				    var content = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
-				    var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out changedIp);
-				    Assert.True(gotIp);
-			    }
-		    }
+			// 3. Get changed TOR IP
+			var handler2 = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
+			using (var httpClient = new HttpClient(handler2))
+			{
+				var content = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
+				var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out changedIp);
+				Assert.True(gotIp);
+			}
 
 		    Assert.NotEqual(changedIp, torIp);
 	    }

@@ -28,6 +28,7 @@ namespace DotNetTor.SocksPort
 			_socket = _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 		}
 
+		private static readonly Semaphore _Semaphore = new Semaphore(1,1);
 		protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
 			CancellationToken cancellationToken)
 		{
@@ -39,10 +40,16 @@ namespace DotNetTor.SocksPort
 				// CONNECT TO DOMAIN DESTINATION IF NOT CONNECTED ALREADY
 				await EnsureConnectedToDest(request).ConfigureAwait(false);
 
-				using (var stream = await _httpSocketClient.GetStreamAsync(_socket, request).ConfigureAwait(false))
+				_Semaphore.WaitOne();
+				try
 				{
+					var stream = await _httpSocketClient.GetStreamAsync(_socket, request).ConfigureAwait(false);
 					await _httpSocketClient.SendRequestAsync(stream, request).ConfigureAwait(false);
 					return await _httpSocketClient.ReceiveResponseAsync(stream, request).ConfigureAwait(false);
+				}
+				finally
+				{
+					_Semaphore.Release();
 				}
 			}
 			catch (TorException)
