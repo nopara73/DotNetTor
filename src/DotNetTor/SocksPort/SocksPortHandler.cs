@@ -33,43 +33,11 @@ namespace DotNetTor.SocksPort
 		{
 			try
 			{
-				if (!_socket.Connected)
-				{
-					// CONNECT TO LOCAL TOR
-					await _socket.ConnectAsync(_socksEndPoint).ConfigureAwait(false);
+				// CONNECT TO LOCAL TOR
+				await EnsureConnected().ConfigureAwait(false);
 
-					// HANDSHAKE
-					var sendBuffer = new ArraySegment<byte>(new byte[] { 5, 1, 0 });
-					await _socket.SendAsync(sendBuffer, SocketFlags.None).ConfigureAwait(false);
-					var receiveBuffer = new ArraySegment<byte>(new byte[_socket.ReceiveBufferSize]);
-					var receiveCount = await _socket.ReceiveAsync(receiveBuffer, SocketFlags.None).ConfigureAwait(false);
-					Util.ValidateHandshakeResponse(receiveBuffer, receiveCount);
-				}
-
-				// CONNECT TO DOMAIN DESTINATION
-				var uri = request.RequestUri;
-				RequestType? reqType = null;
-				if (uri.Port == 80)
-					reqType = RequestType.HTTP;
-				else if (uri.Port == 443)
-					reqType = RequestType.HTTPS;
-				if (reqType == null)
-					throw new ArgumentException($"{nameof(uri.Port)} cannot be {uri.Port}");
-				var connectedTo = new Tuple<string, RequestType>(uri.DnsSafeHost, (RequestType) reqType);
-				if (_connectedTo == null)
-				{
-					var sendBuffer = Util.BuildConnectToDomainRequest(uri.DnsSafeHost, (RequestType) reqType);
-					await _socket.SendAsync(sendBuffer, SocketFlags.None).ConfigureAwait(false);
-					var receiveBuffer = new ArraySegment<byte>(new byte[_socket.ReceiveBufferSize]);
-					var receiveCount = await _socket.ReceiveAsync(receiveBuffer, SocketFlags.None).ConfigureAwait(false);
-					Util.ValidateConnectToDestinationResponse(receiveBuffer, receiveCount);
-					_connectedTo = connectedTo;
-				}
-				else if (!Equals(_connectedTo, connectedTo))
-				{
-					throw new TorException(
-						$"Requests are only allowed to {_connectedTo.Item1} by {_connectedTo.Item2}, you are trying to connect to {connectedTo.Item1} by {connectedTo.Item2}");
-				}
+				// CONNECT TO DOMAIN DESTINATION IF NOT CONNECTED ALREADY
+				await EnsureConnectedToDest(request).ConfigureAwait(false);
 
 				var stream = await _httpSocketClient.GetStreamAsync(_socket, request).ConfigureAwait(false);
 				await _httpSocketClient.SendRequestAsync(stream, request).ConfigureAwait(false);
@@ -83,6 +51,64 @@ namespace DotNetTor.SocksPort
 			{
 				throw new TorException(ex.Message, ex);
 			}
+		}
+
+		private Task _ConnectingToDest;
+		private Task EnsureConnectedToDest(HttpRequestMessage request)
+		{
+			var uri = request.RequestUri;
+			RequestType? reqType = null;
+			if (uri.Port == 80)
+				reqType = RequestType.HTTP;
+			else if (uri.Port == 443)
+				reqType = RequestType.HTTPS;
+			if (reqType == null)
+				throw new ArgumentException($"{nameof(uri.Port)} cannot be {uri.Port}");
+			var connectedTo = new Tuple<string, RequestType>(uri.DnsSafeHost, (RequestType)reqType);
+			if (_connectedTo == null)
+			{
+				if (_ConnectingToDest == null)
+				{
+					_ConnectingToDest = ConnectToDestAsync(uri, (RequestType)reqType, connectedTo);
+				}
+			}
+			else if (!Equals(_connectedTo, connectedTo))
+			{
+				throw new TorException(
+					$"Requests are only allowed to {_connectedTo.Item1} by {_connectedTo.Item2}, you are trying to connect to {connectedTo.Item1} by {connectedTo.Item2}");
+			}
+			return _ConnectingToDest;
+		}
+		private async Task ConnectToDestAsync(Uri uri, RequestType reqType, Tuple<string, RequestType> connectedTo)
+		{
+			var sendBuffer = Util.BuildConnectToDomainRequest(uri.DnsSafeHost, reqType);
+			await _socket.SendAsync(sendBuffer, SocketFlags.None).ConfigureAwait(false);
+			var receiveBuffer = new ArraySegment<byte>(new byte[_socket.ReceiveBufferSize]);
+			var receiveCount = await _socket.ReceiveAsync(receiveBuffer, SocketFlags.None).ConfigureAwait(false);
+			Util.ValidateConnectToDestinationResponse(receiveBuffer, receiveCount);
+			_connectedTo = connectedTo;
+		}
+
+		private Task _Connecting;
+		private Task EnsureConnected()
+		{
+			if (_Connecting == null)
+			{
+				_Connecting = ConnectAsync();
+			}
+			return _Connecting;
+		}
+
+		private async Task ConnectAsync()
+		{
+			await _socket.ConnectAsync(_socksEndPoint).ConfigureAwait(false);
+
+			// HANDSHAKE
+			var sendBuffer = new ArraySegment<byte>(new byte[] { 5, 1, 0 });
+			await _socket.SendAsync(sendBuffer, SocketFlags.None).ConfigureAwait(false);
+			var receiveBuffer = new ArraySegment<byte>(new byte[_socket.ReceiveBufferSize]);
+			var receiveCount = await _socket.ReceiveAsync(receiveBuffer, SocketFlags.None).ConfigureAwait(false);
+			Util.ValidateHandshakeResponse(receiveBuffer, receiveCount);
 		}
 
 		private bool _disposed = false;
