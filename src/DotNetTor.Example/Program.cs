@@ -40,7 +40,7 @@ namespace DotNetTor.Example
 			var request = "http://api.qbit.ninja/transactions/38d4cfeb57d6685753b7a3b3534c3cb576c34ca7344cd4582f9613ebf0c2b02a?format=json&headeronly=true";
 			using (var socksPortClient = new SocksPort.Client())
 			{
-				var handler = await socksPortClient.ConnectAsync(request).ConfigureAwait(false);
+				var handler = await socksPortClient.ConnectAsync().ConfigureAwait(false);
 				using (var httpClient = new HttpClient(handler))
 				{
 					var content = await (await httpClient.GetAsync(request).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -63,7 +63,7 @@ namespace DotNetTor.Example
 			// 2. Get TOR IP
 			using (var socksPortClient = new SocksPort.Client())
 			{
-				var handler = await socksPortClient.ConnectAsync("icanhazip.com", RequestType.HTTP).ConfigureAwait(false);
+				var handler = await socksPortClient.ConnectAsync().ConfigureAwait(false);
 				using (var httpClient = new HttpClient(handler))
 				{
 					var content = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -75,7 +75,7 @@ namespace DotNetTor.Example
 				await controlPortClient.ChangeCircuitAsync().ConfigureAwait(false);
 
 				// 4. Get changed TOR IP
-				handler = await socksPortClient.ConnectAsync(requestUri).ConfigureAwait(false);
+				handler = await socksPortClient.ConnectAsync().ConfigureAwait(false);
 				using (var httpClient = new HttpClient(handler))
 				{
 					var content = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);

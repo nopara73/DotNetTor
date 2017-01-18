@@ -22,11 +22,37 @@ namespace DotNetTor.Tests
 			var requestUri = "http://api.qbit.ninja/whatisit/what%20is%20my%20future";
 			using (var socksPortClient = new SocksPort.Client(Shared.HostAddress, Shared.SocksPort))
 			{
-				var handler = await socksPortClient.ConnectAsync(requestUri).ConfigureAwait(false);
+				using (var handler = await socksPortClient.ConnectAsync().ConfigureAwait(false))
 				using (var httpClient = new HttpClient(handler))
 				{
-					var content = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
+					var message = await httpClient.GetAsync(requestUri).ConfigureAwait(false);
+					var content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
 
+					Assert.Equal(content, "\"Good question Holmes !\"");
+				}
+			}
+		}
+		[Fact]
+		public async Task CantRequestDifferentWithSameHandlerAsync()
+		{
+			using (var socksPortClient = new SocksPort.Client(Shared.HostAddress, Shared.SocksPort))
+			{
+				using (var handler = await socksPortClient.ConnectAsync().ConfigureAwait(false))
+				using (var httpClient = new HttpClient(handler))
+				{
+					var message = await httpClient.GetAsync("http://api.qbit.ninja/whatisit/what%20is%20my%20future").ConfigureAwait(false);
+					var content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
+					Assert.Equal(content, "\"Good question Holmes !\"");
+
+					await Assert.ThrowsAsync<TorException>
+					(async () =>
+						{
+							await httpClient.GetAsync("http://icanhazip.com/").ConfigureAwait(false);
+						}
+					).ConfigureAwait(false);
+
+					message = await httpClient.GetAsync("http://api.qbit.ninja/whatisit/what%20is%20my%20future").ConfigureAwait(false);
+					content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
 					Assert.Equal(content, "\"Good question Holmes !\"");
 				}
 			}
@@ -50,7 +76,7 @@ namespace DotNetTor.Tests
 			// 2. Get TOR IP
 			using (var socksPortClient = new SocksPort.Client(Shared.HostAddress, Shared.SocksPort))
 			{
-				var handler = await socksPortClient.ConnectAsync("icanhazip.com", RequestType.HTTP).ConfigureAwait(false);
+				var handler = await socksPortClient.ConnectAsync().ConfigureAwait(false);
 				using (var httpClient = new HttpClient(handler))
 				{
 					var content = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -68,7 +94,7 @@ namespace DotNetTor.Tests
 			var requestUri = "https://slack.com/api/api.test";
 			using (var socksPortClient = new SocksPort.Client(Shared.HostAddress, Shared.SocksPort))
 			{
-				var handler = await socksPortClient.ConnectAsync(requestUri).ConfigureAwait(false);
+				var handler = await socksPortClient.ConnectAsync().ConfigureAwait(false);
 				using (var httpClient = new HttpClient(handler))
 				{
 					var content = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -86,7 +112,7 @@ namespace DotNetTor.Tests
 			var requestUri = "http://api.qbit.ninja/blocks/0000000000000000119fe3f65fd3038cbe8429ad2cf7c2de1e5e7481b34a01b4";
 			using (var socksPortClient = new SocksPort.Client(Shared.HostAddress, Shared.SocksPort))
 			{
-				var handler = await socksPortClient.ConnectAsync(requestUri).ConfigureAwait(false);
+				var handler = await socksPortClient.ConnectAsync().ConfigureAwait(false);
 				using (var httpClient = new HttpClient(handler))
 				{
 					wTor = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -110,7 +136,7 @@ namespace DotNetTor.Tests
 			var firstRequest = "http://api.qbit.ninja/transactions/38d4cfeb57d6685753b7a3b3534c3cb576c34ca7344cd4582f9613ebf0c2b02a?format=json&headeronly=true";
 			using (var socksPortClient = new SocksPort.Client(Shared.HostAddress, Shared.SocksPort))
 			{
-				var handler = await socksPortClient.ConnectAsync(firstRequest).ConfigureAwait(false);
+				var handler = await socksPortClient.ConnectAsync().ConfigureAwait(false);
 				using (var httpClient = new HttpClient(handler))
 				{
 					await (await httpClient.GetAsync(firstRequest).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -127,7 +153,7 @@ namespace DotNetTor.Tests
 
 			await Assert.ThrowsAsync<TorException>(
 				async () =>
-				await client.ConnectAsync("icanhazip.com", RequestType.HTTP).ConfigureAwait(false)
+				await client.ConnectAsync().ConfigureAwait(false)
 				).ConfigureAwait(false);
 
 			await Assert.ThrowsAsync<TorException>(
@@ -147,7 +173,7 @@ namespace DotNetTor.Tests
 
 			using (var socksPortClient = new SocksPort.Client(Shared.HostAddress, Shared.SocksPort))
 			{
-				var handler = await socksPortClient.ConnectAsync(requestUri).ConfigureAwait(false);
+				var handler = await socksPortClient.ConnectAsync().ConfigureAwait(false);
 				using (var httpClient = new HttpClient(handler))
 				{
 					var content = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);

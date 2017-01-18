@@ -42,7 +42,7 @@ namespace DotNetTor.Tests
 			var requestUri = "http://api.qbit.ninja/whatisit/what%20is%20my%20future";
 			using (var socksPortClient = new SocksPort.Client(Shared.HostAddress, Shared.SocksPort))
 			{
-				var handler = await socksPortClient.ConnectAsync(requestUri).ConfigureAwait(false);
+				var handler = await socksPortClient.ConnectAsync().ConfigureAwait(false);
 				using (var httpClient = new HttpClient(handler))
 				{
 					var tasks = new List<Task<HttpResponseMessage>>();

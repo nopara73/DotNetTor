@@ -41,7 +41,7 @@ namespace DotNetTor.Tests
 	    private static async Task<IPAddress> GetTorIpAsync(SocksPort.Client socksPortClient, string requestUri)
 	    {
 		    IPAddress torIp;
-		    using (var handler = await socksPortClient.ConnectAsync("icanhazip.com", RequestType.HTTP).ConfigureAwait(false))
+		    using (var handler = await socksPortClient.ConnectAsync().ConfigureAwait(false))
 		    using (var httpClient = new HttpClient(handler))
 		    {
 			    var content =
@@ -62,7 +62,7 @@ namespace DotNetTor.Tests
 		    // 1. Get TOR IP
 		    using (var socksPortClient = new SocksPort.Client(Shared.HostAddress, Shared.SocksPort))
 		    {
-			    var handler = await socksPortClient.ConnectAsync("icanhazip.com", RequestType.HTTP).ConfigureAwait(false);
+			    var handler = await socksPortClient.ConnectAsync().ConfigureAwait(false);
 			    using (var httpClient = new HttpClient(handler))
 			    {
 				    var content = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -75,7 +75,7 @@ namespace DotNetTor.Tests
 			    await controlPortClient.ChangeCircuitAsync().ConfigureAwait(false);
 
 			    // 3. Get changed TOR IP
-			    handler = await socksPortClient.ConnectAsync(requestUri).ConfigureAwait(false);
+			    handler = await socksPortClient.ConnectAsync().ConfigureAwait(false);
 			    using (var httpClient = new HttpClient(handler))
 			    {
 				    var content = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
