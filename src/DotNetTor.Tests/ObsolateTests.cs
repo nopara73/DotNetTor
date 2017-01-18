@@ -4,7 +4,7 @@ using Xunit;
 
 namespace DotNetTor.Tests
 {
-	// See BasicTests.cs for proper TOR configuration
+	// See SocksPortTests.cs for proper TOR configuration
 	public class ObsolateTests
 	{
 		[Fact]

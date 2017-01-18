@@ -2,6 +2,6 @@
 {
 	public static class Shared
 	{
-		internal const string SyncMethodDeprecated = "Consider using its async version instead.";
+		internal const string SyncMethodDeprecated = "For better performance consider using the async API instead.";
 	}
 }

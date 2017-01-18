@@ -49,7 +49,7 @@ namespace DotNetTor.ControlPort
 					var command = new ArraySegment<byte>(Encoding.ASCII.GetBytes($"authenticate \"{_password}\"\r\n"));
 					await socket.SendAsync(command, SocketFlags.None).ConfigureAwait(false);
 
-					var buffer = new ArraySegment<byte>(new byte[128]);
+					var buffer = new ArraySegment<byte>(new byte[socket.ReceiveBufferSize]);
 					var received = await socket.ReceiveAsync(buffer, SocketFlags.None).ConfigureAwait(false);
 
 					var response = Encoding.ASCII.GetString(buffer.Array, 0, received);
@@ -61,7 +61,7 @@ namespace DotNetTor.ControlPort
 					command = new ArraySegment<byte>(Encoding.ASCII.GetBytes("SETEVENTS CIRC\r\n"));
 					await socket.SendAsync(command, SocketFlags.None).ConfigureAwait(false);
 
-					buffer = new ArraySegment<byte>(new byte[128]);
+					buffer = new ArraySegment<byte>(new byte[socket.ReceiveBufferSize]);
 					received = await socket.ReceiveAsync(buffer, SocketFlags.None).ConfigureAwait(false);
 
 					response = Encoding.ASCII.GetString(buffer.Array, 0, received);
@@ -73,7 +73,7 @@ namespace DotNetTor.ControlPort
 					command = new ArraySegment<byte>(Encoding.ASCII.GetBytes("signal newnym\r\n"));
 					await socket.SendAsync(command, SocketFlags.None).ConfigureAwait(false);
 
-					buffer = new ArraySegment<byte>(new byte[128]);
+					buffer = new ArraySegment<byte>(new byte[socket.ReceiveBufferSize]);
 					received = await socket.ReceiveAsync(buffer, SocketFlags.None).ConfigureAwait(false);
 
 					response = Encoding.ASCII.GetString(buffer.Array, 0, received);
@@ -98,7 +98,8 @@ namespace DotNetTor.ControlPort
 						System.Diagnostics.Debug.WriteLine(response);
 						if (responseArray.Length < 4)
 							continue;
-						if (!responseArray[0].Equals("650", StringComparison.OrdinalIgnoreCase) || !responseArray[1].Equals("CIRC", StringComparison.OrdinalIgnoreCase))
+						if (!responseArray[0].Equals("650", StringComparison.OrdinalIgnoreCase) ||
+						    !responseArray[1].Equals("CIRC", StringComparison.OrdinalIgnoreCase))
 							continue;
 					} while (responseArray.Length < 4 || !responseArray[3].Equals("CLOSED", StringComparison.OrdinalIgnoreCase));
 				}
@@ -112,7 +113,7 @@ namespace DotNetTor.ControlPort
 				}
 				finally
 				{
-					if(socket.Connected)
+					if (socket.Connected)
 						socket.Shutdown(SocketShutdown.Both);
 				}
 			}
