@@ -4,9 +4,6 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using DotNetTor.SocksPort;
-using NBitcoin;
-using QBitNinja.Client;
-using QBitNinja.Client.Models;
 
 namespace DotNetTor.Example
 {
@@ -15,69 +12,13 @@ namespace DotNetTor.Example
 		// For proper configuraion see https://github.com/nopara73/DotNetTor
 		private static void Main()
 		{
-			//DoARandomRequest();
-			//RequestWith3Ip();
-			//CantRequestDifferentDomainsWithSameHandler();
-			//PayAttentionToHttpClientDisposesHandler();
-
-			FooAsync().Wait();
-			//BarAsync().Wait();
+			DoARandomRequest();
+			RequestWith3Ip();
+			CantRequestDifferentDomainsWithSameHandler();
+			PayAttentionToHttpClientDisposesHandler();
 
 			Console.WriteLine("Press a key to exit..");
 			Console.ReadKey();
-		}
-
-		private static async Task BarAsync()
-		{
-			QBitNinjaClient client = new QBitNinjaClient(Network.Main);
-			client.SetHttpMessageHandler(new SocksPortHandler());
-
-			var tasks = new HashSet<Task<BalanceModel>>();
-			var addresses = new HashSet<BitcoinAddress>();
-			for (var i = 0; i < 10; i++)
-			{
-				addresses.Add(new Key().GetBitcoinSecret(Network.Main).GetAddress());
-			}
-
-			foreach (var dest in addresses)
-			{
-				var task = client.GetBalance(dest, false);
-				tasks.Add(task);
-			}
-			await Task.WhenAll(tasks).ConfigureAwait(false);
-
-			var results = new HashSet<BalanceModel>();
-			foreach (var task in tasks)
-				results.Add(await task.ConfigureAwait(false));
-			foreach (var res in results)
-				Console.WriteLine(res);
-		}
-
-		private static async Task FooAsync()
-		{
-			using (var httpClient = new HttpClient(new SocksPortHandler()))
-			{
-				var tasks = new HashSet<Task<HttpResponseMessage>>();
-				for (var i= 0; i < 10; i++)
-				{
-					var task = httpClient.GetAsync("https://api.qbit.ninja/whatisit/what%20is%20my%20future");
-					tasks.Add(task);
-				}
-				try
-				{
-					await Task.WhenAll(tasks).ConfigureAwait(false);
-				}
-				catch (Exception ex)
-				{
-					Console.WriteLine(ex.Message);
-				}
-
-				var results = new HashSet<HttpResponseMessage>();
-				foreach (var task in tasks)
-					results.Add(await task.ConfigureAwait(false));
-				foreach (var res in results)
-					Console.WriteLine(res.Content.ReadAsStringAsync().Result);
-			}
 		}
 
 		private static void PayAttentionToHttpClientDisposesHandler()
