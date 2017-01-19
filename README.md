@@ -59,7 +59,7 @@ using (var httpClient = new HttpClient(new SocksPortHandler("127.0.0.1", socksPo
 
 While the general wisdom is to use your `HttpClient`, instead of with `using` blocks, this API cannot handle yet requests to diffenet domains with the same handler, so don't do this:
 
-```
+```cs
 using (var httpClient = new HttpClient(new SocksPortHandler()))
 {
 	var message = httpClient.GetAsync("http://icanhazip.com/").Result;
@@ -82,7 +82,7 @@ using (var httpClient = new HttpClient(new SocksPortHandler()))
 
 If you want to reuse a handler pay attention to the an HttpClient's default behaviour. It will dispose the handler for you if you don't say to it otherwise.  
 
-```
+```cs
 var httpClient = new HttpClient(handler, disposeHandler: false)
 ```
 
