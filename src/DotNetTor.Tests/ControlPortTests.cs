@@ -8,7 +8,7 @@ using Xunit;
 
 namespace DotNetTor.Tests
 {
-	// See SocksPortTests.cs for proper TOR configuration
+	// For proper configuraion see https://github.com/nopara73/DotNetTor
 	public class ControlPortTests
     {
 	    [Fact]
@@ -81,5 +81,38 @@ namespace DotNetTor.Tests
 
 		    Assert.NotEqual(changedIp, torIp);
 	    }
-    }
+
+		[Fact]
+		private static async Task CanChangeCircuitWithinSameHttpClientAsync()
+		{
+			var requestUri = "http://icanhazip.com/";
+			IPAddress torIp;
+			IPAddress changedIp;
+
+			// 1. Get TOR IP
+			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
+			using (var httpClient = new HttpClient(handler))
+			{
+				var content =
+					await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync()
+						.ConfigureAwait(false);
+				var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out torIp);
+				Assert.True(gotIp);
+
+				// 2. Change TOR IP
+				var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
+				await controlPortClient.ChangeCircuitAsync().ConfigureAwait(false);
+
+				// 3. Get changed TOR IP
+
+				content =
+					await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync()
+						.ConfigureAwait(false);
+				gotIp = IPAddress.TryParse(content.Replace("\n", ""), out changedIp);
+				Assert.True(gotIp);
+			}
+
+			Assert.NotEqual(changedIp, torIp);
+		}
+	}
 }

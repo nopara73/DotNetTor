@@ -8,13 +8,7 @@ using Xunit;
 
 namespace DotNetTor.Tests
 {
-	// 1. Download TOR Expert Bundle: https://www.torproject.org/download/download
-	// 2. Download the torrc config file sample: https://svn.torproject.org/svn/tor/tags/tor-0_0_9_5/src/config/torrc.sample.in
-	// 3. Place torrc in the proper default location (depending on your OS) and edit it:
-	//	- Uncomment the default Shared.ControlPort 9051
-	//	- Uncomment and modify the password hash to HashedControlPassword 16:0978DBAF70EEB5C46063F3F6FD8CBC7A86DF70D2206916C1E2AE29EAF6
-	// 4. Run tor (it will run in the background and listen to the SocksPort 9050 and Shared.ControlPort 9051)
-	// Now the tests should successfully run
+	// For proper configuraion see https://github.com/nopara73/DotNetTor
 	public class SocksPortTests
 	{
 		[Fact]
@@ -30,6 +24,50 @@ namespace DotNetTor.Tests
 				Assert.Equal(content, "\"Good question Holmes !\"");
 			}
 		}
+
+		//[Fact]
+		//public async Task CanReuseHttpClientAsync()
+		//{
+		//	var requestUri = "http://api.qbit.ninja/whatisit/what%20is%20my%20future";
+		//	using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
+		//	using (var httpClient = new HttpClient(handler))
+		//	{
+		//		var message = await httpClient.GetAsync(requestUri).ConfigureAwait(false);
+		//		var content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+		//		Assert.Equal(content, "\"Good question Holmes !\"");
+		//	}
+		//}
+
+		[Fact]
+		public async Task CanReuseHandlerAsync()
+		{
+			// YOU HAVE TO SET THE HTTP CLIENT NOT TO DISPOSE THE HANDLER
+			var requestUri = "http://api.qbit.ninja/whatisit/what%20is%20my%20future";
+			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
+			using (var httpClient = new HttpClient(handler, disposeHandler: false))
+			{
+				var message = await httpClient.GetAsync(requestUri).ConfigureAwait(false);
+				var content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+				Assert.Equal(content, "\"Good question Holmes !\"");
+			}
+			using (var httpClient = new HttpClient(handler))
+			{
+				var message = await httpClient.GetAsync(requestUri).ConfigureAwait(false);
+				var content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+				Assert.Equal(content, "\"Good question Holmes !\"");
+			}
+			await Assert.ThrowsAsync<TorException>(
+				async () =>
+				{
+					using (var httpClient = new HttpClient(handler))
+						await httpClient.GetAsync(requestUri).ConfigureAwait(false);
+				}
+			).ConfigureAwait(false);
+		}
+
 		[Fact]
 		public async Task CantRequestDifferentWithSameHandlerAsync()
 		{
@@ -41,9 +79,17 @@ namespace DotNetTor.Tests
 				var content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
 				Assert.Equal(content, "\"Good question Holmes !\"");
 
-				await Assert.ThrowsAsync<TorException>
-				(async () => { await httpClient.GetAsync("http://icanhazip.com/").ConfigureAwait(false); }
-				).ConfigureAwait(false);
+				await Assert.ThrowsAsync<TorException>(
+					async () =>
+					{
+						IPAddress ip;
+						message = await httpClient.GetAsync("http://icanhazip.com/").ConfigureAwait(false);
+						content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
+						var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out ip);
+						Assert.True(gotIp);
+					}
+					).ConfigureAwait(false);
+				
 
 				message = await httpClient.GetAsync("http://api.qbit.ninja/whatisit/what%20is%20my%20future").ConfigureAwait(false);
 				content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);

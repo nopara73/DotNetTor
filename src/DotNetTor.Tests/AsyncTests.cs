@@ -9,7 +9,7 @@ using Xunit;
 
 namespace DotNetTor.Tests
 {
-	// See SocksPortTests.cs for proper TOR configuration
+	// For proper configuraion see https://github.com/nopara73/DotNetTor
 	public class AsyncTests
 	{
 		[Fact]

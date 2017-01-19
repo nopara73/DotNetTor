@@ -37,14 +37,14 @@ namespace DotNetTor.ControlPort
 			}
 		}
 
-		private static readonly Semaphore _Semaphore = new Semaphore(1,1);
+		private static readonly Semaphore _Sem = new Semaphore(1,1);
 		public async Task ChangeCircuitAsync()
 		{
 			using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
 			{
 				try
 				{
-					_Semaphore.WaitOne();
+					_Sem.WaitOne();
 					// 1. CONNECT
 					await socket.ConnectAsync(_controlEndPoint).ConfigureAwait(false);
 
@@ -118,7 +118,7 @@ namespace DotNetTor.ControlPort
 				{
 					if (socket.Connected)
 						socket.Shutdown(SocketShutdown.Both);
-					_Semaphore.Release();
+					_Sem.Release();
 				}
 			}
 		}

@@ -4,7 +4,7 @@ using Xunit;
 
 namespace DotNetTor.Tests
 {
-	// See SocksPortTests.cs for proper TOR configuration
+	// For proper configuraion see https://github.com/nopara73/DotNetTor
 #pragma warning disable CS0618 // Type or member is obsolete
 	public class ObsolateTests
 	{

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
@@ -12,7 +13,7 @@ namespace DotNetTor.SocksPort
 	{
 		private Tuple<string, RequestType> _connectedTo = null;
 
-		private readonly Socket _socket;
+		private Socket _socket;
 		private readonly IPEndPoint _socksEndPoint;
 		private readonly HttpSocketClient _httpSocketClient = new HttpSocketClient();
 
@@ -28,29 +29,38 @@ namespace DotNetTor.SocksPort
 			_socket = _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 		}
 
-		private static readonly Semaphore _Semaphore = new Semaphore(1,1);
+		private const int MaxTry = 3;
+		private int _Tried = 0;
+		private static readonly SemaphoreSlim _Semaphore = new SemaphoreSlim(1,1);
 		protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
 			CancellationToken cancellationToken)
 		{
 			try
 			{
-				// CONNECT TO LOCAL TOR
-				await EnsureConnected().ConfigureAwait(false);
-
-				// CONNECT TO DOMAIN DESTINATION IF NOT CONNECTED ALREADY
-				await EnsureConnectedToDest(request).ConfigureAwait(false);
-
-				_Semaphore.WaitOne();
-				try
-				{
-					var stream = await _httpSocketClient.GetStreamAsync(_socket, request).ConfigureAwait(false);
-					await _httpSocketClient.SendRequestAsync(stream, request).ConfigureAwait(false);
-					return await _httpSocketClient.ReceiveResponseAsync(stream, request).ConfigureAwait(false);
-				}
-				finally
-				{
-					_Semaphore.Release();
-				}
+				return await TrySendAsync(request).ConfigureAwait(false);
+			}
+			catch (IOException ex)
+				when (
+					ex.Message.Equals("Unable to read data from the transport connection: An established connection was aborted by the software in your host machine.", StringComparison.Ordinal)
+					&&
+					ex.InnerException != null
+					&&
+					ex.InnerException is SocketException
+					&&
+					ex.InnerException.Message.Equals("An established connection was aborted by the software in your host machine", StringComparison.Ordinal)
+					)
+			{
+				// Circuit has been changed, try again
+				if (_Tried < MaxTry)
+					_Tried++;
+				else throw;
+				if (_socket.Connected) _socket.Shutdown(SocketShutdown.Both);
+				_socket.Dispose();
+				_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+				_Connecting = null;
+				_ConnectingToDest = null;
+				_connectedTo = null;
+				return await TrySendAsync(request).ConfigureAwait(false);
 			}
 			catch (TorException)
 			{
@@ -59,6 +69,30 @@ namespace DotNetTor.SocksPort
 			catch (Exception ex)
 			{
 				throw new TorException(ex.Message, ex);
+			}
+		}
+
+		private async Task<HttpResponseMessage> TrySendAsync(HttpRequestMessage request)
+		{
+			// CONNECT TO LOCAL TOR
+			await EnsureConnected().ConfigureAwait(false);
+
+			// CONNECT TO DOMAIN DESTINATION IF NOT CONNECTED ALREADY
+			await EnsureConnectedToDest(request).ConfigureAwait(false);
+
+			await _Semaphore.WaitAsync().ConfigureAwait(false);
+			try
+			{
+				var stream = await _httpSocketClient.GetStreamAsync(_socket, request).ConfigureAwait(false);
+				await _httpSocketClient.SendRequestAsync(stream, request).ConfigureAwait(false);
+				HttpResponseMessage message = await _httpSocketClient.ReceiveResponseAsync(stream, request).ConfigureAwait(false);
+
+				_Tried = 0;
+				return message;
+			}
+			finally
+			{
+				_Semaphore.Release();
 			}
 		}
 
