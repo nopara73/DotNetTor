@@ -14,7 +14,7 @@ namespace DotNetTor.SocksPort
 {
 	public sealed class SocksPortHandler : HttpMessageHandler
 	{
-		private Tuple<string, RequestType> _connectedTo = null;
+		private Uri _connectedTo = null;
 
 		private Socket _socket;
 		private readonly IPEndPoint _socksEndPoint;
@@ -74,7 +74,7 @@ namespace DotNetTor.SocksPort
 				throw new TorException(ex.Message, ex);
 			}
 		}
-		
+
 		private async Task<HttpResponseMessage> TrySendAsync(HttpRequestMessage request)
 		{
 			// CONNECT TO LOCAL TOR
@@ -115,38 +115,38 @@ namespace DotNetTor.SocksPort
 		}
 
 		private Task _ConnectingToDest;
-		private Task EnsureConnectedToDest(HttpRequestMessage request)
+		private async Task EnsureConnectedToDest(HttpRequestMessage request)
 		{
-			var uri = request.RequestUri;
-			RequestType? reqType = null;
-			if (uri.Scheme.Equals("https", StringComparison.Ordinal))
-				reqType = RequestType.HTTPS;
-			else if (uri.Scheme.Equals("http", StringComparison.Ordinal))
-				reqType = RequestType.HTTP;
-			else throw new ArgumentException($"Invalid scheme: {uri.Scheme}");
-			var connectedTo = new Tuple<string, RequestType>(uri.DnsSafeHost, (RequestType)reqType);
-			if (_connectedTo == null)
+			var uri = StripPath(request.RequestUri);
+			if(_ConnectingToDest == null)
 			{
-				if (_ConnectingToDest == null)
-				{
-					_ConnectingToDest = ConnectToDestAsync(uri, connectedTo);
-				}
+				_ConnectingToDest = ConnectToDestAsync(uri);
 			}
-			else if (!Equals(_connectedTo, connectedTo))
+			await _ConnectingToDest.ConfigureAwait(false);
+			if (_connectedTo.AbsoluteUri != uri.AbsoluteUri)
 			{
 				throw new TorException(
-					$"Requests are only allowed to {_connectedTo.Item1} by {_connectedTo.Item2}, you are trying to connect to {connectedTo.Item1} by {connectedTo.Item2}");
+					$"Requests are only allowed to {_connectedTo.AbsoluteUri}, you are trying to connect to {uri.AbsoluteUri}");
 			}
-			return _ConnectingToDest;
 		}
-		private async Task ConnectToDestAsync(Uri uri,Tuple<string, RequestType> connectedTo)
+
+		private Uri StripPath(Uri requestUri)
 		{
-			var sendBuffer = Util.BuildConnectToDomainRequest(uri);
+			UriBuilder builder = new UriBuilder();
+			builder.Scheme = requestUri.Scheme;
+			builder.Port = requestUri.Port;
+			builder.Host = requestUri.Host;
+			return builder.Uri;
+		}
+
+		private async Task ConnectToDestAsync(Uri uri)
+		{
+			var sendBuffer = Util.BuildConnectToUri(uri);
 			await _socket.SendAsync(sendBuffer, SocketFlags.None).ConfigureAwait(false);
 			var receiveBuffer = new ArraySegment<byte>(new byte[_socket.ReceiveBufferSize]);
 			var receiveCount = await _socket.ReceiveAsync(receiveBuffer, SocketFlags.None).ConfigureAwait(false);
 			Util.ValidateConnectToDestinationResponse(receiveBuffer, receiveCount);
-			_connectedTo = connectedTo;
+			_connectedTo = uri;
 		}
 
 		private Task _Connecting;
