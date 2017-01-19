@@ -49,15 +49,10 @@ namespace DotNetTor
 			Unassigned = 0x09
 		}
 
-		internal static ArraySegment<byte> BuildConnectToDomainRequest(string domainName, RequestType requestType)
+		internal static ArraySegment<byte> BuildConnectToDomainRequest(Uri uri)
 		{
 			ArraySegment<byte> sendBuffer;
-			int port = 0;
-			if (requestType == RequestType.HTTP)
-				port = 80;
-			else if (requestType == RequestType.HTTPS)
-				port = 443;
-			byte[] nameBytes = Encoding.ASCII.GetBytes(domainName);
+			byte[] nameBytes = Encoding.ASCII.GetBytes(uri.DnsSafeHost);
 			var addresByteList = new List<byte>();
 			foreach (byte b in
 				Enumerable.Empty<byte>()
@@ -76,7 +71,7 @@ namespace DotNetTor
 					.Concat(new[] {SocksVersion, (byte)0x01, (byte)0x00, (byte)AddressType.DomainName })
 					.Concat(addressBytes)
 					.Concat(BitConverter.GetBytes(
-						IPAddress.HostToNetworkOrder((short)port))))
+						IPAddress.HostToNetworkOrder((short)uri.Port))))
 			{
 				sendByteList.Add(b);
 			}

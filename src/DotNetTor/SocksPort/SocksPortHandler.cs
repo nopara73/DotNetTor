@@ -129,7 +129,7 @@ namespace DotNetTor.SocksPort
 			{
 				if (_ConnectingToDest == null)
 				{
-					_ConnectingToDest = ConnectToDestAsync(uri, (RequestType)reqType, connectedTo);
+					_ConnectingToDest = ConnectToDestAsync(uri, connectedTo);
 				}
 			}
 			else if (!Equals(_connectedTo, connectedTo))
@@ -139,9 +139,9 @@ namespace DotNetTor.SocksPort
 			}
 			return _ConnectingToDest;
 		}
-		private async Task ConnectToDestAsync(Uri uri, RequestType reqType, Tuple<string, RequestType> connectedTo)
+		private async Task ConnectToDestAsync(Uri uri,Tuple<string, RequestType> connectedTo)
 		{
-			var sendBuffer = Util.BuildConnectToDomainRequest(uri.DnsSafeHost, reqType);
+			var sendBuffer = Util.BuildConnectToDomainRequest(uri);
 			await _socket.SendAsync(sendBuffer, SocketFlags.None).ConfigureAwait(false);
 			var receiveBuffer = new ArraySegment<byte>(new byte[_socket.ReceiveBufferSize]);
 			var receiveCount = await _socket.ReceiveAsync(receiveBuffer, SocketFlags.None).ConfigureAwait(false);
