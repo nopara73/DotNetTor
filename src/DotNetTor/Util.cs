@@ -155,17 +155,5 @@ namespace DotNetTor
 				throw new TorException($"The SOCKS5 proxy responded with 0x{version:x2}, instead of 0x{SocksVersion:x2}, for the SOCKS version number.");
 			}
 		}
-
-		public static RequestType? GetReqType(Uri uri)
-		{
-			RequestType? reqType = null;
-			if (uri.Port == 80)
-				reqType = RequestType.HTTP;
-			else if (uri.Port == 443)
-				reqType = RequestType.HTTPS;
-			if (reqType == null)
-				throw new ArgumentException($"{nameof(uri.Port)} cannot be {uri.Port}");
-			return reqType;
-		}
 	}
 }

@@ -181,6 +181,21 @@ namespace DotNetTor.Tests
 		}
 
 		[Fact]
+		public async Task CanRequestInRowHttpsAsync()
+		{
+			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
+				for (int i = 0; i < 2; i++)
+				{
+					using (var httpClient = new HttpClient(handler, disposeHandler: false))
+					{
+						await (await httpClient.GetAsync(
+								"https://api.qbit.ninja/transactions/38d4cfeb57d6685753b7a3b3534c3cb576c34ca7344cd4582f9613ebf0c2b02a?format=json&headeronly=true")
+							.ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
+					}
+				}
+		}
+
+		[Fact]
 		public async Task ThrowsExcetpionsAsync()
 		{
 			await Assert.ThrowsAsync<TorException>(

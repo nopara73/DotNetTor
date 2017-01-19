@@ -2,7 +2,10 @@
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using DotNetTor.SocksPort.Net;
@@ -71,7 +74,7 @@ namespace DotNetTor.SocksPort
 				throw new TorException(ex.Message, ex);
 			}
 		}
-
+		
 		private async Task<HttpResponseMessage> TrySendAsync(HttpRequestMessage request)
 		{
 			// CONNECT TO LOCAL TOR
@@ -83,9 +86,24 @@ namespace DotNetTor.SocksPort
 			await _Semaphore.WaitAsync().ConfigureAwait(false);
 			try
 			{
-				var stream = await _httpSocketClient.GetStreamAsync(_socket, request).ConfigureAwait(false);
+				Stream stream = new NetworkStream(_socket);
+				if (request.RequestUri.Scheme.Equals("https", StringComparison.Ordinal))
+				{
+					var httpsStream = new SslStream(stream);
+
+					await httpsStream
+						.AuthenticateAsClientAsync(
+							request.RequestUri.DnsSafeHost,
+							new X509CertificateCollection(),
+							SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12,
+							checkCertificateRevocation: false)
+						.ConfigureAwait(false);
+					stream = httpsStream;
+				}
+
 				await _httpSocketClient.SendRequestAsync(stream, request).ConfigureAwait(false);
-				HttpResponseMessage message = await _httpSocketClient.ReceiveResponseAsync(stream, request).ConfigureAwait(false);
+				HttpResponseMessage message =
+					await _httpSocketClient.ReceiveResponseAsync(stream, request).ConfigureAwait(false);
 
 				_Tried = 0;
 				return message;
@@ -101,12 +119,11 @@ namespace DotNetTor.SocksPort
 		{
 			var uri = request.RequestUri;
 			RequestType? reqType = null;
-			if (uri.Port == 80)
-				reqType = RequestType.HTTP;
-			else if (uri.Port == 443)
+			if (uri.Scheme.Equals("https", StringComparison.Ordinal))
 				reqType = RequestType.HTTPS;
-			if (reqType == null)
-				throw new ArgumentException($"{nameof(uri.Port)} cannot be {uri.Port}");
+			else if (uri.Scheme.Equals("http", StringComparison.Ordinal))
+				reqType = RequestType.HTTP;
+			else throw new ArgumentException($"Invalid scheme: {uri.Scheme}");
 			var connectedTo = new Tuple<string, RequestType>(uri.DnsSafeHost, (RequestType)reqType);
 			if (_connectedTo == null)
 			{

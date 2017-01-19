@@ -118,7 +118,7 @@ namespace DotNetTor.SocksPort.Net
 		{
 			Stream networkStream = new NetworkStream(socket);
 
-			if (request.RequestUri.Scheme.Equals("https", StringComparison.OrdinalIgnoreCase))
+			if (request.RequestUri.Scheme.Equals("https", StringComparison.Ordinal))
 			{
 				var httpsStream = new SslStream(networkStream);
 
@@ -127,9 +127,9 @@ namespace DotNetTor.SocksPort.Net
 						request.RequestUri.DnsSafeHost,
 						new X509CertificateCollection(),
 						SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12,
-						true)
+						checkCertificateRevocation: false)
 					.ConfigureAwait(false);
-
+				
 				networkStream = httpsStream;
 			}
 
@@ -215,22 +215,27 @@ namespace DotNetTor.SocksPort.Net
 			return contentStream;
 		}
 
-		private async Task WriteHeaderAsync(StreamWriter writer, string key, string value)
+		private async Task WriteHeaderAsync(TextWriter writer, string key, string value)
 		{
 			await WriteHeaderAsync(writer, new KeyValuePair<string, IEnumerable<string>>(key, new[] { value })).ConfigureAwait(false);
 		}
 
-		private async Task WriteHeaderAsync(StreamWriter writer, KeyValuePair<string, IEnumerable<string>> header)
+		private async Task WriteHeaderAsync(TextWriter writer, KeyValuePair<string, IEnumerable<string>> header)
 		{
 			await writer.WriteAsync($"{header.Key}: {string.Join(",", header.Value)}" + LineSeparator).ConfigureAwait(false);
 		}
 
 		private void ValidateRequest(HttpRequestMessage request)
 		{
-			if (request.RequestUri.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase) && request.RequestUri.Scheme.Equals("https", StringComparison.OrdinalIgnoreCase))
+			if (request.RequestUri.Scheme.Equals("http", StringComparison.Ordinal))
 			{
-				throw new NotSupportedException("Only HTTP and HTTPS are supported.");
+				
 			}
+			else if (request.RequestUri.Scheme.Equals("https", StringComparison.Ordinal))
+			{
+				
+			}
+			else throw new NotSupportedException("Only HTTP and HTTPS are supported.");
 
 			if (request.Version != new Version(1, 1))
 			{
