@@ -10,11 +10,13 @@ namespace DotNetTor.SocksPort.Helpers
 		private readonly Stream _innerStream;
 		private bool _disposed;
 		private long _length;
+		private bool _leaveInnerStreamOpen;
 
-		public LimitedStream(Stream innerStream, long length)
+		public LimitedStream(Stream innerStream, long length, bool leaveOpen)
 		{
 			_innerStream = innerStream;
 			_disposed = false;
+			_leaveInnerStreamOpen = leaveOpen;
 			_length = length;
 		}
 
@@ -58,7 +60,8 @@ namespace DotNetTor.SocksPort.Helpers
 		{
 			if (!_disposed && disposing)
 			{
-				_innerStream.Dispose();
+				if(!_leaveInnerStreamOpen)
+					_innerStream.Dispose();
 				_disposed = true;
 			}
 		}

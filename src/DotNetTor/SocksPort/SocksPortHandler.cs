@@ -86,24 +86,9 @@ namespace DotNetTor.SocksPort
 			await _Semaphore.WaitAsync().ConfigureAwait(false);
 			try
 			{
-				Stream stream = new NetworkStream(_socket);
-				if (request.RequestUri.Scheme.Equals("https", StringComparison.Ordinal))
-				{
-					var httpsStream = new SslStream(stream);
-
-					await httpsStream
-						.AuthenticateAsClientAsync(
-							request.RequestUri.DnsSafeHost,
-							new X509CertificateCollection(),
-							SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12,
-							checkCertificateRevocation: false)
-						.ConfigureAwait(false);
-					stream = httpsStream;
-				}
-
-				await _httpSocketClient.SendRequestAsync(stream, request).ConfigureAwait(false);
+				await _httpSocketClient.SendRequestAsync(_Stream, request).ConfigureAwait(false);
 				HttpResponseMessage message =
-					await _httpSocketClient.ReceiveResponseAsync(stream, request).ConfigureAwait(false);
+					await _httpSocketClient.ReceiveResponseAsync(_Stream, request).ConfigureAwait(false);
 
 				_Tried = 0;
 				return message;
@@ -115,6 +100,7 @@ namespace DotNetTor.SocksPort
 		}
 
 		private Task _ConnectingToDest;
+		private Stream _Stream;
 		private async Task EnsureConnectedToDestAsync(HttpRequestMessage request)
 		{
 			var uri = StripPath(request.RequestUri);
@@ -147,6 +133,21 @@ namespace DotNetTor.SocksPort
 			var receiveCount = await _socket.ReceiveAsync(receiveBuffer, SocketFlags.None).ConfigureAwait(false);
 			Util.ValidateConnectToDestinationResponse(receiveBuffer, receiveCount);
 			_connectedTo = uri;
+			Stream stream = new NetworkStream(_socket);
+			if(uri.Scheme.Equals("https", StringComparison.Ordinal))
+			{
+				var httpsStream = new SslStream(stream);
+
+				await httpsStream
+					.AuthenticateAsClientAsync(
+						uri.DnsSafeHost,
+						new X509CertificateCollection(),
+						SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12,
+						checkCertificateRevocation: false)
+					.ConfigureAwait(false);
+				stream = httpsStream;
+			}
+			_Stream = stream;
 		}
 
 		private Task _Connecting;

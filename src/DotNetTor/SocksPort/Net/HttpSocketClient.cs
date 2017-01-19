@@ -56,7 +56,7 @@ namespace DotNetTor.SocksPort.Net
 			{
 				// read the body with a content-length
 				var remainingStream = reader.GetRemainingStream();
-				var limitedStream = new LimitedStream(remainingStream, response.Content.Headers.ContentLength.Value);
+				var limitedStream = new LimitedStream(remainingStream, response.Content.Headers.ContentLength.Value, true);
 				content = new StreamContent(limitedStream);
 			}
 			else
