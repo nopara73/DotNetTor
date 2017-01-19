@@ -27,39 +27,65 @@ Library implementation of essential TOR features in .NET Core.
 4. Start tor, it will listen to the ports you set in the config file.
 
 ##Usage
-```cs
-var requestUri = "http://icanhazip.com/"; // Gives back your IP
 
-// 1. Get your (real) IP, just like you normally do
+```cs
+var requestUri = "http://icanhazip.com/";
+
+// 1. Get real IP
 using (var httpClient = new HttpClient())
 {
-	var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
+	var message = httpClient.GetAsync(requestUri).Result;
+	var content = message.Content.ReadAsStringAsync().Result;
 	Console.WriteLine($"Your real IP: \t\t{content}");
 }
 
-// 2. Get your IP through TOR
-using (var socksPortClient = new SocksPort.Client())
+// 2. Get TOR IP
+using (var httpClient = new HttpClient(new SocksPortHandler("127.0.0.1", socksPort: 9050)))
 {
-	var handler = socksPortClient.GetHandlerFromDomain("icanhazip.com");
-	using (var httpClient = new HttpClient(handler))
-	{
-		var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
-		Console.WriteLine($"Your TOR IP: \t\t{ content}");
-	}
+	var message = httpClient.GetAsync(requestUri).Result;
+	var content = message.Content.ReadAsStringAsync().Result;
+	Console.WriteLine($"Your TOR IP: \t\t{content}");
 
 	// 3. Change TOR IP
-	var controlPortClient = new ControlPort.Client(password: "ILoveBitcoin21");
-	controlPortClient.ChangeCircuit();
+	var controlPortClient = new ControlPort.Client("127.0.0.1", controlPort: 9051, password: "ILoveBitcoin21");
+	controlPortClient.ChangeCircuitAsync().Wait();
 
 	// 4. Get changed TOR IP
-	handler = socksPortClient.GetHandlerFromRequestUri(requestUri);
-	using (var httpClient = new HttpClient(handler))
+	message = httpClient.GetAsync(requestUri).Result;
+	content = message.Content.ReadAsStringAsync().Result;
+	Console.WriteLine($"Your other TOR IP: \t{content}");
+}
+```
+
+While the general wisdom is to use your `HttpClient`, instead of with `using` blocks, this API cannot handle yet requests to diffenet domains with the same handler, so don't do this:
+
+```cs
+using (var httpClient = new HttpClient(new SocksPortHandler()))
+{
+	var message = httpClient.GetAsync("http://icanhazip.com/").Result;
+	var content = message.Content.ReadAsStringAsync().Result;
+	Console.WriteLine($"Your TOR IP: \t\t{content}");
+
+	try
 	{
-		var content = httpClient.GetAsync(requestUri).Result.Content.ReadAsStringAsync().Result;
-		Console.WriteLine($"Your other TOR IP: \t{content}");
+		message = httpClient.GetAsync("http://api.qbit.ninja/whatisit/what%20is%20my%20future").Result;
+		content = message.Content.ReadAsStringAsync().Result;
+		Console.WriteLine(content);
+	}
+	catch (AggregateException ex) when (ex.InnerException != null && ex.InnerException is TorException)
+	{
+		Console.WriteLine("Don't do this!");
+		Console.WriteLine(ex.InnerException.Message);
 	}
 }
 ```
+
+If you want to reuse a handler pay attention to the an HttpClient's default behaviour. It will dispose the handler for you if you don't say to it otherwise.  
+
+```cs
+var httpClient = new HttpClient(handler, disposeHandler: false)
+```
+
 
 ##Acknowledgement
 Originally the SocksPort part of this project was a leaned down, modified and .NET Core ported version of the [SocketToMe](https://github.com/joelverhagen/SocketToMe) project.  
