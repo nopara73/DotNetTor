@@ -81,7 +81,7 @@ namespace DotNetTor.SocksPort
 			await EnsureConnected().ConfigureAwait(false);
 
 			// CONNECT TO DOMAIN DESTINATION IF NOT CONNECTED ALREADY
-			await EnsureConnectedToDest(request).ConfigureAwait(false);
+			await EnsureConnectedToDestAsync(request).ConfigureAwait(false);
 
 			await _Semaphore.WaitAsync().ConfigureAwait(false);
 			try
@@ -115,7 +115,7 @@ namespace DotNetTor.SocksPort
 		}
 
 		private Task _ConnectingToDest;
-		private async Task EnsureConnectedToDest(HttpRequestMessage request)
+		private async Task EnsureConnectedToDestAsync(HttpRequestMessage request)
 		{
 			var uri = StripPath(request.RequestUri);
 			if(_ConnectingToDest == null)
