@@ -21,7 +21,7 @@ namespace DotNetTor.Tests
 		    IPAddress prevIp;
 
 		    var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
-		    for (int i = 0; i < 5; i++)
+		    for (int i = 0; i < 3; i++)
 		    {
 			    prevIp = currIp;
 			    // Change TOR IP
