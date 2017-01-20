@@ -39,9 +39,19 @@ namespace DotNetTor.Tests
 				Assert.Equal(content, "\"Good question Holmes !\"");
 			}
 		}
-		private static async Task<List<string>> QBitTestAsync(int times)
+		[Fact]
+		public async Task CanDoHttpsRequestManyAsync()
+		{
+			var contents = await QBitTestAsync(30, https: true).ConfigureAwait(false);
+			foreach (var content in contents)
+			{
+				Assert.Equal(content, "\"Good question Holmes !\"");
+			}
+		}
+		private static async Task<List<string>> QBitTestAsync(int times, bool https = false)
 		{
 			var requestUri = "http://api.qbit.ninja/whatisit/what%20is%20my%20future";
+			if(https) requestUri = "https://api.qbit.ninja/whatisit/what%20is%20my%20future";
 			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
 			using (var httpClient = new HttpClient(handler))
 			{
