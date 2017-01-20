@@ -114,28 +114,6 @@ namespace DotNetTor.SocksPort.Net
 			return response;
 		}
 
-		public async Task<Stream> GetStreamAsync(Socket socket, HttpRequestMessage request)
-		{
-			Stream networkStream = new NetworkStream(socket);
-
-			if (request.RequestUri.Scheme.Equals("https", StringComparison.Ordinal))
-			{
-				var httpsStream = new SslStream(networkStream);
-
-				await httpsStream
-					.AuthenticateAsClientAsync(
-						request.RequestUri.DnsSafeHost,
-						new X509CertificateCollection(),
-						SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12,
-						checkCertificateRevocation: false)
-					.ConfigureAwait(false);
-				
-				networkStream = httpsStream;
-			}
-
-			return networkStream;
-		}
-
 		public async Task SendRequestAsync(Stream networkStream, HttpRequestMessage request)
 		{
 			ValidateRequest(request);
