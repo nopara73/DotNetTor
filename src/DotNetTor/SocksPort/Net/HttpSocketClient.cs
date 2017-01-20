@@ -10,6 +10,7 @@ using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DotNetTor.SocksPort.Net
@@ -27,13 +28,13 @@ namespace DotNetTor.SocksPort.Net
 		private static readonly ISet<HttpMethod> MethodsWithoutRequestBody = new HashSet<HttpMethod> { ConnectMethod, HttpMethod.Head };
 		private static readonly ISet<HttpMethod> MethodsWithoutResponseBody = new HashSet<HttpMethod> { ConnectMethod, HttpMethod.Head };
 		private static readonly ISet<string> SpecialHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { HostHeader, ContentLengthHeader, TransferEncodingHeader };
-
+		
 		public async Task<HttpResponseMessage> ReceiveResponseAsync(Stream stream, HttpRequestMessage request)
 		{
 			var reader = new ByteStreamReader(stream, BufferSize, false);
-
+			
 			var response = await ReadResponseHeadAsync(reader, request).ConfigureAwait(false);
-
+				
 			if (!MethodsWithoutResponseBody.Contains(request.Method))
 			{
 				ReadResponseBody(reader, response);
@@ -170,7 +171,6 @@ namespace DotNetTor.SocksPort.Net
 				}
 				else
 				{
-					contentStream = new ReadsToChunksStream(contentStream);
 					await WriteHeaderAsync(writer, TransferEncodingHeader, "chunked").ConfigureAwait(false);
 				}
 

@@ -34,7 +34,7 @@ namespace DotNetTor.SocksPort
 
 		private const int MaxTry = 3;
 		private int _Tried = 0;
-		private static readonly SemaphoreSlim _Semaphore = new SemaphoreSlim(1,1);
+		private static readonly SemaphoreSlim _Semaphore = new SemaphoreSlim(1, 1);
 		protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
 			CancellationToken cancellationToken)
 		{

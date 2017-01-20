@@ -84,13 +84,7 @@ namespace DotNetTor.SocksPort.Helpers
 
 		public override int Read(byte[] buffer, int offset, int count)
 		{
-			int read;
-			if (TryReadBuffer(buffer, offset, count, out read))
-			{
-				return read;
-			}
-
-			return _innerStream.Read(buffer, offset, count);
+			throw new NotSupportedException();
 		}
 
 		public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
