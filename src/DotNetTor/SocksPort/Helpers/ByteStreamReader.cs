@@ -54,7 +54,7 @@ namespace DotNetTor.SocksPort.Helpers
 			// Ensure first read
 			if (_bufferSize < 0)
 			{
-				_bufferSize = await _stream.ReadAsync(_buffer, 0, _buffer.Length).ConfigureAwait(false);
+				await ReadWaitRetryAsync().ConfigureAwait(false);
 			}
 
 			if (_bufferSize == 0)
@@ -90,7 +90,7 @@ namespace DotNetTor.SocksPort.Helpers
 
 				if (endPosition == _bufferSize && !lineFinished)
 				{
-					_bufferSize = await _stream.ReadAsync(_buffer, 0, _buffer.Length).ConfigureAwait(false);
+					await ReadWaitRetryAsync().ConfigureAwait(false);
 					_position = 0;
 				}
 			}
@@ -105,6 +105,19 @@ namespace DotNetTor.SocksPort.Helpers
 			}
 
 			return line;
+		}
+		private async Task ReadWaitRetryAsync()
+		{
+			try
+			{
+				_bufferSize = await _stream.ReadAsync(_buffer, 0, _buffer.Length).ConfigureAwait(false);
+			}
+			catch (NotSupportedException ex) when (ex.Message.Trim().Equals("The BeginRead method cannot be called when another read operation is pending.", StringComparison.Ordinal))
+			{
+				Debug.WriteLine(ex);
+				await Task.Delay(50).ConfigureAwait(false);
+				await ReadWaitRetryAsync().ConfigureAwait(false);
+			}
 		}
 
 		public async Task<int> ReadAsync(byte[] buffer, int offset, int count)
