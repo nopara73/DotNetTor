@@ -1,12 +1,8 @@
 ﻿using DotNetTor.SocksPort.Net;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Net;
-using System.Net.Sockets;
-using System.Threading.Tasks;
-using System.Text;
+// ReSharper disable All
 
 namespace DotNetTor.SocksPort
 {

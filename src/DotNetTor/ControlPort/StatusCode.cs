@@ -13,7 +13,7 @@
 		/// <summary>
 		/// The command was processed.
 		/// </summary>
-		OK = 250,
+		Ok = 250,
 
 		/// <summary>
 		/// The operation was unnecessary.
@@ -93,6 +93,6 @@
 		/// <summary>
 		/// A notification sent following an asynchronous operation.
 		/// </summary>
-		AsynchronousEventNotify = 650,
+		AsynchronousEventNotify = 650
 	}
 }

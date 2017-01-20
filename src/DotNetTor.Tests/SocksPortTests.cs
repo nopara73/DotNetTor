@@ -1,6 +1,4 @@
-﻿using DotNetTor.SocksPort.Net;
-using System;
-using System.Net;
+﻿using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using DotNetTor.SocksPort;
@@ -18,26 +16,12 @@ namespace DotNetTor.Tests
 			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
 			using (var httpClient = new HttpClient(handler))
 			{
-				var message = await httpClient.GetAsync(requestUri).ConfigureAwait(false);
+				HttpResponseMessage message = await httpClient.GetAsync(requestUri).ConfigureAwait(false);
 				var content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
 
 				Assert.Equal(content, "\"Good question Holmes !\"");
 			}
 		}
-
-		//[Fact]
-		//public async Task CanReuseHttpClientAsync()
-		//{
-		//	var requestUri = "http://api.qbit.ninja/whatisit/what%20is%20my%20future";
-		//	using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
-		//	using (var httpClient = new HttpClient(handler))
-		//	{
-		//		var message = await httpClient.GetAsync(requestUri).ConfigureAwait(false);
-		//		var content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-		//		Assert.Equal(content, "\"Good question Holmes !\"");
-		//	}
-		//}
 
 		[Fact]
 		public async Task CanReuseHandlerAsync()
@@ -47,14 +31,14 @@ namespace DotNetTor.Tests
 			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var httpClient = new HttpClient(handler, disposeHandler: false))
 			{
-				var message = await httpClient.GetAsync(requestUri).ConfigureAwait(false);
+				HttpResponseMessage message = await httpClient.GetAsync(requestUri).ConfigureAwait(false);
 				var content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
 
 				Assert.Equal(content, "\"Good question Holmes !\"");
 			}
 			using (var httpClient = new HttpClient(handler))
 			{
-				var message = await httpClient.GetAsync(requestUri).ConfigureAwait(false);
+				HttpResponseMessage message = await httpClient.GetAsync(requestUri).ConfigureAwait(false);
 				var content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
 
 				Assert.Equal(content, "\"Good question Holmes !\"");
@@ -63,7 +47,9 @@ namespace DotNetTor.Tests
 				async () =>
 				{
 					using (var httpClient = new HttpClient(handler))
+					{
 						await httpClient.GetAsync(requestUri).ConfigureAwait(false);
+					}
 				}
 			).ConfigureAwait(false);
 		}
@@ -74,7 +60,7 @@ namespace DotNetTor.Tests
 			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
 			using (var httpClient = new HttpClient(handler))
 			{
-				var message =
+				HttpResponseMessage message =
 					await httpClient.GetAsync("http://api.qbit.ninja/whatisit/what%20is%20my%20future").ConfigureAwait(false);
 				var content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
 				Assert.Equal(content, "\"Good question Holmes !\"");
@@ -89,7 +75,7 @@ namespace DotNetTor.Tests
 						Assert.True(gotIp);
 					}
 					).ConfigureAwait(false);
-				
+
 
 				message = await httpClient.GetAsync("http://api.qbit.ninja/whatisit/what%20is%20my%20future").ConfigureAwait(false);
 				content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -125,7 +111,7 @@ namespace DotNetTor.Tests
 
 			Assert.NotEqual(realIp, torIp);
 		}
-		
+
 		[Fact]
 		public async Task CanDoHttpsAsync()
 		{
@@ -170,7 +156,7 @@ namespace DotNetTor.Tests
 		public async Task CanRequestInRowAsync()
 		{
 			var firstRequest = "http://api.qbit.ninja/transactions/38d4cfeb57d6685753b7a3b3534c3cb576c34ca7344cd4582f9613ebf0c2b02a?format=json&headeronly=true";
-			
+
 			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
 			using (var httpClient = new HttpClient(handler))
 			{
@@ -184,6 +170,7 @@ namespace DotNetTor.Tests
 		public async Task CanRequestInRowHttpsAsync()
 		{
 			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
+			{
 				for (int i = 0; i < 2; i++)
 				{
 					using (var httpClient = new HttpClient(handler, disposeHandler: false))
@@ -193,6 +180,7 @@ namespace DotNetTor.Tests
 							.ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
 					}
 				}
+			}
 		}
 
 		[Fact]

@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace DotNetTor.SocksPort.Helpers
 {
-	internal class PartiallyBufferedStream : Stream
+	internal sealed class PartiallyBufferedStream : Stream
 	{
 		private readonly byte[] _buffer;
 		private bool _disposed;

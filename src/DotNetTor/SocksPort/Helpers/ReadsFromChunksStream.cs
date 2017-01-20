@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace DotNetTor.SocksPort.Helpers
 {
-	internal class ReadsFromChunksStream : Stream
+	internal sealed class ReadsFromChunksStream : Stream
 	{
 		private readonly ByteStreamReader _byteStreamReader;
 		private bool _disposed;

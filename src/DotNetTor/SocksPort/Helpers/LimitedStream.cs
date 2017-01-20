@@ -5,12 +5,12 @@ using System.Threading.Tasks;
 
 namespace DotNetTor.SocksPort.Helpers
 {
-	internal class LimitedStream : Stream
+	internal sealed class LimitedStream : Stream
 	{
 		private readonly Stream _innerStream;
 		private bool _disposed;
 		private long _length;
-		private bool _leaveInnerStreamOpen;
+		private readonly bool _leaveInnerStreamOpen;
 
 		public LimitedStream(Stream innerStream, long length, bool leaveOpen)
 		{

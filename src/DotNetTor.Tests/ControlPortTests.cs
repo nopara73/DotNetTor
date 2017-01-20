@@ -1,6 +1,4 @@
-﻿using DotNetTor.SocksPort.Net;
-using System;
-using System.Net;
+﻿using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using DotNetTor.SocksPort;
@@ -18,12 +16,11 @@ namespace DotNetTor.Tests
 
 		    // 1. Get TOR IP
 		    IPAddress currIp = await GetTorIpAsync(requestUri).ConfigureAwait(false);
-		    IPAddress prevIp;
 
 		    var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
 		    for (int i = 0; i < 3; i++)
 		    {
-			    prevIp = currIp;
+			    IPAddress prevIp = currIp;
 			    // Change TOR IP
 
 			    await controlPortClient.ChangeCircuitAsync().ConfigureAwait(false);

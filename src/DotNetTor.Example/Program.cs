@@ -1,8 +1,5 @@
-﻿using DotNetTor.SocksPort.Net;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Net.Http;
-using System.Threading.Tasks;
 using DotNetTor.SocksPort;
 
 namespace DotNetTor.Example
@@ -14,8 +11,8 @@ namespace DotNetTor.Example
 		{
 			DoARandomRequest();
 			RequestWith3Ip();
-			CantRequestDifferentDomainsWithSameHandler();
-			PayAttentionToHttpClientDisposesHandler();
+			//CantRequestDifferentDomainsWithSameHandler();
+			//PayAttentionToHttpClientDisposesHandler();
 
 			Console.WriteLine("Press a key to exit..");
 			Console.ReadKey();
@@ -105,7 +102,7 @@ namespace DotNetTor.Example
 					content = message.Content.ReadAsStringAsync().Result;
 					Console.WriteLine(content);
 				}
-				catch (AggregateException ex) when (ex.InnerException != null && ex.InnerException is TorException)
+				catch (AggregateException ex) when (ex.InnerException is TorException)
 				{
 					Console.WriteLine("Don't do this!");
 					Console.WriteLine(ex.InnerException.Message);

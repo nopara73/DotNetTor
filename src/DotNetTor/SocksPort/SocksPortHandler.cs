@@ -18,7 +18,6 @@ namespace DotNetTor.SocksPort
 
 		private Socket _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 		private readonly IPEndPoint _socksEndPoint;
-		private readonly HttpSocketClient _httpSocketClient = new HttpSocketClient();
 
 		public SocksPortHandler(string address = "127.0.0.1", int socksPort = 9050)
 			: this(new IPEndPoint(IPAddress.Parse(address), socksPort))
@@ -26,14 +25,15 @@ namespace DotNetTor.SocksPort
 
 		}
 
+		// ReSharper disable once MemberCanBePrivate.Global
 		public SocksPortHandler(IPEndPoint endpoint)
 		{
 			_socksEndPoint = endpoint;
 		}
 
 		private const int MaxTry = 3;
-		private int _Tried = 0;
-		private static readonly SemaphoreSlim _Semaphore = new SemaphoreSlim(1, 1);
+		private int _tried = 0;
+		private static readonly SemaphoreSlim Semaphore = new SemaphoreSlim(1, 1);
 		protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
 			CancellationToken cancellationToken)
 		{
@@ -44,23 +44,20 @@ namespace DotNetTor.SocksPort
 			catch (IOException ex)
 				when (
 					ex.Message.Equals("Unable to read data from the transport connection: An established connection was aborted by the software in your host machine.", StringComparison.Ordinal)
-					&&
-					ex.InnerException != null
-					&&
-					ex.InnerException is SocketException
-					&&
-					ex.InnerException.Message.Equals("An established connection was aborted by the software in your host machine", StringComparison.Ordinal)
+					&& ex.InnerException is SocketException
+					&& ex.InnerException.Message.Equals("An established connection was aborted by the software in your host machine", StringComparison.Ordinal)
 					)
 			{
 				// Circuit has been changed, try again
-				if (_Tried < MaxTry)
-					_Tried++;
+				if (_tried < MaxTry)
+					_tried++;
 				else throw;
+
 				if (_socket.Connected) _socket.Shutdown(SocketShutdown.Both);
 				_socket.Dispose();
 				_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-				_Connecting = null;
-				_ConnectingToDest = null;
+				_connecting = null;
+				_connectingToDest = null;
 				_connectedTo = null;
 				return await TrySendAsync(request).ConfigureAwait(false);
 			}
@@ -82,32 +79,32 @@ namespace DotNetTor.SocksPort
 			// CONNECT TO DOMAIN DESTINATION IF NOT CONNECTED ALREADY
 			await EnsureConnectedToDestAsync(request).ConfigureAwait(false);
 
-			await _Semaphore.WaitAsync().ConfigureAwait(false);
+			await Semaphore.WaitAsync().ConfigureAwait(false);
 			try
 			{
-				await _httpSocketClient.SendRequestAsync(_Stream, request).ConfigureAwait(false);
+				await HttpSocketClient.SendRequestAsync(_stream, request).ConfigureAwait(false);
 				HttpResponseMessage message =
-					await _httpSocketClient.ReceiveResponseAsync(_Stream, request).ConfigureAwait(false);
+					await HttpSocketClient.ReceiveResponseAsync(_stream, request).ConfigureAwait(false);
 
-				_Tried = 0;
+				_tried = 0;
 				return message;
 			}
 			finally
 			{
-				_Semaphore.Release();
+				Semaphore.Release();
 			}
 		}
 
-		private Task _ConnectingToDest;
-		private Stream _Stream;
+		private Task _connectingToDest;
+		private Stream _stream;
 		private async Task EnsureConnectedToDestAsync(HttpRequestMessage request)
 		{
-			var uri = StripPath(request.RequestUri);
-			if(_ConnectingToDest == null)
+			Uri uri = StripPath(request.RequestUri);
+			if(_connectingToDest == null)
 			{
-				_ConnectingToDest = ConnectToDestAsync(uri);
+				_connectingToDest = ConnectToDestAsync(uri);
 			}
-			await _ConnectingToDest.ConfigureAwait(false);
+			await _connectingToDest.ConfigureAwait(false);
 			if (_connectedTo.AbsoluteUri != uri.AbsoluteUri)
 			{
 				throw new TorException(
@@ -115,12 +112,14 @@ namespace DotNetTor.SocksPort
 			}
 		}
 
-		private Uri StripPath(Uri requestUri)
+		private static Uri StripPath(Uri requestUri)
 		{
-			UriBuilder builder = new UriBuilder();
-			builder.Scheme = requestUri.Scheme;
-			builder.Port = requestUri.Port;
-			builder.Host = requestUri.Host;
+			var builder = new UriBuilder
+			{
+				Scheme = requestUri.Scheme,
+				Port = requestUri.Port,
+				Host = requestUri.Host
+			};
 			return builder.Uri;
 		}
 
@@ -146,18 +145,11 @@ namespace DotNetTor.SocksPort
 					.ConfigureAwait(false);
 				stream = httpsStream;
 			}
-			_Stream = stream;
+			_stream = stream;
 		}
 
-		private Task _Connecting;
-		private Task EnsureConnected()
-		{
-			if (_Connecting == null)
-			{
-				_Connecting = ConnectAsync();
-			}
-			return _Connecting;
-		}
+		private Task _connecting;
+		private Task EnsureConnected() => _connecting ?? (_connecting = ConnectAsync());
 
 		private async Task ConnectAsync()
 		{
@@ -186,8 +178,10 @@ namespace DotNetTor.SocksPort
 				{
 					return;
 				}
+
 				_disposed = true;
 			}
+
 			base.Dispose(disposing);
 		}
 

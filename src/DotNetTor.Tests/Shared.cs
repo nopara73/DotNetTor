@@ -1,6 +1,6 @@
 ﻿namespace DotNetTor.Tests
 {
-	public static class Shared
+	internal static class Shared
 	{
 		public const string HostAddress = "127.0.0.1";
 		public const int SocksPort = 9050;

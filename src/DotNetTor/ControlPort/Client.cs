@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace DotNetTor.ControlPort
 {
-	public class Client
+	public sealed class Client
 	{
 		private readonly IPEndPoint _controlEndPoint;
 		private readonly string _password;
@@ -17,34 +17,18 @@ namespace DotNetTor.ControlPort
 			_controlEndPoint = new IPEndPoint(IPAddress.Parse(address), controlPort);
 			_password = password;
 		}
-		
+
 		[Obsolete(Shared.SyncMethodDeprecated)]
-		public void ChangeCircuit()
-		{
-			ChangeCircuitAsync().Wait(); // Task.Wait is fine, because the method is obsolated
-		}
+		public void ChangeCircuit() => ChangeCircuitAsync().Wait();
 
-		public async Task<bool> TryChangeCircuitAsync()
-		{
-			try
-			{
-				await TryChangeCircuitAsync().ConfigureAwait(false);
-				return true;
-			}
-			catch (Exception)
-			{
-				return false;
-			}
-		}
-
-		private static readonly Semaphore _Sem = new Semaphore(1,1);
+		private static readonly Semaphore Sem = new Semaphore(1,1);
 		public async Task ChangeCircuitAsync()
 		{
-			using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
+			using (var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
 			{
 				try
 				{
-					_Sem.WaitOne();
+					Sem.WaitOne();
 					// 1. CONNECT
 					await socket.ConnectAsync(_controlEndPoint).ConfigureAwait(false);
 
@@ -56,8 +40,8 @@ namespace DotNetTor.ControlPort
 					var received = await socket.ReceiveAsync(buffer, SocketFlags.None).ConfigureAwait(false);
 
 					var response = Encoding.ASCII.GetString(buffer.Array, 0, received);
-					var statusCode = GetStatusCode(response);
-					if (statusCode != StatusCode.OK)
+					StatusCode statusCode = GetStatusCode(response);
+					if (statusCode != StatusCode.Ok)
 						throw new TorException($"Possibly wrong TOR control port password. {nameof(statusCode)}: {statusCode}");
 
 					// 3. SET LISTEN FOR CIRCUIT STATUS CHANGED EVENTS
@@ -69,7 +53,7 @@ namespace DotNetTor.ControlPort
 
 					response = Encoding.ASCII.GetString(buffer.Array, 0, received);
 					statusCode = GetStatusCode(response);
-					if (statusCode != StatusCode.OK)
+					if (statusCode != StatusCode.Ok)
 						throw new TorException($"SETEVENTS CIRC failed {nameof(statusCode)}: {statusCode}");
 
 					// 3. CHANGE CIRCUIT
@@ -81,7 +65,7 @@ namespace DotNetTor.ControlPort
 
 					response = Encoding.ASCII.GetString(buffer.Array, 0, received);
 					statusCode = GetStatusCode(response);
-					if (statusCode != StatusCode.OK)
+					if (statusCode != StatusCode.Ok)
 						throw new TorException($"Couldn't change the circuit. {nameof(statusCode)}: {statusCode}");
 
 					// LOOK FOR CIRCUIT CLOSING EVENTS
@@ -118,7 +102,7 @@ namespace DotNetTor.ControlPort
 				{
 					if (socket.Connected)
 						socket.Shutdown(SocketShutdown.Both);
-					_Sem.Release();
+					Sem.Release();
 				}
 			}
 		}

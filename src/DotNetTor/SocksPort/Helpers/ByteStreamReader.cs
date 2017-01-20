@@ -3,42 +3,31 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace DotNetTor.SocksPort.Helpers
 {
-	internal class ByteStreamReader : IDisposable
+	internal sealed class ByteStreamReader : IDisposable
 	{
 		private readonly Stream _stream;
 		private readonly bool _preserveLineEndings;
-		private readonly Encoding _encoding;
-		private readonly string _lineEnding;
-		private readonly byte[] _lineEndingBuffer;
+		private static readonly Encoding Encoding = new UTF8Encoding(false);
+		private const string LineEnding = "\r\n";
+		private readonly byte[] _lineEndingBuffer = Encoding.GetBytes(LineEnding);
 		private readonly byte[] _buffer;
 
-		private bool _disposed;
-		private int _position;
-		private int _bufferSize;
+		private bool _disposed = false;
+		private int _position = 0;
+		private int _bufferSize = -1;
 
 		public ByteStreamReader(Stream stream, int bufferSize, bool preserveLineEndings)
 		{
 			_stream = stream;
 			_preserveLineEndings = preserveLineEndings;
-			_encoding = new UTF8Encoding(false);
-			_lineEnding = "\r\n";
-			_lineEndingBuffer = _encoding.GetBytes("\r\n");
 			_buffer = new byte[bufferSize];
-
-			_disposed = false;
-			_position = 0;
-			_bufferSize = -1;
 		}
 
-		public Stream GetRemainingStream()
-		{
-			return new PartiallyBufferedStream(_buffer, _position, _bufferSize - _position, _stream);
-		}
+		public Stream RemainingStream => new PartiallyBufferedStream(_buffer, _position, _bufferSize - _position, _stream);
 
 		public void Dispose()
 		{
@@ -85,6 +74,7 @@ namespace DotNetTor.SocksPort.Helpers
 						lineEndingPosition = 0;
 					}
 				}
+
 				await lineStream.WriteAsync(_buffer, _position, endPosition - _position).ConfigureAwait(false);
 				_position = endPosition;
 
@@ -94,14 +84,15 @@ namespace DotNetTor.SocksPort.Helpers
 					_position = 0;
 				}
 			}
+
 			ArraySegment<byte> buffer;
 			if (!lineStream.TryGetBuffer(out buffer))
 				throw new Exception("Can't get buffer");
 
-			var line = _encoding.GetString(buffer.ToArray(), 0, (int)lineStream.Length);
+			var line = Encoding.GetString(buffer.ToArray(), 0, (int)lineStream.Length);
 			if (!_preserveLineEndings && lineFinished)
 			{
-				line = line.Substring(0, line.Length - _lineEnding.Length);
+				line = line.Substring(0, line.Length - LineEnding.Length);
 			}
 
 			return line;

@@ -5,17 +5,12 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Net.Security;
-using System.Net.Sockets;
-using System.Security.Authentication;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace DotNetTor.SocksPort.Net
 {
-	internal class HttpSocketClient
+	internal sealed class HttpSocketClient
 	{
 		private const int BufferSize = 4096;
 		private const string HostHeader = "Host";
@@ -28,13 +23,13 @@ namespace DotNetTor.SocksPort.Net
 		private static readonly ISet<HttpMethod> MethodsWithoutRequestBody = new HashSet<HttpMethod> { ConnectMethod, HttpMethod.Head };
 		private static readonly ISet<HttpMethod> MethodsWithoutResponseBody = new HashSet<HttpMethod> { ConnectMethod, HttpMethod.Head };
 		private static readonly ISet<string> SpecialHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { HostHeader, ContentLengthHeader, TransferEncodingHeader };
-		
-		public async Task<HttpResponseMessage> ReceiveResponseAsync(Stream stream, HttpRequestMessage request)
+
+		public static async Task<HttpResponseMessage> ReceiveResponseAsync(Stream stream, HttpRequestMessage request)
 		{
 			var reader = new ByteStreamReader(stream, BufferSize, false);
-			
-			var response = await ReadResponseHeadAsync(reader, request).ConfigureAwait(false);
-				
+
+			HttpResponseMessage response = await ReadResponseHeadAsync(reader, request).ConfigureAwait(false);
+
 			if (!MethodsWithoutResponseBody.Contains(request.Method))
 			{
 				ReadResponseBody(reader, response);
@@ -43,20 +38,20 @@ namespace DotNetTor.SocksPort.Net
 			return response;
 		}
 
-		private void ReadResponseBody(ByteStreamReader reader, HttpResponseMessage response)
+		private static void ReadResponseBody(ByteStreamReader reader, HttpResponseMessage response)
 		{
 			HttpContent content = null;
 			if (response.Headers.TransferEncodingChunked.GetValueOrDefault(false))
 			{
 				// read the body with chunked transfer encoding
-				var remainingStream = reader.GetRemainingStream();
+				Stream remainingStream = reader.RemainingStream;
 				var chunkedStream = new ReadsFromChunksStream(remainingStream);
 				content = new StreamContent(chunkedStream);
 			}
 			else if (response.Content.Headers.ContentLength.HasValue)
 			{
 				// read the body with a content-length
-				var remainingStream = reader.GetRemainingStream();
+				Stream remainingStream = reader.RemainingStream;
 				var limitedStream = new LimitedStream(remainingStream, response.Content.Headers.ContentLength.Value, true);
 				content = new StreamContent(limitedStream);
 			}
@@ -77,14 +72,14 @@ namespace DotNetTor.SocksPort.Net
 			}
 		}
 
-		private async Task<HttpResponseMessage> ReadResponseHeadAsync(ByteStreamReader reader, HttpRequestMessage request)
+		private static async Task<HttpResponseMessage> ReadResponseHeadAsync(ByteStreamReader reader, HttpRequestMessage request)
 		{
 			// initialize the response
 			var response = new HttpResponseMessage { RequestMessage = request };
 
 			// read the first line of the response
 			string line = await reader.ReadLineAsync().ConfigureAwait(false);
-			string[] pieces = line.Split(new[] { ' ' }, 3);
+			var pieces = line.Split(new[] { ' ' }, 3);
 			if (pieces[0] != "HTTP/1.1")
 			{
 				throw new HttpRequestException("The HTTP version the response is not supported.");
@@ -115,7 +110,7 @@ namespace DotNetTor.SocksPort.Net
 			return response;
 		}
 
-		public async Task SendRequestAsync(Stream networkStream, HttpRequestMessage request)
+		public static async Task SendRequestAsync(Stream networkStream, HttpRequestMessage request)
 		{
 			ValidateRequest(request);
 
@@ -132,7 +127,7 @@ namespace DotNetTor.SocksPort.Net
 			}
 		}
 
-		private async Task<Stream> SendRequestHeadAsync(StreamWriter writer, HttpRequestMessage request)
+		private static async Task<Stream> SendRequestHeadAsync(TextWriter writer, HttpRequestMessage request)
 		{
 			var location = request.Method != ConnectMethod ? request.RequestUri.PathAndQuery : $"{request.RequestUri.DnsSafeHost}:{request.RequestUri.Port}";
 			await writer.WriteAsync($"{request.Method.Method} {location} HTTP/{request.Version}" + LineSeparator).ConfigureAwait(false);
@@ -193,25 +188,21 @@ namespace DotNetTor.SocksPort.Net
 			return contentStream;
 		}
 
-		private async Task WriteHeaderAsync(TextWriter writer, string key, string value)
-		{
-			await WriteHeaderAsync(writer, new KeyValuePair<string, IEnumerable<string>>(key, new[] { value })).ConfigureAwait(false);
-		}
+		private static async Task WriteHeaderAsync(TextWriter writer, string key, string value)
+			=> await WriteHeaderAsync(writer, new KeyValuePair<string, IEnumerable<string>>(key, new[] { value })).ConfigureAwait(false);
 
-		private async Task WriteHeaderAsync(TextWriter writer, KeyValuePair<string, IEnumerable<string>> header)
-		{
-			await writer.WriteAsync($"{header.Key}: {string.Join(",", header.Value)}" + LineSeparator).ConfigureAwait(false);
-		}
+		private static async Task WriteHeaderAsync(TextWriter writer, KeyValuePair<string, IEnumerable<string>> header)
+			=> await writer.WriteAsync($"{header.Key}: {string.Join(",", header.Value)}" + LineSeparator).ConfigureAwait(false);
 
-		private void ValidateRequest(HttpRequestMessage request)
+		private static void ValidateRequest(HttpRequestMessage request)
 		{
 			if (request.RequestUri.Scheme.Equals("http", StringComparison.Ordinal))
 			{
-				
+
 			}
 			else if (request.RequestUri.Scheme.Equals("https", StringComparison.Ordinal))
 			{
-				
+
 			}
 			else throw new NotSupportedException("Only HTTP and HTTPS are supported.");
 

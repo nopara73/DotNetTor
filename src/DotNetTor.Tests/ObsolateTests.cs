@@ -74,7 +74,7 @@ namespace DotNetTor.Tests
 
 				// 2. Change TOR IP
 				var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
-				
+
 				controlPortClient.ChangeCircuit();
 
 				// 3. Get changed TOR IP
