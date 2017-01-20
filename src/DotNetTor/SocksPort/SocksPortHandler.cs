@@ -16,7 +16,7 @@ namespace DotNetTor.SocksPort
 	{
 		private Uri _connectedTo = null;
 
-		private Socket _socket;
+		private Socket _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 		private readonly IPEndPoint _socksEndPoint;
 		private readonly HttpSocketClient _httpSocketClient = new HttpSocketClient();
 
@@ -29,7 +29,6 @@ namespace DotNetTor.SocksPort
 		public SocksPortHandler(IPEndPoint endpoint)
 		{
 			_socksEndPoint = endpoint;
-			_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 		}
 
 		private const int MaxTry = 3;
