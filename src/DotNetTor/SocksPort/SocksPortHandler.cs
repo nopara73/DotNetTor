@@ -29,7 +29,7 @@ namespace DotNetTor.SocksPort
 		public SocksPortHandler(IPEndPoint endpoint)
 		{
 			_socksEndPoint = endpoint;
-			_socket = _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+			_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 		}
 
 		private const int MaxTry = 3;

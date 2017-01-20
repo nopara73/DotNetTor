@@ -48,10 +48,14 @@ namespace DotNetTor.SocksPort.Helpers
 				_disposed = true;
 			}
 		}
-		
+
 		public async Task<string> ReadLineAsync()
 		{
-			await EnsureFirstRead().ConfigureAwait(false);
+			// Ensure first read
+			if (_bufferSize < 0)
+			{
+				_bufferSize = await _stream.ReadAsync(_buffer, 0, _buffer.Length).ConfigureAwait(false);
+			}
 
 			if (_bufferSize == 0)
 			{
@@ -94,7 +98,7 @@ namespace DotNetTor.SocksPort.Helpers
 			if (!lineStream.TryGetBuffer(out buffer))
 				throw new Exception("Can't get buffer");
 
-			var line = _encoding.GetString(buffer.ToArray(), 0, (int) lineStream.Length);
+			var line = _encoding.GetString(buffer.ToArray(), 0, (int)lineStream.Length);
 			if (!_preserveLineEndings && lineFinished)
 			{
 				line = line.Substring(0, line.Length - _lineEnding.Length);
@@ -126,24 +130,6 @@ namespace DotNetTor.SocksPort.Helpers
 			}
 
 			return read;
-		}
-
-		private Task _Reading;
-		private Task EnsureFirstRead()
-		{
-			if (_Reading == null)
-			{
-				_Reading = FirstRead();
-			}
-			return _Reading;
-		}
-
-		private async Task FirstRead()
-		{
-			if (_bufferSize < 0)
-			{
-				_bufferSize = await _stream.ReadAsync(_buffer, 0, _buffer.Length).ConfigureAwait(false);
-			}
 		}
 	}
 }
