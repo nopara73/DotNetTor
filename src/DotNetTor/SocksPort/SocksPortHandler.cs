@@ -74,7 +74,7 @@ namespace DotNetTor.SocksPort
 		private async Task<HttpResponseMessage> TrySendAsync(HttpRequestMessage request)
 		{
 			// CONNECT TO LOCAL TOR
-			await EnsureConnected().ConfigureAwait(false);
+			await EnsureConnected.ConfigureAwait(false);
 
 			// CONNECT TO DOMAIN DESTINATION IF NOT CONNECTED ALREADY
 			await EnsureConnectedToDestAsync(request).ConfigureAwait(false);
@@ -149,7 +149,7 @@ namespace DotNetTor.SocksPort
 		}
 
 		private Task _connecting;
-		private Task EnsureConnected() => _connecting ?? (_connecting = ConnectAsync());
+		private Task EnsureConnected => _connecting ?? (_connecting = ConnectAsync());
 
 		private async Task ConnectAsync()
 		{

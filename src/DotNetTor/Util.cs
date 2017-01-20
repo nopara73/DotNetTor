@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -25,16 +24,16 @@ namespace DotNetTor
 			}
 		}
 
-		internal const byte SocksVersion = 0x05;
+		private const byte SocksVersion = 0x05;
 
-		internal enum AddressType : byte
+		private enum AddressType : byte
 		{
 			IpV4 = 0x01,
 			DomainName = 0x03,
 			IpV6 = 0x04
 		}
 
-		internal enum ReplyType : byte
+		private enum ReplyType : byte
 		{
 			Succeeded = 0x00,
 			GeneralSocksServerFailure = 0x01,
@@ -53,29 +52,22 @@ namespace DotNetTor
 			ArraySegment<byte> sendBuffer;
 			int port = uri.Port;
 			byte[] nameBytes = Encoding.ASCII.GetBytes(uri.DnsSafeHost);
-			var addresByteList = new List<byte>();
-			foreach (byte b in
-				Enumerable.Empty<byte>()
-					.Concat(
-						new[] { (byte)nameBytes.Length })
-					.Concat(nameBytes))
-			{
-				addresByteList.Add(b);
-			}
-			byte[] addressBytes = addresByteList.ToArray();
 
-			var sendByteList = new List<byte>();
-			foreach (
-				byte b in
+			var addressBytes =
 				Enumerable.Empty<byte>()
-					.Concat(new[] {SocksVersion, (byte)0x01, (byte)0x00, (byte)AddressType.DomainName })
-					.Concat(addressBytes)
-					.Concat(BitConverter.GetBytes(
-						IPAddress.HostToNetworkOrder((short)port))))
-			{
-				sendByteList.Add(b);
-			}
-			sendBuffer = new ArraySegment<byte>(sendByteList.ToArray());
+				.Concat(new[] {(byte) nameBytes.Length})
+				.Concat(nameBytes).ToArray();
+
+			sendBuffer =
+				new ArraySegment<byte>(
+					Enumerable.Empty<byte>()
+					.Concat(
+						new[]
+						{
+							SocksVersion, (byte) 0x01, (byte) 0x00, (byte) AddressType.DomainName
+						})
+						.Concat(addressBytes)
+						.Concat(BitConverter.GetBytes(IPAddress.HostToNetworkOrder((short) port))).ToArray());
 			return sendBuffer;
 		}
 
@@ -85,6 +77,7 @@ namespace DotNetTor
 			{
 				throw new TorException($"The SOCKS5 proxy responded with {receiveCount} bytes to the connect request. At least 7 bytes are expected.");
 			}
+
 			byte version = receiveBuffer.Array[0];
 			ValidateSocksVersion(version);
 			if (receiveBuffer.Array[1] != (byte)ReplyType.Succeeded)
@@ -99,6 +92,7 @@ namespace DotNetTor
 			{
 				throw new TorException($"The SOCKS5 proxy responded with an unexpected {nameof(AddressType)} 0x{receiveBuffer.Array[3]:x2}.");
 			}
+
 			var bindAddressType = (AddressType)receiveBuffer.Array[3];
 			if (bindAddressType == AddressType.IpV4)
 			{
@@ -106,6 +100,7 @@ namespace DotNetTor
 				{
 					throw new TorException($"The SOCKS5 proxy responded with an unexpected number of bytes ({receiveCount} bytes) when the address is an IPv4 address. 10 bytes were expected.");
 				}
+
 				IPAddress.NetworkToHostOrder(BitConverter.ToInt16(receiveBuffer.Array, 8));
 			}
 			else if (bindAddressType == AddressType.DomainName)
@@ -120,6 +115,7 @@ namespace DotNetTor
 				{
 					throw new TorException($"The SOCKS5 proxy responded with an unexpected number of bytes ({receiveCount} bytes) when the address is an IPv6 address. 22 bytes were expected.");
 				}
+
 				IPAddress.NetworkToHostOrder(BitConverter.ToInt16(receiveBuffer.Array, 20));
 			}
 			else
@@ -135,6 +131,7 @@ namespace DotNetTor
 			{
 				throw new TorException($"The SOCKS5 proxy responded with {receiveCount} bytes, instead of 2, during the handshake.");
 			}
+
 			byte version = receiveBuffer.Array[0];
 			ValidateSocksVersion(version);
 			if (receiveBuffer.Array[1] == 0xFF)
@@ -143,7 +140,7 @@ namespace DotNetTor
 			}
 		}
 
-		internal static void ValidateSocksVersion(byte version)
+		private static void ValidateSocksVersion(byte version)
 		{
 			if (version != SocksVersion)
 			{

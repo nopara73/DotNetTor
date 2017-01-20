@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace DotNetTor.SocksPort.Net
 {
-	internal sealed class HttpSocketClient
+	internal static class HttpSocketClient
 	{
 		private const int BufferSize = 4096;
 		private const string HostHeader = "Host";
