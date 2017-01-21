@@ -43,19 +43,17 @@ namespace DotNetTor.Tests
 
 				Assert.Equal(content, "\"Good question Holmes !\"");
 			}
-			await Assert.ThrowsAsync<TorException>(
-				async () =>
-				{
-					using (var httpClient = new HttpClient(handler))
-					{
-						await httpClient.GetAsync(requestUri).ConfigureAwait(false);
-					}
-				}
-			).ConfigureAwait(false);
+			using (var httpClient = new HttpClient(handler))
+			{
+				HttpResponseMessage message = await httpClient.GetAsync(requestUri).ConfigureAwait(false);
+				var content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+				Assert.Equal(content, "\"Good question Holmes !\"");
+			}
 		}
 
 		[Fact]
-		public async Task CantRequestDifferentWithSameHandlerAsync()
+		public async Task CanRequestDifferentWithSameHandlerAsync()
 		{
 			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
 			using (var httpClient = new HttpClient(handler))
@@ -65,16 +63,11 @@ namespace DotNetTor.Tests
 				var content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
 				Assert.Equal(content, "\"Good question Holmes !\"");
 
-				await Assert.ThrowsAsync<TorException>(
-					async () =>
-					{
-						IPAddress ip;
-						message = await httpClient.GetAsync("http://icanhazip.com/").ConfigureAwait(false);
-						content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
-						var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out ip);
-						Assert.True(gotIp);
-					}
-					).ConfigureAwait(false);
+				IPAddress ip;
+				message = await httpClient.GetAsync("http://icanhazip.com/").ConfigureAwait(false);
+				content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
+				var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out ip);
+				Assert.True(gotIp);
 
 
 				message = await httpClient.GetAsync("http://api.qbit.ninja/whatisit/what%20is%20my%20future").ConfigureAwait(false);

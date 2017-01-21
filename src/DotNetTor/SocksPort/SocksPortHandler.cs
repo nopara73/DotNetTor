@@ -43,7 +43,8 @@ namespace DotNetTor.SocksPort
 			}
 			catch (Exception ex)
 			{
-				// Circuit has been changed, try again
+				// Circuit has been changed, try again 
+				// Or something else unexpected error happened, try again a few times
 				if (_tried < MaxTry)
 					_tried++;
 				else throw new TorException(ex.Message, ex);
