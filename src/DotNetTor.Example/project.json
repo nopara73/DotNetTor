@@ -1,8 +1,7 @@
 {
   "version": "1.0.0-*",
   "buildOptions": {
-    "emitEntryPoint": true,
-    "nowarn": [ "CC0030", "CC0001", "CC0105" ]
+    "emitEntryPoint": true
   },
 
   "dependencies": {
