@@ -121,31 +121,6 @@ namespace DotNetTor.Tests
 		}
 
 		[Fact]
-		public async Task CanRequestALotAsync()
-		{
-			string woTor;
-			string wTor;
-			var requestUri = "http://api.qbit.ninja/blocks/0000000000000000119fe3f65fd3038cbe8429ad2cf7c2de1e5e7481b34a01b4";
-			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
-			using (var httpClient = new HttpClient(handler))
-			{
-				wTor =
-					await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync()
-						.ConfigureAwait(false);
-			}
-
-			using (var httpClient = new HttpClient())
-			{
-				woTor =
-					await (
-						await httpClient.GetAsync(requestUri).ConfigureAwait(false)
-					).Content.ReadAsStringAsync().ConfigureAwait(false);
-			}
-
-			Assert.Equal(woTor, wTor);
-		}
-
-		[Fact]
 		public async Task CanRequestInRowAsync()
 		{
 			var firstRequest = "http://api.qbit.ninja/transactions/38d4cfeb57d6685753b7a3b3534c3cb576c34ca7344cd4582f9613ebf0c2b02a?format=json&headeronly=true";

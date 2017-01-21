@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Security;
@@ -14,10 +16,8 @@ namespace DotNetTor.SocksPort
 {
 	public sealed class SocksPortHandler : HttpMessageHandler
 	{
-		private Uri _connectedTo = null;
-
-		private Socket _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-		private readonly IPEndPoint _socksEndPoint;
+		private Socket _socket = null;
+		private IPEndPoint _socksEndPoint;
 
 		public SocksPortHandler(string address = "127.0.0.1", int socksPort = 9050)
 			: this(new IPEndPoint(IPAddress.Parse(address), socksPort))
@@ -34,48 +34,17 @@ namespace DotNetTor.SocksPort
 		private const int MaxTry = 3;
 		private int _tried = 0;
 		private static readonly SemaphoreSlim Semaphore = new SemaphoreSlim(1, 1);
+
 		protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
 			CancellationToken cancellationToken)
 		{
-			try
-			{
-				return await TrySendAsync(request).ConfigureAwait(false);
-			}
-			catch (Exception ex)
-			{
-				// Circuit has been changed, try again 
-				// Or something else unexpected error happened, try again a few times
-				if (_tried < MaxTry)
-					_tried++;
-				else throw new TorException(ex.Message, ex);
-
-				if (_socket.Connected) _socket.Shutdown(SocketShutdown.Both);
-				_socket.Dispose();
-				_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-				_connecting = null;
-				_connectingToDest = null;
-				_connectedTo = null;
-				return await TrySendAsync(request).ConfigureAwait(false);
-			}
-		}
-
-		private async Task<HttpResponseMessage> TrySendAsync(HttpRequestMessage request)
-		{
-			// CONNECT TO LOCAL TOR
-			await EnsureConnected.ConfigureAwait(false);
-
-			// CONNECT TO DOMAIN DESTINATION IF NOT CONNECTED ALREADY
-			await EnsureConnectedToDestAsync(request).ConfigureAwait(false);
-
 			await Semaphore.WaitAsync().ConfigureAwait(false);
 			try
 			{
-				await HttpSocketClient.SendRequestAsync(_stream, request).ConfigureAwait(false);
-				HttpResponseMessage message =
-					await HttpSocketClient.ReceiveResponseAsync(_stream, request).ConfigureAwait(false);
-
-				_tried = 0;
-				return message;
+				// CONNECT TO LOCAL TOR
+				await EnsureConnectedToTorAsync().ConfigureAwait(false);
+				
+				return await TrySendAsync(request).ConfigureAwait(false);
 			}
 			finally
 			{
@@ -83,43 +52,52 @@ namespace DotNetTor.SocksPort
 			}
 		}
 
-		private Task _connectingToDest;
-		private Stream _stream;
-		private async Task EnsureConnectedToDestAsync(HttpRequestMessage request)
+		private async Task<HttpResponseMessage> TrySendAsync(HttpRequestMessage request)
 		{
-			Uri uri = StripPath(request.RequestUri);
-			if(_connectingToDest == null)
+			var uri = Util.StripPath(request.RequestUri);
+			try
 			{
-				_connectingToDest = ConnectToDestAsync(uri);
+				await ConnectToDestAsync(uri).ConfigureAwait(false);
+
+				Stream stream;
+				_connections.TryGetValue(uri, out stream);
+
+				await HttpSocketClient.SendRequestAsync(stream, request).ConfigureAwait(false);
+				HttpResponseMessage message =
+					await HttpSocketClient.ReceiveResponseAsync(stream, request).ConfigureAwait(false);
+
+				_tried = 0;
+				return message;
 			}
-			await _connectingToDest.ConfigureAwait(false);
-			if (_connectedTo.AbsoluteUri != uri.AbsoluteUri)
+			catch (Exception ex)
 			{
-				throw new TorException(
-					$"Requests are only allowed to {_connectedTo.AbsoluteUri}, you are trying to connect to {uri.AbsoluteUri}");
+				// Circuit has been changed, try again
+				// Or something else unexpected error happened, try again a few times
+				if (_tried < MaxTry)
+					_tried++;
+				else throw new TorException(ex.Message, ex);
+
+				await EnsureConnectedToTorAsync().ConfigureAwait(false);
+				Stream stream;
+				_connections.TryRemove(uri, out stream);
+				return await TrySendAsync(request).ConfigureAwait(false);
 			}
 		}
 
-		private static Uri StripPath(Uri requestUri)
-		{
-			var builder = new UriBuilder
-			{
-				Scheme = requestUri.Scheme,
-				Port = requestUri.Port,
-				Host = requestUri.Host
-			};
-			return builder.Uri;
-		}
+		private readonly ConcurrentDictionary<Uri, Stream> _connections = new ConcurrentDictionary<Uri, Stream>();
 
 		private async Task ConnectToDestAsync(Uri uri)
 		{
+			if (_connections.ContainsKey(uri)) return;
+
 			var sendBuffer = Util.BuildConnectToUri(uri);
 			await _socket.SendAsync(sendBuffer, SocketFlags.None).ConfigureAwait(false);
 			var receiveBuffer = new ArraySegment<byte>(new byte[_socket.ReceiveBufferSize]);
 			var receiveCount = await _socket.ReceiveAsync(receiveBuffer, SocketFlags.None).ConfigureAwait(false);
+
 			Util.ValidateConnectToDestinationResponse(receiveBuffer, receiveCount);
-			_connectedTo = uri;
-			Stream stream = new NetworkStream(_socket);
+
+			Stream stream = new NetworkStream(_socket, ownsSocket: false);
 			if(uri.Scheme.Equals("https", StringComparison.Ordinal))
 			{
 				var httpsStream = new SslStream(stream);
@@ -133,38 +111,58 @@ namespace DotNetTor.SocksPort
 					.ConfigureAwait(false);
 				stream = httpsStream;
 			}
-			_stream = stream;
+			_connections.AddOrUpdate(uri, stream, (k, v) => stream);
 		}
 
-		private Task _connecting;
-		private Task EnsureConnected => _connecting ?? (_connecting = ConnectAsync());
-
-		private async Task ConnectAsync()
+		private async Task EnsureConnectedToTorAsync()
 		{
-			await _socket.ConnectAsync(_socksEndPoint).ConfigureAwait(false);
+			if (_socket == null || _socket.Connected == false)
+			{
+				if(_socket != null)
+					_socksPortUsers.AddOrUpdate(_socket, true, (k, v) => true);
 
-			// HANDSHAKE
-			var sendBuffer = new ArraySegment<byte>(new byte[] { 5, 1, 0 });
-			await _socket.SendAsync(sendBuffer, SocketFlags.None).ConfigureAwait(false);
-			var receiveBuffer = new ArraySegment<byte>(new byte[_socket.ReceiveBufferSize]);
-			var receiveCount = await _socket.ReceiveAsync(receiveBuffer, SocketFlags.None).ConfigureAwait(false);
-			Util.ValidateHandshakeResponse(receiveBuffer, receiveCount);
+				_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+
+				_socksPortUsers.AddOrUpdate(_socket, false, (k,v) => false);
+
+				await _socket.ConnectAsync(_socksEndPoint).ConfigureAwait(false);
+
+				// HANDSHAKE
+				var sendBuffer = new ArraySegment<byte>(new byte[] {5, 1, 0});
+				await _socket.SendAsync(sendBuffer, SocketFlags.None).ConfigureAwait(false);
+				var receiveBuffer = new ArraySegment<byte>(new byte[_socket.ReceiveBufferSize]);
+				var receiveCount = await _socket.ReceiveAsync(receiveBuffer, SocketFlags.None).ConfigureAwait(false);
+				Util.ValidateHandshakeResponse(receiveBuffer, receiveCount);
+			}
 		}
+
+		// bool can be disposed
+		private static ConcurrentDictionary<Socket, bool> _socksPortUsers = new ConcurrentDictionary<Socket, bool>();
 
 		private bool _disposed = false;
+
 		protected override void Dispose(bool disposing)
 		{
 			if (!_disposed)
 			{
-				try
+				_socksPortUsers.AddOrUpdate(_socket, true, (k, v) => true);
+				if (_socksPortUsers.Values.All(x => x)) // if all socket let itself to be disposed so be it
 				{
-					if (_socket.Connected)
-						_socket.Shutdown(SocketShutdown.Both);
-					_socket.Dispose();
-				}
-				catch (ObjectDisposedException)
-				{
-					return;
+					foreach (Socket socket in _socksPortUsers.Keys)
+					{
+						try
+						{
+							if (socket.Connected)
+								socket.Shutdown(SocketShutdown.Both);
+							socket.Dispose();
+						}
+						catch (ObjectDisposedException)
+						{
+							continue;
+						}
+					}
+
+					_socksPortUsers.Clear();
 				}
 
 				_disposed = true;

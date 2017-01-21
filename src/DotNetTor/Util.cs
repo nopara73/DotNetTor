@@ -150,5 +150,16 @@ namespace DotNetTor
 
 		internal const string SyncMethodDeprecated = "For better performance consider using the async API instead.";
 		internal const string ClassDeprecated = "This class is deprecated.";
+
+		public static Uri StripPath(Uri requestUri)
+		{
+			var builder = new UriBuilder
+			{
+				Scheme = requestUri.Scheme,
+				Port = requestUri.Port,
+				Host = requestUri.Host
+			};
+			return builder.Uri;
+		}
 	}
 }
