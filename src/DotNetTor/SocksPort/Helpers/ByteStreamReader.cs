@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -97,15 +96,21 @@ namespace DotNetTor.SocksPort.Helpers
 
 			return line;
 		}
+		private const int MaxTry = 7;
+		private int _tried = 0;
 		private async Task ReadWaitRetryAsync()
 		{
 			try
 			{
 				_bufferSize = await _stream.ReadAsync(_buffer, 0, _buffer.Length).ConfigureAwait(false);
+				_tried = 0;
 			}
-			catch (NotSupportedException ex) when (ex.Message.Trim().Equals("The BeginRead method cannot be called when another read operation is pending.", StringComparison.Ordinal))
+			catch (NotSupportedException)
 			{
-				Debug.WriteLine(ex);
+				if (_tried < MaxTry)
+					_tried++;
+				else throw;
+
 				await Task.Delay(50).ConfigureAwait(false);
 				await ReadWaitRetryAsync().ConfigureAwait(false);
 			}
