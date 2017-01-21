@@ -21,7 +21,7 @@ namespace DotNetTor.ControlPort
 			_password = password;
 		}
 
-		[Obsolete(Shared.SyncMethodDeprecated)]
+		[Obsolete(Util.SyncMethodDeprecated)]
 		public void ChangeCircuit() => ChangeCircuitAsync().Wait();
 
 		private static readonly SemaphoreSlim Sem = new SemaphoreSlim(1,1);

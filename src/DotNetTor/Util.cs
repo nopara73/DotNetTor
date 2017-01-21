@@ -147,5 +147,8 @@ namespace DotNetTor
 				throw new TorException($"The SOCKS5 proxy responded with 0x{version:x2}, instead of 0x{SocksVersion:x2}, for the SOCKS version number.");
 			}
 		}
+
+		internal const string SyncMethodDeprecated = "For better performance consider using the async API instead.";
+		internal const string ClassDeprecated = "This class is deprecated.";
 	}
 }

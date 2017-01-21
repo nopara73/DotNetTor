@@ -6,12 +6,12 @@ using System.Net;
 
 namespace DotNetTor.SocksPort
 {
-	[Obsolete(Shared.ClassDeprecated + "Consider using SocksPortHandler class instead.")]
+	[Obsolete(Util.ClassDeprecated + "Consider using SocksPortHandler class instead.")]
 	public sealed class Client : IDisposable
 	{
 		private readonly IPEndPoint _socksEndPoint;
 
-		[Obsolete(Shared.ClassDeprecated + "Consider using SocksPortHandler class instead.")]
+		[Obsolete(Util.ClassDeprecated + "Consider using SocksPortHandler class instead.")]
 		public Client(string address = "127.0.0.1", int socksPort = 9050)
 		{
 			try
@@ -24,12 +24,12 @@ namespace DotNetTor.SocksPort
 			}
 		}
 
-		[Obsolete(Shared.ClassDeprecated + "Consider using SocksPortHandler class instead.")]
+		[Obsolete(Util.ClassDeprecated + "Consider using SocksPortHandler class instead.")]
 		[SuppressMessage("ReSharper", "UnusedParameter.Global")] // It's fine to leave it as, to not break userspace
 		public SocksPortHandler GetHandlerFromDomain(string domainName, RequestType requestType = RequestType.HTTP)
 			=> new SocksPortHandler(_socksEndPoint.Address.ToString(), _socksEndPoint.Port);
 
-		[Obsolete(Shared.ClassDeprecated + "Consider using SocksPortHandler class instead.")]
+		[Obsolete(Util.ClassDeprecated + "Consider using SocksPortHandler class instead.")]
 		[SuppressMessage("ReSharper", "UnusedParameter.Global")] // It's fine to leave it as, to not break userspace
 		public SocksPortHandler GetHandlerFromRequestUri(string requestUri = "")
 			=> new SocksPortHandler(_socksEndPoint.Address.ToString(), _socksEndPoint.Port);
@@ -39,7 +39,7 @@ namespace DotNetTor.SocksPort
 			// Leave empty to not break userspace
 		}
 
-		[Obsolete(Shared.ClassDeprecated + "Consider using SocksPortHandler class instead.")]
+		[Obsolete(Util.ClassDeprecated + "Consider using SocksPortHandler class instead.")]
 		public void Dispose()
 		{
 			ReleaseUnmanagedResources();
