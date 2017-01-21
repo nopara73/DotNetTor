@@ -41,13 +41,12 @@ namespace DotNetTor.SocksPort
 			{
 				return await TrySendAsync(request).ConfigureAwait(false);
 			}
-			catch (IOException ex)
-				when (ex.InnerException is SocketException)
+			catch (Exception ex)
 			{
 				// Circuit has been changed, try again
 				if (_tried < MaxTry)
 					_tried++;
-				else throw;
+				else throw new TorException(ex.Message, ex);
 
 				if (_socket.Connected) _socket.Shutdown(SocketShutdown.Both);
 				_socket.Dispose();
@@ -56,14 +55,6 @@ namespace DotNetTor.SocksPort
 				_connectingToDest = null;
 				_connectedTo = null;
 				return await TrySendAsync(request).ConfigureAwait(false);
-			}
-			catch (TorException)
-			{
-				throw;
-			}
-			catch (Exception ex)
-			{
-				throw new TorException(ex.Message, ex);
 			}
 		}
 
