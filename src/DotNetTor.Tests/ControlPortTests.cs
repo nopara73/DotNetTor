@@ -18,7 +18,7 @@ namespace DotNetTor.Tests
 		    IPAddress currIp = await GetTorIpAsync(requestUri).ConfigureAwait(false);
 
 		    var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
-		    for (int i = 0; i < 3; i++)
+		    for (int i = 0; i < 5; i++)
 		    {
 			    IPAddress prevIp = currIp;
 			    // Change TOR IP
