@@ -42,11 +42,7 @@ namespace DotNetTor.SocksPort
 				return await TrySendAsync(request).ConfigureAwait(false);
 			}
 			catch (IOException ex)
-				when (
-					ex.Message.Equals("Unable to read data from the transport connection: An established connection was aborted by the software in your host machine.", StringComparison.Ordinal)
-					&& ex.InnerException is SocketException
-					&& ex.InnerException.Message.Equals("An established connection was aborted by the software in your host machine", StringComparison.Ordinal)
-					)
+				when (ex.InnerException is SocketException)
 			{
 				// Circuit has been changed, try again
 				if (_tried < MaxTry)
