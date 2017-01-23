@@ -4,7 +4,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace DotNetTor.ControlPort
@@ -23,8 +22,6 @@ namespace DotNetTor.ControlPort
 
 		[Obsolete(Util.SyncMethodDeprecated)]
 		public void ChangeCircuit() => ChangeCircuitAsync().Wait();
-
-		private static readonly SemaphoreSlim Sem = new SemaphoreSlim(1,1);
 
 		public async Task ChangeCircuitAsync()
 		{
@@ -50,6 +47,9 @@ namespace DotNetTor.ControlPort
 			finally
 			{
 				DisconnectDisposeSocket();
+
+				// safety delay, in case the tor client is not quick enough with the actions
+				await Task.Delay(100).ConfigureAwait(false);
 			}
 		}
 
@@ -189,7 +189,7 @@ namespace DotNetTor.ControlPort
 			}
 			finally
 			{
-				Sem.Release();
+				Util.Semaphore.Release();
 			}
 		}
 
@@ -197,7 +197,7 @@ namespace DotNetTor.ControlPort
 		{
 			try
 			{
-				await Sem.WaitAsync().ConfigureAwait(false);
+				await Util.Semaphore.WaitAsync().ConfigureAwait(false);
 				_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 				await _socket.ConnectAsync(_controlEndPoint).ConfigureAwait(false);
 			}

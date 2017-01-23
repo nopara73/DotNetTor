@@ -1,7 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace DotNetTor.SocksPort.Helpers
 {
@@ -10,13 +8,11 @@ namespace DotNetTor.SocksPort.Helpers
 		private readonly Stream _innerStream;
 		private bool _disposed;
 		private long _length;
-		private readonly bool _leaveInnerStreamOpen;
 
-		public LimitedStream(Stream innerStream, long length, bool leaveOpen)
+		public LimitedStream(Stream innerStream, long length)
 		{
 			_innerStream = innerStream;
 			_disposed = false;
-			_leaveInnerStreamOpen = leaveOpen;
 			_length = length;
 		}
 
@@ -60,18 +56,11 @@ namespace DotNetTor.SocksPort.Helpers
 		{
 			if (!_disposed && disposing)
 			{
-				if(!_leaveInnerStreamOpen)
-					_innerStream.Dispose();
 				_disposed = true;
 			}
 		}
 
 		public override int Read(byte[] buffer, int offset, int count)
-		{
-			throw new NotSupportedException();
-		}
-
-		public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
 		{
 			var limitedCount = (int)Math.Min(_length, count);
 			if (limitedCount == 0)
@@ -79,7 +68,7 @@ namespace DotNetTor.SocksPort.Helpers
 				return 0;
 			}
 
-			var read = await _innerStream.ReadAsync(buffer, offset, limitedCount, cancellationToken).ConfigureAwait(false);
+			var read = _innerStream.Read(buffer, offset, limitedCount);
 			_length -= read;
 			return read;
 		}

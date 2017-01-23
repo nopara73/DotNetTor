@@ -32,17 +32,16 @@ namespace DotNetTor.SocksPort.Helpers
 		{
 			if (!_disposed)
 			{
-				_stream.Dispose();
 				_disposed = true;
 			}
 		}
 
-		public async Task<string> ReadLineAsync()
+		public string ReadLine()
 		{
 			// Ensure first read
 			if (_bufferSize < 0)
 			{
-				await ReadWaitRetryAsync().ConfigureAwait(false);
+				ReadWaitRetry();
 			}
 
 			if (_bufferSize == 0)
@@ -74,12 +73,12 @@ namespace DotNetTor.SocksPort.Helpers
 					}
 				}
 
-				await lineStream.WriteAsync(_buffer, _position, endPosition - _position).ConfigureAwait(false);
+				lineStream.Write(_buffer, _position, endPosition - _position);
 				_position = endPosition;
 
 				if (endPosition == _bufferSize && !lineFinished)
 				{
-					await ReadWaitRetryAsync().ConfigureAwait(false);
+					ReadWaitRetry();
 					_position = 0;
 				}
 			}
@@ -98,11 +97,11 @@ namespace DotNetTor.SocksPort.Helpers
 		}
 		private const int MaxTry = 7;
 		private int _tried = 0;
-		private async Task ReadWaitRetryAsync()
+		private void ReadWaitRetry()
 		{
 			try
 			{
-				_bufferSize = await _stream.ReadAsync(_buffer, 0, _buffer.Length).ConfigureAwait(false);
+				_bufferSize = _stream.Read(_buffer, 0, _buffer.Length);
 				_tried = 0;
 			}
 			catch (NotSupportedException)
@@ -111,12 +110,12 @@ namespace DotNetTor.SocksPort.Helpers
 					_tried++;
 				else throw;
 
-				await Task.Delay(50).ConfigureAwait(false);
-				await ReadWaitRetryAsync().ConfigureAwait(false);
+				Task.Delay(50);
+				ReadWaitRetry();
 			}
 		}
 
-		public async Task<int> ReadAsync(byte[] buffer, int offset, int count)
+		public int Read(byte[] buffer, int offset, int count)
 		{
 			int read = 0;
 			if (_bufferSize >= 0)
@@ -135,7 +134,7 @@ namespace DotNetTor.SocksPort.Helpers
 
 			if (count != 0)
 			{
-				read += await _stream.ReadAsync(buffer, offset, count).ConfigureAwait(false);
+				read += _stream.Read(buffer, offset, count);
 			}
 
 			return read;

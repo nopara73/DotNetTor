@@ -41,7 +41,7 @@ namespace DotNetTor.Tests
 			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var client = new HttpClient(handler))
 			{
-				var contents = await QBitTestAsync(client, 30).ConfigureAwait(false);
+				var contents = await QBitTestAsync(client, 15).ConfigureAwait(false);
 				foreach (var content in contents)
 				{
 					Assert.Equal(content, "\"Good question Holmes !\"");
@@ -54,7 +54,7 @@ namespace DotNetTor.Tests
 			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var client = new HttpClient(handler))
 			{
-				await QBitTestAsync(client, 15, alterRequests: true).ConfigureAwait(false);
+				await QBitTestAsync(client, 10, alterRequests: true).ConfigureAwait(false);
 			}
 		}
 		[Fact]
@@ -63,7 +63,7 @@ namespace DotNetTor.Tests
 			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var client = new HttpClient(handler))
 			{
-				var contents = await QBitTestAsync(client, 30, https: true).ConfigureAwait(false);
+				var contents = await QBitTestAsync(client, 15, https: true).ConfigureAwait(false);
 
 				foreach (var content in contents)
 				{
