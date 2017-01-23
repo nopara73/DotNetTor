@@ -197,7 +197,8 @@ namespace DotNetTor.ControlPort
 		{
 			try
 			{
-				await Util.Semaphore.WaitAsync().ConfigureAwait(false);
+				Util.Semaphore.WaitOne();
+				//await Util.Semaphore.WaitAsync().ConfigureAwait(false);
 				_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 				await _socket.ConnectAsync(_controlEndPoint).ConfigureAwait(false);
 			}

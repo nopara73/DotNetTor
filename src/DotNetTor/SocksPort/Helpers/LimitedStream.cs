@@ -68,7 +68,16 @@ namespace DotNetTor.SocksPort.Helpers
 				return 0;
 			}
 
-			var read = _innerStream.Read(buffer, offset, limitedCount);
+			int read;
+			try
+			{
+				read = _innerStream.Read(buffer, offset, limitedCount);
+			}
+			catch
+			{
+				return 0;
+			}
+
 			_length -= read;
 			return read;
 		}

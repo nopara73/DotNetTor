@@ -53,10 +53,13 @@ namespace DotNetTor.SocksPort
 
 		protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
 		{
-			await Util.Semaphore.WaitAsync().ConfigureAwait(false);
+			Util.Semaphore.WaitOne();
+			//await Util.Semaphore.WaitAsync().ConfigureAwait(false);
 			try
 			{
-				return Retry.Do(() => Send(request), RetryInterval, MaxRetry);
+				return await Task.Run(()=>
+					Retry.Do(() => Send(request), RetryInterval, MaxRetry)
+					).ConfigureAwait(false);
 			}
 			catch (Exception ex)
 			{
@@ -71,7 +74,7 @@ namespace DotNetTor.SocksPort
 		private static HttpResponseMessage Send(HttpRequestMessage request)
 		{
 
-			Uri uri = request.RequestUri;
+			Uri strippedUri = Util.StripPath(request.RequestUri);
 
 			try
 			{
@@ -84,7 +87,7 @@ namespace DotNetTor.SocksPort
 
 			try
 			{
-				Retry.Do(() => ConnectToDestinationIfNotConnected(uri), RetryInterval, MaxRetry);
+				Retry.Do(() => ConnectToDestinationIfNotConnected(strippedUri), RetryInterval, MaxRetry);
 			}
 			catch (Exception ex)
 			{
@@ -240,7 +243,8 @@ namespace DotNetTor.SocksPort
 		{
 			if (!IsSocketConnected(throws: false))
 				DestroyConnections();
-			return Connections.ContainsKey(uri);
+			var strippedUri = Util.StripPath(uri);
+			return Connections.ContainsKey(strippedUri);
 		}
 
 		private static void DestroyConnections()
@@ -258,23 +262,23 @@ namespace DotNetTor.SocksPort
 			}
 		}
 
-		private static void ConnectToDestinationIfNotConnected(Uri uri)
+		private static void ConnectToDestinationIfNotConnected(Uri strippedUri)
 		{
-			if (!IsConnectedToDestination(uri))
+			if (!IsConnectedToDestination(strippedUri))
 			{
-				ConnectToDestination(uri);
+				ConnectToDestination(strippedUri);
 			}
 			else
 			{
 				Stream stream;
-				Connections.TryGetValue(uri, out stream);
+				Connections.TryGetValue(strippedUri, out stream);
 				_currentStream = stream;
 			}
 		}
 
-		private static void ConnectToDestination(Uri uri)
+		private static void ConnectToDestination(Uri strippedUri)
 		{
-			var sendBuffer = Util.BuildConnectToUri(uri).Array;
+			var sendBuffer = Util.BuildConnectToUri(strippedUri).Array;
 			_socket.Send(sendBuffer, SocketFlags.None);
 
 			var recBuffer = new byte[_socket.ReceiveBufferSize];
@@ -283,20 +287,20 @@ namespace DotNetTor.SocksPort
 			Util.ValidateConnectToDestinationResponse(recBuffer, recCnt);
 
 			Stream stream = new NetworkStream(_socket, ownsSocket: false);
-			if (uri.Scheme.Equals("https", StringComparison.Ordinal))
+			if (strippedUri.Scheme.Equals("https", StringComparison.Ordinal))
 			{
 				var httpsStream = new SslStream(stream, leaveInnerStreamOpen: true);
 
 				httpsStream
 					.AuthenticateAsClientAsync(
-						uri.DnsSafeHost,
+						strippedUri.DnsSafeHost,
 						new X509CertificateCollection(),
 						SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12,
 						checkCertificateRevocation: false)
 					.Wait();
 				stream = httpsStream;
 			}
-			Connections.AddOrUpdate(uri, stream, (k, v) => stream);
+			Connections.AddOrUpdate(strippedUri, stream, (k, v) => stream);
 			_currentStream = stream;
 		}
 
@@ -390,7 +394,8 @@ namespace DotNetTor.SocksPort
 		{
 			if (!_disposed)
 			{
-				Util.Semaphore.Wait();
+				Util.Semaphore.WaitOne();
+				//Util.Semaphore.Wait();
 				try
 				{
 					ReleaseUnmanagedResources();
