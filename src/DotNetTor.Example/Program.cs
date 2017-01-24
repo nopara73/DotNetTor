@@ -11,42 +11,10 @@ namespace DotNetTor.Example
 		{
 			DoARandomRequest();
 			RequestWith3Ip();
-			//CantRequestDifferentDomainsWithSameHandler();
-			//PayAttentionToHttpClientDisposesHandler();
+			CanRequestDifferentDomainsWithSameHandler();
 
 			Console.WriteLine("Press a key to exit..");
 			Console.ReadKey();
-		}
-
-		private static void PayAttentionToHttpClientDisposesHandler()
-		{
-			var handler = new SocksPortHandler("127.0.0.1", 9050);
-			using (var httpClient = new HttpClient(handler, disposeHandler: false))
-			{
-				HttpResponseMessage message = httpClient.GetAsync("http://api.qbit.ninja/whatisit/what%20is%20my%20future").Result;
-				var content = message.Content.ReadAsStringAsync().Result;
-				Console.WriteLine(content);
-			}
-			using (var httpClient = new HttpClient(handler))
-			{
-				HttpResponseMessage message = httpClient.GetAsync("http://api.qbit.ninja/whatisit/what%20is%20my%20future").Result;
-				var content = message.Content.ReadAsStringAsync().Result;
-				Console.WriteLine(content);
-			}
-			try
-			{
-				using (var httpClient = new HttpClient(handler))
-				{
-					HttpResponseMessage message = httpClient.GetAsync("http://api.qbit.ninja/whatisit/what%20is%20my%20future").Result;
-					var content = message.Content.ReadAsStringAsync().Result;
-					Console.WriteLine(content);
-				}
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine("Don't do this!");
-				Console.WriteLine(ex.Message);
-			}
 		}
 
 		private static void DoARandomRequest()
@@ -88,7 +56,7 @@ namespace DotNetTor.Example
 				Console.WriteLine($"Your other TOR IP: \t{content}");
 			}
 		}
-		private static void CantRequestDifferentDomainsWithSameHandler()
+		private static void CanRequestDifferentDomainsWithSameHandler()
 		{
 			using (var httpClient = new HttpClient(new SocksPortHandler()))
 			{
