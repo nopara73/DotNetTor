@@ -57,36 +57,6 @@ using (var httpClient = new HttpClient(new SocksPortHandler("127.0.0.1", socksPo
 }
 ```
 
-While the general wisdom is to use your `HttpClient`, instead of with `using` blocks, this API cannot handle yet requests to diffenet domains with the same handler, so don't do this:
-
-```cs
-using (var httpClient = new HttpClient(new SocksPortHandler()))
-{
-	var message = httpClient.GetAsync("http://icanhazip.com/").Result;
-	var content = message.Content.ReadAsStringAsync().Result;
-	Console.WriteLine($"Your TOR IP: \t\t{content}");
-
-	try
-	{
-		message = httpClient.GetAsync("http://api.qbit.ninja/whatisit/what%20is%20my%20future").Result;
-		content = message.Content.ReadAsStringAsync().Result;
-		Console.WriteLine(content);
-	}
-	catch (AggregateException ex) when (ex.InnerException != null && ex.InnerException is TorException)
-	{
-		Console.WriteLine("Don't do this!");
-		Console.WriteLine(ex.InnerException.Message);
-	}
-}
-```
-
-If you want to reuse a handler pay attention to the an HttpClient's default behaviour. It will dispose the handler for you if you don't say to it otherwise.  
-
-```cs
-var httpClient = new HttpClient(handler, disposeHandler: false)
-```
-
-
 ##Acknowledgement
 Originally the SocksPort part of this project was a leaned down, modified and .NET Core ported version of the [SocketToMe](https://github.com/joelverhagen/SocketToMe) project.  
 Originally the ControlPort part of this project was a leaned down, modified and .NET Core ported version of the [Tor.NET](https://github.com/sharpbrowser/Tor.NET) project.  
