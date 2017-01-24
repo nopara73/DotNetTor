@@ -11,7 +11,7 @@ namespace DotNetTor
 {
 	internal static class Util
 	{
-		public static readonly Semaphore Semaphore = new Semaphore(1, 1);
+		public static readonly SemaphoreSlim Semaphore = new SemaphoreSlim(1, 1);
 
 		internal static async Task AssertPortOpenAsync(IPEndPoint ipEndPoint)
 		{

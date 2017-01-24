@@ -47,7 +47,6 @@ namespace DotNetTor.ControlPort
 			finally
 			{
 				DisconnectDisposeSocket();
-
 				// safety delay, in case the tor client is not quick enough with the actions
 				await Task.Delay(100).ConfigureAwait(false);
 			}
@@ -197,8 +196,7 @@ namespace DotNetTor.ControlPort
 		{
 			try
 			{
-				Util.Semaphore.WaitOne();
-				//await Util.Semaphore.WaitAsync().ConfigureAwait(false);
+				await Util.Semaphore.WaitAsync().ConfigureAwait(false);
 				_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 				await _socket.ConnectAsync(_controlEndPoint).ConfigureAwait(false);
 			}

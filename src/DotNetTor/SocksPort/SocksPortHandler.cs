@@ -53,13 +53,10 @@ namespace DotNetTor.SocksPort
 
 		protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
 		{
-			Util.Semaphore.WaitOne();
-			//await Util.Semaphore.WaitAsync().ConfigureAwait(false);
+			await Util.Semaphore.WaitAsync().ConfigureAwait(false);
 			try
 			{
-				return await Task.Run(()=>
-					Retry.Do(() => Send(request), RetryInterval, MaxRetry)
-					).ConfigureAwait(false);
+				return Retry.Do(() => Send(request), RetryInterval, MaxRetry);
 			}
 			catch (Exception ex)
 			{
@@ -394,8 +391,6 @@ namespace DotNetTor.SocksPort
 		{
 			if (!_disposed)
 			{
-				Util.Semaphore.WaitOne();
-				//Util.Semaphore.Wait();
 				try
 				{
 					ReleaseUnmanagedResources();
@@ -403,10 +398,6 @@ namespace DotNetTor.SocksPort
 				catch (Exception)
 				{
 					// ignored
-				}
-				finally
-				{
-					Util.Semaphore.Release();
 				}
 
 				_disposed = true;
