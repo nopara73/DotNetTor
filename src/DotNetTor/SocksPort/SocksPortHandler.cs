@@ -144,12 +144,21 @@ namespace DotNetTor.SocksPort
 						else
 							requestHead += "Transfer-Encoding: chunked\r\n";
 
-						// write all content headers
-						requestHead +=
-							request.Content.Headers.Where(header => !string.Equals(header.Key, "Transfer-Encoding", StringComparison.Ordinal))
-								.Where(header => !string.Equals(header.Key, "Content-Length", StringComparison.Ordinal))
-								.Where(header => !string.Equals(header.Key, "Host", StringComparison.Ordinal))
-								.Aggregate(requestHead, (current, header) => current + ParseHeaderToString(header));
+						//write all content headers
+						string result = "";
+						foreach (var header in request.Content.Headers)
+						{
+							if (!string.Equals(header.Key, "Transfer-Encoding", StringComparison.Ordinal))
+							{
+								if (!string.Equals(header.Key, "Content-Length", StringComparison.Ordinal))
+								{
+									if (!string.Equals(header.Key, "Host", StringComparison.Ordinal))
+										result = ParseHeaderToString(header);
+								}
+							}
+						}
+
+						requestHead += result;
 					}
 
 					// write the rest of the request headers
