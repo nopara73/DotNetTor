@@ -205,7 +205,7 @@ namespace DotNetTor
 				try
 				{
 					if (retry > 0)
-						Task.Delay(retryInterval);
+						Task.Delay(retryInterval).Wait();
 					return action();
 				}
 				catch (Exception ex)

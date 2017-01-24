@@ -110,7 +110,7 @@ namespace DotNetTor.SocksPort.Helpers
 					_tried++;
 				else throw;
 
-				Task.Delay(50);
+				Task.Delay(50).Wait();
 				ReadWaitRetry();
 			}
 		}

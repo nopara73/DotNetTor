@@ -47,6 +47,7 @@ namespace DotNetTor.ControlPort
 			finally
 			{
 				DisconnectDisposeSocket();
+
 				// safety delay, in case the tor client is not quick enough with the actions
 				await Task.Delay(100).ConfigureAwait(false);
 			}
