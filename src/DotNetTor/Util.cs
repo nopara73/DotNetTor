@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -198,7 +199,7 @@ namespace DotNetTor
 			TimeSpan retryInterval,
 			int retryCount = 3)
 		{
-			Exception exception = null;
+			var exceptions = new List<Exception>();
 
 			for (int retry = 0; retry < retryCount; retry++)
 			{
@@ -210,12 +211,11 @@ namespace DotNetTor
 				}
 				catch (Exception ex)
 				{
-					exception = ex;
+					exceptions.Add(ex);
 				}
 			}
 
-			// ReSharper disable once PossibleNullReferenceException
-			throw exception;
+			throw new AggregateException(exceptions);
 		}
 	}
 }
