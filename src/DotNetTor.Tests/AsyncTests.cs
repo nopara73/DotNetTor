@@ -71,6 +71,18 @@ namespace DotNetTor.Tests
 				}
 			}
 		}
+		[Fact]
+		public async Task CanDoHttpsRequest1Async()
+		{
+			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
+			using (var client = new HttpClient(handler))
+			{
+				var request = "https://api.qbit.ninja/whatisit/what%20is%20my%20future";
+				var res = await client.GetAsync(request).ConfigureAwait(false);
+				var content = await res.Content.ReadAsStringAsync().ConfigureAwait(false);
+				Assert.Equal(content, "\"Good question Holmes !\"");
+			}
+		}
 
 		private static async Task<List<string>> QBitTestAsync(HttpClient httpClient, int times, bool https = false, bool alterRequests = false)
 		{

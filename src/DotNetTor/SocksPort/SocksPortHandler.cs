@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Security;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -58,20 +59,28 @@ namespace DotNetTor.SocksPort
 			Stream stream = new NetworkStream(Socket, ownsSocket: false);
 			if (Destination.Scheme.Equals("https", StringComparison.Ordinal))
 			{
-				var httpsStream = new SslStream(stream, leaveInnerStreamOpen: true);
+				SslStream httpsStream;
+				if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+					httpsStream = new SslStream(stream, leaveInnerStreamOpen: true);
+				else // TODO: Fix this security vulnerability
+				{
+					httpsStream = new SslStream(
+						stream,
+						leaveInnerStreamOpen: true,
+						userCertificateValidationCallback: (a, b, c, d) => true);
+				}
 
 				httpsStream
 					.AuthenticateAsClientAsync(
 						Destination.DnsSafeHost,
 						new X509CertificateCollection(),
 						SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12,
-						checkCertificateRevocation: false)
+						checkCertificateRevocation: true)
 					.Wait();
 				stream = httpsStream;
 			}
 			Stream = stream;
 		}
-
 
 		private static string ParseHeaderToString(KeyValuePair<string, IEnumerable<string>> header)
 			=> $"{header.Key}: " +
@@ -330,6 +339,7 @@ namespace DotNetTor.SocksPort
 		protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
 		{
 			await Util.Semaphore.WaitAsync().ConfigureAwait(false);
+
 			try
 			{
 				return Retry.Do(() => Send(request), RetryInterval, MaxRetry);
