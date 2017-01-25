@@ -1,5 +1,5 @@
 {
-  "version": "2.1.1",
+  "version": "2.1.2",
   "dependencies": {
     "NETStandard.Library": "1.6.1",
     "System.Net.Security": "4.3.0"
