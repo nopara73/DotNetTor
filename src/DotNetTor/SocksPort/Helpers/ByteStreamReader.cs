@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DotNetTor.SocksPort.Helpers
 {
-	internal sealed class ByteStreamReader : IDisposable
+	internal sealed class ByteStreamReader
 	{
 		private readonly Stream _stream;
 		private readonly bool _preserveLineEndings;
@@ -15,7 +15,6 @@ namespace DotNetTor.SocksPort.Helpers
 		private readonly byte[] _lineEndingBuffer = Encoding.GetBytes(LineEnding);
 		private readonly byte[] _buffer;
 
-		private bool _disposed = false;
 		private int _position = 0;
 		private int _bufferSize = -1;
 
@@ -27,14 +26,6 @@ namespace DotNetTor.SocksPort.Helpers
 		}
 
 		public Stream RemainingStream => new PartiallyBufferedStream(_buffer, _position, _bufferSize - _position, _stream);
-
-		public void Dispose()
-		{
-			if (!_disposed)
-			{
-				_disposed = true;
-			}
-		}
 
 		public string ReadLine()
 		{
