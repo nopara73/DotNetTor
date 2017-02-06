@@ -137,7 +137,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanRequestInRowHttpsAsync()
 		{
-			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
+			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true))
 			{
 				for (int i = 0; i < 2; i++)
 				{

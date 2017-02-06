@@ -60,7 +60,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanDoHttpsRequestManyAsync()
 		{
-			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
+			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true);
 			using (var client = new HttpClient(handler))
 			{
 				var contents = await QBitTestAsync(client, 15, https: true).ConfigureAwait(false);
@@ -74,7 +74,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanDoHttpsRequest1Async()
 		{
-			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
+			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true);
 			using (var client = new HttpClient(handler))
 			{
 				var request = "https://api.qbit.ninja/whatisit/what%20is%20my%20future";

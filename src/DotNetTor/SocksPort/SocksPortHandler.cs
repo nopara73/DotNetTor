@@ -46,7 +46,7 @@ namespace DotNetTor.SocksPort
 			Socket.Connect(EndPoint);
 		}
 
-		private void ConnectToDestination()
+		private void ConnectToDestination(bool ignoreSslCertification = false)
 		{
 			var sendBuffer = Util.BuildConnectToUri(Destination).Array;
 			Socket.Send(sendBuffer, SocketFlags.None);
@@ -60,14 +60,16 @@ namespace DotNetTor.SocksPort
 			if (Destination.Scheme.Equals("https", StringComparison.Ordinal))
 			{
 				SslStream httpsStream;
-				if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-					httpsStream = new SslStream(stream, leaveInnerStreamOpen: true);
-				else // TODO: Fix this security vulnerability
+				if(ignoreSslCertification)
 				{
 					httpsStream = new SslStream(
 						stream,
 						leaveInnerStreamOpen: true,
 						userCertificateValidationCallback: (a, b, c, d) => true);
+				}
+				else
+				{
+					httpsStream = new SslStream(stream, leaveInnerStreamOpen: true);
 				}
 
 				httpsStream
@@ -111,13 +113,13 @@ namespace DotNetTor.SocksPort
 			}
 		}
 
-		public HttpResponseMessage SendRequest(HttpRequestMessage request)
+		public HttpResponseMessage SendRequest(HttpRequestMessage request, bool ignoreSslCertification = false)
 		{
 			lock (Lock)
 			{
 				try
 				{
-					EnsureConnectedToTor();
+					EnsureConnectedToTor(ignoreSslCertification);
 					var isConnectRequest = Equals(request.Method, new HttpMethod("CONNECT"));
 					string location;
 					if (!isConnectRequest)
@@ -257,14 +259,14 @@ namespace DotNetTor.SocksPort
 			}
 		}
 
-		private void EnsureConnectedToTor()
+		private void EnsureConnectedToTor(bool ignoreSslCertification)
 		{
 			if (!IsSocketConnected(throws: false)) // Socket.Connected is misleading, don't use that
 			{
 				DestroySocket();
 				ConnectSocket();
 				HandshakeTor();
-				ConnectToDestination();
+				ConnectToDestination(ignoreSslCertification);
 			}
 		}
 
@@ -306,22 +308,23 @@ namespace DotNetTor.SocksPort
 
 	public sealed class SocksPortHandler : HttpMessageHandler
 	{
-
 		// Tolerate errors
 		private const int MaxRetry = 3;
 		private static readonly TimeSpan RetryInterval = TimeSpan.FromMilliseconds(100);
+
+		public bool IgnoreSslCertification { get; set; }
 
 		private static ConcurrentDictionary<string, SocksConnection> _Connections = new ConcurrentDictionary<string, SocksConnection>();
 
 		#region Constructors
 
-		public SocksPortHandler(string address = "127.0.0.1", int socksPort = 9050)
-			: this(new IPEndPoint(IPAddress.Parse(address), socksPort))
+		public SocksPortHandler(string address = "127.0.0.1", int socksPort = 9050, bool ignoreSslCertification = false)
+			: this(new IPEndPoint(IPAddress.Parse(address), socksPort), ignoreSslCertification)
 		{
 
 		}
 
-		public SocksPortHandler(IPEndPoint endpoint)
+		public SocksPortHandler(IPEndPoint endpoint, bool ignoreSslCertification = false)
 		{
 			if (EndPoint == null)
 				EndPoint = endpoint;
@@ -330,6 +333,7 @@ namespace DotNetTor.SocksPort
 				throw new TorException($"Cannot change {nameof(endpoint)}, until every {nameof(SocksPortHandler)}, is disposed. " +
 										$"The current {nameof(endpoint)} is {EndPoint.Address}:{EndPoint.Port}, your desired is {endpoint.Address}:{endpoint.Port}");
 			}
+			IgnoreSslCertification = ignoreSslCertification;
 		}
 
 
@@ -370,7 +374,7 @@ namespace DotNetTor.SocksPort
 			}
 
 			Util.ValidateRequest(request);
-			HttpResponseMessage message = connection.SendRequest(request);
+			HttpResponseMessage message = connection.SendRequest(request, IgnoreSslCertification);
 
 			return message;
 		}
