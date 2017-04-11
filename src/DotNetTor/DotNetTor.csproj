@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Library for essential TOR features in .NET Core.</Description>
+    <Copyright>MIT</Copyright>
+    <AssemblyTitle>DotNetTor</AssemblyTitle>
+    <VersionPrefix>2.1.3</VersionPrefix>
+    <Authors>nopara73;NicolasDorier</Authors>
+    <TargetFramework>netstandard1.6</TargetFramework>
+    <AssemblyName>DotNetTor</AssemblyName>
+    <PackageId>DotNetTor</PackageId>
+    <PackageTags>tor</PackageTags>
+    <PackageReleaseNotes>Make Ssl certificate check optional.</PackageReleaseNotes>
+    <PackageIconUrl>http://img.tamindir.com/ti_e_ul/lucifer/tor-ikon.gif</PackageIconUrl>
+    <PackageProjectUrl>https://github.com/nopara73/DotNetTor</PackageProjectUrl>
+    <NetStandardImplicitPackageVersion>1.6.1</NetStandardImplicitPackageVersion>
+    <PackageTargetFallback>$(PackageTargetFallback);dnxcore50</PackageTargetFallback>
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Net.Security" Version="4.3.0" />
+  </ItemGroup>
+
+</Project>

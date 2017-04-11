@@ -1,23 +1,20 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26403.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{3B3CCD07-23CC-4F78-BEAD-1288DFD1BEA2}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{3160078D-B9E8-47E8-B191-2F74BEC183C3}"
-	ProjectSection(SolutionItems) = preProject
-		global.json = global.json
-	EndProjectSection
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "DotNetTor", "src\DotNetTor\DotNetTor.xproj", "{C5D9FFC6-BE5B-448D-B746-2CFBC5D4E2C2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetTor", "src\DotNetTor\DotNetTor.csproj", "{C5D9FFC6-BE5B-448D-B746-2CFBC5D4E2C2}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "DotNetTor.Tests", "src\DotNetTor.Tests\DotNetTor.Tests.xproj", "{ECC736D1-D4A9-4CD3-954B-7A795E46550F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetTor.Tests", "src\DotNetTor.Tests\DotNetTor.Tests.csproj", "{ECC736D1-D4A9-4CD3-954B-7A795E46550F}"
 	ProjectSection(ProjectDependencies) = postProject
 		{C5D9FFC6-BE5B-448D-B746-2CFBC5D4E2C2} = {C5D9FFC6-BE5B-448D-B746-2CFBC5D4E2C2}
 	EndProjectSection
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "DotNetTor.Example", "src\DotNetTor.Example\DotNetTor.Example.xproj", "{BB62E68F-F0AF-4583-A537-168C8B3448D2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetTor.Example", "src\DotNetTor.Example\DotNetTor.Example.csproj", "{BB62E68F-F0AF-4583-A537-168C8B3448D2}"
 	ProjectSection(ProjectDependencies) = postProject
 		{C5D9FFC6-BE5B-448D-B746-2CFBC5D4E2C2} = {C5D9FFC6-BE5B-448D-B746-2CFBC5D4E2C2}
 	EndProjectSection
