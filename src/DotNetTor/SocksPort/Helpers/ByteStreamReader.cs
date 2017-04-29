@@ -67,15 +67,14 @@ namespace DotNetTor.SocksPort.Helpers
 				lineStream.Write(_buffer, _position, endPosition - _position);
 				_position = endPosition;
 
-				if (endPosition == _bufferSize && !lineFinished)
+				if (endPosition >= _bufferSize && !lineFinished)
 				{
 					ReadWaitRetry();
 					_position = 0;
 				}
 			}
 
-			ArraySegment<byte> buffer;
-			if (!lineStream.TryGetBuffer(out buffer))
+			if (!lineStream.TryGetBuffer(out ArraySegment<byte> buffer))
 				throw new Exception("Can't get buffer");
 
 			var line = Encoding.GetString(buffer.ToArray(), 0, (int)lineStream.Length);

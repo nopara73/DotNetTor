@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Net.Http;
 using DotNetTor.SocksPort;
+using System.Linq;
+using System.IO;
 
 namespace DotNetTor.Example
 {
@@ -10,8 +12,8 @@ namespace DotNetTor.Example
 		private static void Main()
 		{
 			DoARandomRequest();
-			RequestWith3Ip();
-			CanRequestDifferentDomainsWithSameHandler();
+			//RequestWith3Ip();
+			//CanRequestDifferentDomainsWithSameHandler();
 
 			Console.WriteLine("Press a key to exit..");
 			Console.ReadKey();

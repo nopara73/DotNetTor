@@ -81,8 +81,7 @@ namespace DotNetTor.SocksPort.Helpers
 
 		public override int Read(byte[] buffer, int offset, int count)
 		{
-			int read;
-			if (TryReadBuffer(buffer, offset, count, out read))
+			if (TryReadBuffer(buffer, offset, count, out int read))
 			{
 				return read;
 			}
