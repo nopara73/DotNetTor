@@ -3,18 +3,20 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using DotNetTor.SocksPort;
 using Xunit;
+using System.Diagnostics;
 
 namespace DotNetTor.Tests
 {
 	// For proper configuraion see https://github.com/nopara73/DotNetTor
 	public class ControlPortTests
     {
-		//[Fact]
-		//private static async Task CanGetInfoAsync()
-		//{
-		//	var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
-		//	var getInfoRespone = controlPortClient.GetInfo();
-		//}
+		[Fact]
+		private static async Task IsCircuitEstabilishedAsync()
+		{
+			var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
+			var yes = await controlPortClient.IsCircuitEstabilishedAsync().ConfigureAwait(false);
+			Assert.True(yes);
+		}
 
 		[Fact]
 	    private static async Task CanChangeCircuitMultipleTimesAsync()

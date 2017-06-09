@@ -14,6 +14,11 @@ namespace DotNetTor
 	{
 		public static readonly SemaphoreSlim Semaphore = new SemaphoreSlim(1, 1);
 
+		public static bool Contains(this string source, string toCheck, StringComparison comp)
+		{
+			return source.IndexOf(toCheck, comp) >= 0;
+		}
+
 		internal static async Task AssertPortOpenAsync(IPEndPoint ipEndPoint)
 		{
 			using (TcpClient tcpClient = new TcpClient())

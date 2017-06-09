@@ -20,6 +20,40 @@ namespace DotNetTor.ControlPort
 			_password = password;
 		}
 
+		public async Task<bool> IsCircuitEstabilishedAsync()
+		{
+			try
+			{
+				await InitializeConnectSocketAsync().ConfigureAwait(false);
+
+				await SendCommandAsync($"AUTHENTICATE \"{_password}\"").ConfigureAwait(false);
+				
+				// Get info
+				var response = await SendCommandAsync("GETINFO status/circuit-established").ConfigureAwait(false);
+								
+				if (response.Contains("status/circuit-established=1", StringComparison.OrdinalIgnoreCase))
+				{
+					return true;
+				}
+				else if (response.Contains("status/circuit-established=0", StringComparison.OrdinalIgnoreCase))
+				{
+					return false;
+				}
+				else throw new TorException($"Wrong response to 'GETINFO status/circuit-established': '{response}'");
+			}
+			catch (Exception ex)
+			{
+				throw new TorException("Couldn't determine if circuit is estabilished", ex);
+			}
+			finally
+			{
+				DisconnectDisposeSocket();
+
+				// safety delay, in case the tor client is not quick enough with the actions
+				await Task.Delay(100).ConfigureAwait(false);
+			}
+		}
+
 		public async Task ChangeCircuitAsync()
 		{
 			try
@@ -80,7 +114,7 @@ namespace DotNetTor.ControlPort
 			}
 		}
 
-		private async Task SendCommandAsync(string command)
+		private async Task<string> SendCommandAsync(string command)
 		{
 			try
 			{
@@ -140,6 +174,8 @@ namespace DotNetTor.ControlPort
 					eventTypes.RemoveAt(0);
 					foreach (string type in eventTypes) _eventsSet.Add(type);
 				}
+
+				return response;
 			}
 			catch (TorException)
 			{
