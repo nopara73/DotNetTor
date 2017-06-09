@@ -10,10 +10,13 @@ namespace DotNetTor.ControlPort
 {
 	public sealed class Client
 	{
+		public static event EventHandler CircuitChangeRequested;
+		public static void OnCircuitChangeRequested() => CircuitChangeRequested?.Invoke(null, EventArgs.Empty);
+
 		private readonly IPEndPoint _controlEndPoint;
 		private readonly string _password;
 		private Socket _socket;
-
+		
 		public Client(string address = "127.0.0.1", int controlPort = 9051, string password = "")
 		{
 			_controlEndPoint = new IPEndPoint(IPAddress.Parse(address), controlPort);
@@ -58,6 +61,8 @@ namespace DotNetTor.ControlPort
 		{
 			try
 			{
+				OnCircuitChangeRequested();
+
 				await InitializeConnectSocketAsync().ConfigureAwait(false);
 
 				await SendCommandAsync($"AUTHENTICATE \"{_password}\"").ConfigureAwait(false);

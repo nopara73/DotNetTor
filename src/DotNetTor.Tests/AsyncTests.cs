@@ -12,7 +12,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanDoRequest1Async()
 		{
-			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
+			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true);
 			using (var client = new HttpClient(handler))
 			{
 				var contents = await QBitTestAsync(client, 1).ConfigureAwait(false);
@@ -25,7 +25,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanDoRequest2Async()
 		{
-			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
+			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true);
 			using (var client = new HttpClient(handler))
 			{
 				var contents = await QBitTestAsync(client, 2).ConfigureAwait(false);
@@ -38,7 +38,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanDoRequestManyAsync()
 		{
-			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
+			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true);
 			using (var client = new HttpClient(handler))
 			{
 				var contents = await QBitTestAsync(client, 15).ConfigureAwait(false);
@@ -51,7 +51,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanDoRequestManyDifferentAsync()
 		{
-			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
+			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true);
 			using (var client = new HttpClient(handler))
 			{
 				await QBitTestAsync(client, 10, alterRequests: true).ConfigureAwait(false);

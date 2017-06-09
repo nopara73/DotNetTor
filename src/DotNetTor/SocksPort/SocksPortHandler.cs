@@ -18,30 +18,46 @@ namespace DotNetTor.SocksPort
 
 		public bool IgnoreSslCertification { get; set; }
 
-		private static ConcurrentDictionary<string, SocksConnection> _Connections = new ConcurrentDictionary<string, SocksConnection>();
+		private static ConcurrentDictionary<string, SocksConnection> _Connections;
+		
+		public IPEndPoint EndPoint { get; private set; }
+
+		private List<Uri> _References;
+		
+		private volatile bool _disposed;
 
 		#region Constructors
 
 		public SocksPortHandler(string address = "127.0.0.1", int socksPort = 9050, bool ignoreSslCertification = false)
-			: this(new IPEndPoint(IPAddress.Parse(address), socksPort), ignoreSslCertification)
 		{
-
+			Init(new IPEndPoint(IPAddress.Parse(address), socksPort), ignoreSslCertification);
 		}
 
 		public SocksPortHandler(IPEndPoint endpoint, bool ignoreSslCertification = false)
 		{
-			if (EndPoint == null)
-				EndPoint = endpoint;
-			else if (!Equals(EndPoint.Address, endpoint.Address) || !Equals(EndPoint.Port, endpoint.Port))
-			{
-				throw new TorException($"Cannot change {nameof(endpoint)}, until every {nameof(SocksPortHandler)}, is disposed. " +
-										$"The current {nameof(endpoint)} is {EndPoint.Address}:{EndPoint.Port}, your desired is {endpoint.Address}:{endpoint.Port}");
-			}
-			IgnoreSslCertification = ignoreSslCertification;
+			Init(endpoint, ignoreSslCertification);
 		}
 
+		private void Init(IPEndPoint endpoint, bool ignoreSslCertification)
+		{
+			_disposed = false;
+			_References = new List<Uri>();
+			_Connections = new ConcurrentDictionary<string, SocksConnection>();
+			EndPoint = endpoint;
+			IgnoreSslCertification = ignoreSslCertification;
 
-		public readonly IPEndPoint EndPoint = null;
+			ControlPort.Client.CircuitChangeRequested += Client_CircuitChangeRequested;
+		}
+		private void Reset()
+		{
+			Init(EndPoint, IgnoreSslCertification);
+		}
+
+		private void Client_CircuitChangeRequested(object sender, EventArgs e)
+		{
+			Reset();
+		}
+
 		#endregion
 
 		protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -87,7 +103,6 @@ namespace DotNetTor.SocksPort
 
 		#region DestinationConnections
 
-		private List<Uri> _References = new List<Uri>();
 		private SocksConnection ConnectToDestinationIfNotConnected(Uri uri)
 		{
 			uri = Util.StripPath(uri);
@@ -116,12 +131,7 @@ namespace DotNetTor.SocksPort
 		}
 
 		#endregion
-
-		#region TorConnection
-
-
-		#endregion
-
+		
 		#region Cleanup
 
 		private void ReleaseUnmanagedResources()
@@ -142,7 +152,6 @@ namespace DotNetTor.SocksPort
 			}
 		}
 
-		private volatile bool _disposed = false;
 		protected override void Dispose(bool disposing)
 		{
 			if (!_disposed)

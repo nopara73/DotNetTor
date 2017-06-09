@@ -21,7 +21,7 @@ namespace DotNetTor.Example
 
 		private static void DoARandomRequest()
 		{
-			using (var httpClient = new HttpClient(new SocksPortHandler("127.0.0.1", 9050)))
+			using (var httpClient = new HttpClient(new SocksPortHandler("127.0.0.1", 9050, ignoreSslCertification: true)))
 			{
 				HttpResponseMessage message = httpClient.GetAsync("http://api.qbit.ninja/whatisit/what%20is%20my%20future").Result;
 				var content = message.Content.ReadAsStringAsync().Result;
@@ -42,7 +42,7 @@ namespace DotNetTor.Example
 			}
 
 			// 2. Get TOR IP
-			using (var httpClient = new HttpClient(new SocksPortHandler("127.0.0.1", socksPort: 9050)))
+			using (var httpClient = new HttpClient(new SocksPortHandler("127.0.0.1", socksPort: 9050, ignoreSslCertification: true)))
 			{
 				var message = httpClient.GetAsync(requestUri).Result;
 				var content = message.Content.ReadAsStringAsync().Result;
@@ -60,7 +60,7 @@ namespace DotNetTor.Example
 		}
 		private static void CanRequestDifferentDomainsWithSameHandler()
 		{
-			using (var httpClient = new HttpClient(new SocksPortHandler()))
+			using (var httpClient = new HttpClient(new SocksPortHandler(ignoreSslCertification: true)))
 			{
 				var message = httpClient.GetAsync("https://api.ipify.org/").Result;
 				var content = message.Content.ReadAsStringAsync().Result;
