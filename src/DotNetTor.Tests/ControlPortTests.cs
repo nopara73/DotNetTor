@@ -21,7 +21,7 @@ namespace DotNetTor.Tests
 		[Fact]
 	    private static async Task CanChangeCircuitMultipleTimesAsync()
 	    {
-		    var requestUri = "http://icanhazip.com/";
+		    var requestUri = "https://api.ipify.org/";
 
 		    // 1. Get TOR IP
 		    IPAddress currIp = await GetTorIpAsync(requestUri).ConfigureAwait(false);
@@ -59,7 +59,7 @@ namespace DotNetTor.Tests
 	    [Fact]
 	    private static async Task CanChangeCircuitAsync()
 	    {
-		    var requestUri = "http://icanhazip.com/";
+		    var requestUri = "https://api.ipify.org/";
 		    IPAddress torIp;
 		    IPAddress changedIp;
 
@@ -91,7 +91,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		private static async Task CanChangeCircuitWithinSameHttpClientAsync()
 		{
-			var requestUri = "http://icanhazip.com/";
+			var requestUri = "https://api.ipify.org/";
 			IPAddress torIp;
 			IPAddress changedIp;
 
@@ -108,9 +108,8 @@ namespace DotNetTor.Tests
 				// 2. Change TOR IP
 				var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
 				await controlPortClient.ChangeCircuitAsync().ConfigureAwait(false);
-
+			
 				// 3. Get changed TOR IP
-
 				content =
 					await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync()
 						.ConfigureAwait(false);

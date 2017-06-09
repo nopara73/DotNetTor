@@ -95,7 +95,7 @@ namespace DotNetTor.Tests
 				var task = httpClient.GetAsync(requestUri);
 				if (alterRequests)
 				{
-					var task2 = httpClient.GetAsync("http://icanhazip.com/");
+					var task2 = httpClient.GetAsync("https://api.ipify.org/");
 					tasks.Add(task2);
 				}
 				tasks.Add(task);

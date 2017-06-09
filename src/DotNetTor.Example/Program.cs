@@ -31,7 +31,7 @@ namespace DotNetTor.Example
 
 		private static void RequestWith3Ip()
 		{
-			var requestUri = "http://icanhazip.com/";
+			var requestUri = "https://api.ipify.org/";
 
 			// 1. Get real IP
 			using (var httpClient = new HttpClient())
@@ -62,7 +62,7 @@ namespace DotNetTor.Example
 		{
 			using (var httpClient = new HttpClient(new SocksPortHandler()))
 			{
-				var message = httpClient.GetAsync("http://icanhazip.com/").Result;
+				var message = httpClient.GetAsync("https://api.ipify.org/").Result;
 				var content = message.Content.ReadAsStringAsync().Result;
 				Console.WriteLine($"Your TOR IP: \t\t{content}");
 

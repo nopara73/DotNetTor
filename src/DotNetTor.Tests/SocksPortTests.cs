@@ -64,7 +64,7 @@ namespace DotNetTor.Tests
 				Assert.Equal(content, "\"Good question Holmes !\"");
 
 				IPAddress ip;
-				message = await httpClient.GetAsync("http://icanhazip.com/").ConfigureAwait(false);
+				message = await httpClient.GetAsync("https://api.ipify.org/").ConfigureAwait(false);
 				content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
 				var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out ip);
 				Assert.True(gotIp);
@@ -79,7 +79,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		private static async Task TorIpIsNotTheRealOneAsync()
 		{
-			var requestUri = "http://icanhazip.com/";
+			var requestUri = "https://api.ipify.org/";
 			IPAddress realIp;
 			IPAddress torIp;
 
