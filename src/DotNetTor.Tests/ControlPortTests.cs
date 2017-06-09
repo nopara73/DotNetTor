@@ -9,7 +9,14 @@ namespace DotNetTor.Tests
 	// For proper configuraion see https://github.com/nopara73/DotNetTor
 	public class ControlPortTests
     {
-	    [Fact]
+		//[Fact]
+		//private static async Task CanGetInfoAsync()
+		//{
+		//	var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
+		//	var getInfoRespone = controlPortClient.GetInfo();
+		//}
+
+		[Fact]
 	    private static async Task CanChangeCircuitMultipleTimesAsync()
 	    {
 		    var requestUri = "http://icanhazip.com/";

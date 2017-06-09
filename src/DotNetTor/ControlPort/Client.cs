@@ -20,9 +20,6 @@ namespace DotNetTor.ControlPort
 			_password = password;
 		}
 
-		[Obsolete(Util.SyncMethodDeprecated)]
-		public void ChangeCircuit() => ChangeCircuitAsync().Wait();
-
 		public async Task ChangeCircuitAsync()
 		{
 			try
