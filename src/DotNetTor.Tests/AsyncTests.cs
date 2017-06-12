@@ -23,6 +23,17 @@ namespace DotNetTor.Tests
 			}
 		}
 		[Fact]
+		public async Task TestMicrosoftNCSI()
+		{
+			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true);
+			using (var client = new HttpClient(handler))
+			{
+				var response = await client.GetAsync("http://www.msftncsi.com/ncsi.txt").ConfigureAwait(false);
+				var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+				Assert.Equal(content, "Microsoft NCSI");
+			}
+		}
+		[Fact]
 		public async Task CanDoRequest2Async()
 		{
 			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true);
