@@ -1,11 +1,11 @@
 # DotNetTor
 Library implementation of essential Tor features in .NET Core.
 
-## See detailed documentation on [CodeProject](https://www.codeproject.com/script/Articles/ArticleVersion.aspx?waid=225577&aid=1161078)
+## See quickstart tutorial on [CodeProject](https://www.codeproject.com/script/Articles/ArticleVersion.aspx?waid=225577&aid=1161078)
   
-##[Nuget](https://www.nuget.org/packages/DotNetTor)
+## [Nuget](https://www.nuget.org/packages/DotNetTor)
 
-##Build & Test
+## Build & Test
 
 1. `git clone https://github.com/nopara73/DotNetTor`
 2. `cd DotNetTor/`
@@ -14,7 +14,7 @@ Library implementation of essential Tor features in .NET Core.
 5. Configure Tor properly.
 6. `dotnet test`
 
-##Configure Tor
+## Configure Tor
 1. Download Tor Expert Bundle: https://www.torproject.org/download/download
 2. Download the torrc config file sample: https://github.com/nopara73/DotNetTor/blob/master/torrc
 3. Place torrc in the proper default location (depending on your OS) and edit it:
@@ -26,7 +26,7 @@ Library implementation of essential Tor features in .NET Core.
       where password is the `password` you've chosen. It will give you the `HashedControlPassword`.
 4. Start tor, it will listen to the ports you set in the config file.
 
-##Usage
+## Usage
 
 ```cs
 var requestUri = "http://icanhazip.com/";
@@ -57,7 +57,7 @@ using (var httpClient = new HttpClient(new SocksPortHandler("127.0.0.1", socksPo
 }
 ```
 
-##Acknowledgement
+## Acknowledgement
 Originally the SocksPort part of this project was a leaned down, modified and .NET Core ported version of the [SocketToMe](https://github.com/joelverhagen/SocketToMe) project.  
 Originally the ControlPort part of this project was a leaned down, modified and .NET Core ported version of the [Tor.NET](https://github.com/sharpbrowser/Tor.NET) project.  
 At this point of the development you can still find parts of the former project in the codebase, however the latter has been completely replaced.  
