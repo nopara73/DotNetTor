@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using DotNetTor.SocksPort;
 using Xunit;
+using System.Diagnostics;
 
 namespace DotNetTor.Tests
 {
@@ -20,6 +21,17 @@ namespace DotNetTor.Tests
 				{
 					Assert.Equal(content, "\"Good question Holmes !\"");
 				}
+			}
+		}
+		[Fact]
+		public async Task CanRequestChunkEncodedAsync()
+		{
+			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true);
+			using (var client = new HttpClient(handler))
+			{
+				var response = await client.GetAsync("https://jigsaw.w3.org/HTTP/ChunkedScript").ConfigureAwait(false);
+				var content = await response.Content.ReadAsStringAsync();
+				Debug.WriteLine(content);
 			}
 		}
 		[Fact]

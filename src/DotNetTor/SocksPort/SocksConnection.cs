@@ -189,18 +189,19 @@ namespace DotNetTor.SocksPort
 
 					var reader = new ByteStreamReader(Stream, Socket.ReceiveBufferSize, preserveLineEndings: false);
 
-					// initialize the response
-					var response = new HttpResponseMessage { RequestMessage = request };
-
 					// read the first line of the response
 					string line = reader.ReadLine();
 					var pieces = line.Split(new[] { ' ' }, 3);
 
-					if (!string.Equals(pieces[0], "HTTP/1.1", StringComparison.Ordinal))
+					// According to RFC7230, if the major version is the same recipient must understand
+					if (pieces[0] == null || !pieces[0].StartsWith("HTTP/1."))
+					{
 						throw new HttpRequestException($"Only HTTP/1.1 is supported, actual: {pieces[0]}");
+					}
 
-					response.StatusCode = (HttpStatusCode)int.Parse(pieces[1]);
-					response.ReasonPhrase = pieces[2];
+					var statusCode = (HttpStatusCode)int.Parse(pieces[1]);
+					var response = new HttpResponseMessage(statusCode) { RequestMessage = request };
+					response.Version = new Version(pieces[0].Split("/".ToCharArray())[1]);
 
 					// read the headers
 					response.Content = new ByteArrayContent(new byte[0]);
