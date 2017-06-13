@@ -10,9 +10,9 @@ namespace DotNetTor.SocksPort.Helpers
 		private int _chunkSize;
 		private int _remaining;
 
-		public ReadsFromChunksStream(Stream innerStream)
+		public ReadsFromChunksStream(Stream innerStream, int bufferSize)
 		{
-			_byteStreamReader = new ByteStreamReader(innerStream, 4096, false);
+			_byteStreamReader = new ByteStreamReader(innerStream, bufferSize, false);
 			_disposed = false;
 			_chunkSize = -1;
 			_remaining = -1;

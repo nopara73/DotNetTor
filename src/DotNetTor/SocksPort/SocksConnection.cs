@@ -223,7 +223,7 @@ namespace DotNetTor.SocksPort
 						if (response.Headers.TransferEncodingChunked.GetValueOrDefault(false))
 						{
 							// read the body with chunked transfer encoding
-							var chunkedStream = new ReadsFromChunksStream(reader.RemainingStream);
+							var chunkedStream = new ReadsFromChunksStream(reader.RemainingStream, Socket.ReceiveBufferSize);
 							httpContent = new StreamContent(chunkedStream);
 						}
 						else if (response.Content.Headers.ContentLength.HasValue)
