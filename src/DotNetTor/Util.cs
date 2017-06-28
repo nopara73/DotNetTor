@@ -176,16 +176,6 @@ namespace DotNetTor
 			};
 			return builder.Uri;
 		}
-
-		internal static void ValidateRequest(HttpRequestMessage request)
-		{
-			if (!request.RequestUri.Scheme.Equals("http", StringComparison.Ordinal) &&
-				!request.RequestUri.Scheme.Equals("https", StringComparison.Ordinal))
-				throw new NotSupportedException("Only HTTP and HTTPS are supported.");
-
-			if (!Equals(request.Version, new Version(1, 1)))
-				throw new NotSupportedException("Only HTTP/1.1 is supported.");
-		}
 	}
 
 	internal static class Retry

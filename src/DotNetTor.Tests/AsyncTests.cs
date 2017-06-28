@@ -103,7 +103,7 @@ namespace DotNetTor.Tests
 				var request = "https://api.qbit.ninja/whatisit/what%20is%20my%20future";
 				var res = await client.GetAsync(request).ConfigureAwait(false);
 				var content = await res.Content.ReadAsStringAsync().ConfigureAwait(false);
-				Assert.Equal(content, "\"Good question Holmes !\"");
+				Assert.Equal("\"Good question Holmes !\"", content);
 			}
 		}
 

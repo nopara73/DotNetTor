@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DotNetTor.Http;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
@@ -17,6 +18,8 @@ namespace DotNetTor.SocksPort
 		private static readonly TimeSpan RetryInterval = TimeSpan.FromMilliseconds(100);
 
 		public bool IgnoreSslCertification { get; set; }
+
+		public readonly HttpProtocol Protocol = HttpProtocol.HTTP11;
 
 		private static ConcurrentDictionary<string, SocksConnection> _Connections;
 		
@@ -61,7 +64,7 @@ namespace DotNetTor.SocksPort
 		#endregion
 
 		protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-		{
+		{			
 			await Util.Semaphore.WaitAsync().ConfigureAwait(false);
 
 			try
@@ -92,8 +95,17 @@ namespace DotNetTor.SocksPort
 			{
 				throw new TorException("Failed to connect to the destination", ex);
 			}
+			
+			// https://tools.ietf.org/html/rfc7230#section-2.7.1
+			// A sender MUST NOT generate an "http" URI with an empty host identifier.
+			if (request.RequestUri.DnsSafeHost == "") throw new HttpRequestException("Host identifier is empty");
 
-			Util.ValidateRequest(request);
+			// https://tools.ietf.org/html/rfc7230#section-2.6
+			// Intermediaries that process HTTP messages (i.e., all intermediaries
+			// other than those acting as tunnels) MUST send their own HTTP - version
+			// in forwarded messages.
+			request.Version = Protocol.Version;
+
 			HttpResponseMessage message = connection.SendRequest(request, IgnoreSslCertification);
 
 			return message;

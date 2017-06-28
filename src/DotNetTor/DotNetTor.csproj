@@ -25,4 +25,8 @@
     <PackageReference Include="System.Net.Security" Version="4.3.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Http\" />
+  </ItemGroup>
+
 </Project>

@@ -81,11 +81,6 @@ namespace DotNetTor.SocksPort
 			Stream = stream;
 		}
 
-		private static string ParseHeaderToString(KeyValuePair<string, IEnumerable<string>> header)
-			=> $"{header.Key}: " +
-				$"{string.Join(",", header.Value)}" +
-				"\r\n";
-
 		private bool IsSocketConnected(bool throws)
 		{
 			try
@@ -117,143 +112,116 @@ namespace DotNetTor.SocksPort
 				try
 				{
 					EnsureConnectedToTor(ignoreSslCertification);
-					var isConnectRequest = Equals(request.Method, new HttpMethod("CONNECT"));
-					string location;
-					if (!isConnectRequest)
-						location = request.RequestUri.PathAndQuery;
-					else
-						location = $"{request.RequestUri.DnsSafeHost}:{request.RequestUri.Port}";
 
-					string requestHead = $"{request.Method.Method} {location} HTTP/{request.Version}\r\n";
-
-					if (!isConnectRequest)
+					// https://tools.ietf.org/html/rfc7230#section-3.3.2
+					// A user agent SHOULD send a Content - Length in a request message when
+					// no Transfer-Encoding is sent and the request method defines a meaning
+					// for an enclosed payload body.For example, a Content - Length header
+					// field is normally sent in a POST request even when the value is 0
+					// (indicating an empty payload body).A user agent SHOULD NOT send a
+					// Content - Length header field when the request message does not contain
+					// a payload body and the method semantics do not anticipate such a
+					// body.
+					// TODO implement it fully (altough probably .NET already ensures it)
+					if (request.Method == HttpMethod.Post)
 					{
-						string host = request.Headers.Contains("Host") ? request.Headers.Host : request.RequestUri.Host;
-						requestHead += $"Host: {host}\r\n";
-					}
-
-					string content = "";
-					if (request.Content != null && !isConnectRequest && request.Method != HttpMethod.Head)
-					{
-						content = request.Content.ReadAsStringAsync().Result;
-
-						// determine whether to use chunked transfer encoding
-						long? contentLength = null;
-						if (!request.Headers.TransferEncodingChunked.GetValueOrDefault(false))
-							contentLength = content.Length;
-
-						// set the appropriate content transfer headers
-						if (contentLength.HasValue)
+						if (request.Headers.TransferEncoding.Count == 0)
 						{
-							contentLength = request.Content.Headers.ContentLength ?? contentLength;
-							requestHead += $"Content-Length: {contentLength}\r\n";
-						}
-						else
-							requestHead += "Transfer-Encoding: chunked\r\n";
-
-						//write all content headers
-						string result = "";
-						foreach (var header in request.Content.Headers)
-						{
-							if (!string.Equals(header.Key, "Transfer-Encoding", StringComparison.Ordinal))
+							if (request.Content == null)
 							{
-								if (!string.Equals(header.Key, "Content-Length", StringComparison.Ordinal))
+								request.Content = new ByteArrayContent(new byte[] { }); // dummy empty content
+								request.Content.Headers.ContentLength = 0;
+							}
+							else
+							{
+								if (request.Content.Headers.ContentLength == null)
 								{
-									if (!string.Equals(header.Key, "Host", StringComparison.Ordinal))
-										result = ParseHeaderToString(header);
+									request.Content.Headers.ContentLength = request.Content.ReadAsStringAsync().Result.Length;
 								}
 							}
 						}
-
-						requestHead += result;
 					}
-
-					// write the rest of the request headers
-					foreach (var header in request.Headers)
+					if (request.Method != new HttpMethod("CONNECT"))
 					{
-						if (!string.Equals(header.Key, "Transfer-Encoding", StringComparison.Ordinal))
+						// Make sure we write the Host header
+						if (!request.Headers.Contains("Host"))
 						{
-							if (!string.Equals(header.Key, "Content-Length", StringComparison.Ordinal))
-							{
-								if (!string.Equals(header.Key, "Host", StringComparison.Ordinal))
-									requestHead += ParseHeaderToString(header);
-							}
+							request.Headers.TryAddWithoutValidation("Host", request.RequestUri.DnsSafeHost);
 						}
 					}
-
-					requestHead += "\r\n";
-
-					var headAndContent = requestHead + content;
-					Stream.Write(Encoding.UTF8.GetBytes(headAndContent), 0, headAndContent.Length);
+					
+					var requestString = request.ToHttpStringAsync().Result;
+					Stream.Write(Encoding.UTF8.GetBytes(requestString), 0, requestString.Length);
 					Stream.Flush();
 
-					var reader = new ByteStreamReader(Stream, Socket.ReceiveBufferSize, preserveLineEndings: false);
+					return new HttpResponseMessage().CreateNewAsync(Stream, request.Method).Result;
 
-					// read the first line of the response
-					string line = reader.ReadLine();
-					var pieces = line.Split(new[] { ' ' }, 3);
+					//var reader = new ByteStreamReader(Stream, Socket.ReceiveBufferSize, preserveLineEndings: false);
 
-					// According to RFC7230, if the major version is the same recipient must understand
-					if (pieces[0] == null || !pieces[0].StartsWith("HTTP/1."))
-					{
-						throw new HttpRequestException($"Only HTTP/1.1 is supported, actual: {pieces[0]}");
-					}
+					//// read the first line of the response
+					//string line = reader.ReadLine();
+					//var pieces = line.Split(new[] { ' ' }, 3);
 
-					var statusCode = (HttpStatusCode)int.Parse(pieces[1]);
-					var response = new HttpResponseMessage(statusCode) { RequestMessage = request };
-					response.Version = new Version(pieces[0].Split("/".ToCharArray())[1]);
+					//// According to RFC7230, if the major version is the same recipient must understand
+					//if (pieces[0] == null || !pieces[0].StartsWith("HTTP/1."))
+					//{
+					//	throw new HttpRequestException($"Only HTTP/1.1 is supported, actual: {pieces[0]}");
+					//}
 
-					// read the headers
-					response.Content = new ByteArrayContent(new byte[0]);
-					while ((line = reader.ReadLine()) != null && line != string.Empty)
-					{
-						pieces = line.Split(new[] { ":" }, 2, StringSplitOptions.None);
-						if (pieces[1].StartsWith(" ", StringComparison.Ordinal))
-							pieces[1] = pieces[1].Substring(1);
+					//var statusCode = (HttpStatusCode)int.Parse(pieces[1]);
+					//var response = new HttpResponseMessage(statusCode) { RequestMessage = request };
+					//response.Version = new Version(pieces[0].Split("/".ToCharArray())[1]);
 
-						if (!response.Headers.TryAddWithoutValidation(pieces[0], pieces[1]) &&
-							!response.Content.Headers.TryAddWithoutValidation(pieces[0], pieces[1]))
-							throw new InvalidOperationException(
-								$"The header '{pieces[0]}' could not be added to the response message or to the response content.");
-					}
+					//// read the headers
+					//response.Content = new ByteArrayContent(new byte[0]);
+					//while ((line = reader.ReadLine()) != null && line != string.Empty)
+					//{
+					//	pieces = line.Split(new[] { ":" }, 2, StringSplitOptions.None);
+					//	if (pieces[1].StartsWith(" ", StringComparison.Ordinal))
+					//		pieces[1] = pieces[1].Substring(1);
 
-					if (!(request.Method == new HttpMethod("CONNECT") || request.Method == HttpMethod.Head))
-					{
-						HttpContent httpContent = null;
-						if (response.Headers.TransferEncodingChunked.GetValueOrDefault(false))
-						{
-							// read the body with chunked transfer encoding
-							var chunkedStream = new ReadsFromChunksStream(reader.RemainingStream, Socket.ReceiveBufferSize);
-							httpContent = new StreamContent(chunkedStream);
-						}
-						else if (response.Content.Headers.ContentLength.HasValue)
-						{
-							// read the body with a content-length
-							var limitedStream = new LimitedStream(
-								reader.RemainingStream,
-								response.Content.Headers.ContentLength.Value);
-							httpContent = new StreamContent(limitedStream);
-						}
-						else return response;
+					//	if (!response.Headers.TryAddWithoutValidation(pieces[0], pieces[1]) &&
+					//		!response.Content.Headers.TryAddWithoutValidation(pieces[0], pieces[1]))
+					//		throw new InvalidOperationException(
+					//			$"The header '{pieces[0]}' could not be added to the response message or to the response content.");
+					//}
 
-						if (content != null)
-						{
-							// copy over the content headers
-							foreach (var header in response.Content.Headers)
-								httpContent.Headers.TryAddWithoutValidation(header.Key, header.Value);
+					//if (!(request.Method == new HttpMethod("CONNECT") || request.Method == HttpMethod.Head))
+					//{
+					//	HttpContent httpContent = null;
+					//	if (response.Headers.TransferEncodingChunked.GetValueOrDefault(false))
+					//	{
+					//		// read the body with chunked transfer encoding
+					//		var chunkedStream = new ReadsFromChunksStream(reader.RemainingStream, Socket.ReceiveBufferSize);
+					//		httpContent = new StreamContent(chunkedStream);
+					//	}
+					//	else if (response.Content.Headers.ContentLength.HasValue)
+					//	{
+					//		// read the body with a content-length
+					//		var limitedStream = new LimitedStream(
+					//			reader.RemainingStream,
+					//			response.Content.Headers.ContentLength.Value);
+					//		httpContent = new StreamContent(limitedStream);
+					//	}
+					//	else return response;
 
-							response.Content = httpContent;
-						}
-					}
+					//	if (response.Content != null)
+					//	{
+					//		// copy over the content headers
+					//		foreach (var header in response.Content.Headers)
+					//			httpContent.Headers.TryAddWithoutValidation(header.Key, header.Value);
 
-					return response;
+					//		response.Content = httpContent;
+					//	}
+					//}
+
+					//return response;
 				}
 				catch (SocketException)
 				{
 					DestroySocket();
 					throw;
 				}
-
 			}
 		}
 
