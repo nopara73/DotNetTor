@@ -251,15 +251,22 @@ namespace System.Net.Http
 		
 		private static async Task<byte[]> ReadBytesTillLengthAsync(StreamReader reader, long? contentLength)
 		{
+			var sb = new StringBuilder();
+
 			var buffer = new char[(long)contentLength];
 			var left = contentLength;
 			while (left != 0)
 			{
 				// TODO: don't just cast to int, handle overflow!
-				var c = await reader.ReadAsync(buffer, 0, (int)left).ConfigureAwait(false);
-				left -= c;
+				var readCount = await reader.ReadAsync(buffer, 0, (int)left).ConfigureAwait(false);
+				left -= readCount;
+
+				foreach(var c in buffer)
+				{
+					sb.Append(c);
+				}
 			}
-			return reader.CurrentEncoding.GetBytes(buffer);
+			return reader.CurrentEncoding.GetBytes(sb.ToString());
 		}
 
 		public static void AssertValidResponse(HttpHeaders messageHeaders, HttpContentHeaders contentHeaders)
