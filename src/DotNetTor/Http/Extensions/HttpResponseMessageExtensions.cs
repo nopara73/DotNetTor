@@ -43,11 +43,11 @@ namespace System.Net.Http
 
 			var headerSection = HeaderSection.CreateNew(headers);
 			var headerStruct = headerSection.ToHttpResponseHeaders();
-			HttpMessageHelper.CopyHeaders(headerStruct.ResponseHeaders, response.Headers);
 
 			HttpMessageHelper.AssertValidResponse(headerStruct.ResponseHeaders, headerStruct.ContentHeaders);
 			response.Content = await HttpMessageHelper.GetContentAsync(reader, headerStruct, requestMethod, statusLine).ConfigureAwait(false);
 
+			HttpMessageHelper.CopyHeaders(headerStruct.ResponseHeaders, response.Headers);
 			if (response.Content != null)
 			{
 				HttpMessageHelper.CopyHeaders(headerStruct.ContentHeaders, response.Content.Headers);
