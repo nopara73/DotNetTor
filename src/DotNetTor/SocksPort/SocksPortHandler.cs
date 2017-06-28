@@ -63,55 +63,43 @@ namespace DotNetTor.SocksPort
 
 		#endregion
 
-		protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+		protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ctsToken)
 		{			
 			await Util.Semaphore.WaitAsync().ConfigureAwait(false);
 
 			try
 			{
-				return Retry.Do(() => Send(request), RetryInterval, MaxRetry);
-			}
-			catch (Exception ex)
-			{
-				throw new TorException("Couldn't send the request", ex);
+				SocksConnection connection = null;
+				try
+				{
+					Retry.Do(() =>
+					{
+						connection = ConnectToDestinationIfNotConnected(request.RequestUri);
+					}, RetryInterval, MaxRetry);
+				}
+				catch (Exception ex)
+				{
+					throw new TorException("Failed to connect to the destination", ex);
+				}
+				ctsToken.ThrowIfCancellationRequested();
+
+				// https://tools.ietf.org/html/rfc7230#section-2.7.1
+				// A sender MUST NOT generate an "http" URI with an empty host identifier.
+				if (request.RequestUri.DnsSafeHost == "") throw new HttpRequestException("Host identifier is empty");
+
+				// https://tools.ietf.org/html/rfc7230#section-2.6
+				// Intermediaries that process HTTP messages (i.e., all intermediaries
+				// other than those acting as tunnels) MUST send their own HTTP - version
+				// in forwarded messages.
+				request.Version = Protocol.Version;
+				
+				return await connection.SendRequestAsync(request, ctsToken, IgnoreSslCertification).ConfigureAwait(false);
 			}
 			finally
 			{
 				Util.Semaphore.Release();
 			}
 		}
-
-		private HttpResponseMessage Send(HttpRequestMessage request)
-		{
-			SocksConnection connection = null;
-			try
-			{
-				Retry.Do(() =>
-				{
-					connection = ConnectToDestinationIfNotConnected(request.RequestUri);
-				}, RetryInterval, MaxRetry);
-			}
-			catch (Exception ex)
-			{
-				throw new TorException("Failed to connect to the destination", ex);
-			}
-			
-			// https://tools.ietf.org/html/rfc7230#section-2.7.1
-			// A sender MUST NOT generate an "http" URI with an empty host identifier.
-			if (request.RequestUri.DnsSafeHost == "") throw new HttpRequestException("Host identifier is empty");
-
-			// https://tools.ietf.org/html/rfc7230#section-2.6
-			// Intermediaries that process HTTP messages (i.e., all intermediaries
-			// other than those acting as tunnels) MUST send their own HTTP - version
-			// in forwarded messages.
-			request.Version = Protocol.Version;
-
-			HttpResponseMessage message = connection.SendRequest(request, IgnoreSslCertification);
-
-			return message;
-		}
-
-
 
 		#region DestinationConnections
 
