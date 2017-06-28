@@ -70,7 +70,7 @@ namespace System.Net.Http
 			return headers;
 		}
 
-		public static HttpContent GetContent(StreamReader reader, int position, HttpRequestContentHeaders headerStruct)
+		public static async Task<HttpContent> GetContentAsync(StreamReader reader, HttpRequestContentHeaders headerStruct)
 		{
 			if (headerStruct.RequestHeaders != null && headerStruct.RequestHeaders.Contains("Transfer-Encoding"))
 			{
@@ -89,7 +89,9 @@ namespace System.Net.Http
 				// status code and then close the connection.
 				else
 				{
-					return new StreamContent(new SubStream(reader.BaseStream, position, reader.BaseStream.Length - position));
+					var contentString = await reader.ReadToEndAsync().ConfigureAwait(false);
+					var contentBytes = reader.CurrentEncoding.GetBytes(contentString);
+					return new ByteArrayContent(contentBytes);
 				}
 			}
 			// https://tools.ietf.org/html/rfc7230#section-3.3.3
@@ -102,7 +104,11 @@ namespace System.Net.Http
 			else if (headerStruct.ContentHeaders.Contains("Content-Length"))
 			{
 				long? contentLength = headerStruct.ContentHeaders?.ContentLength;
-				return new StreamContent(new SubStream(reader.BaseStream, position, (long)contentLength));
+
+				var buffer = new char[(long)contentLength];
+				// TODO: don't just cast to int, handle overflow!
+				await reader.ReadAsync(buffer, 0, (int)contentLength).ConfigureAwait(false);
+				return new ByteArrayContent(reader.CurrentEncoding.GetBytes(buffer));
 			}
 
 			// https://tools.ietf.org/html/rfc7230#section-3.3.3
@@ -115,7 +121,7 @@ namespace System.Net.Http
 			return GetDummyOrNullContent(headerStruct.ContentHeaders);
 		}
 
-		public static HttpContent GetContent(StreamReader reader, int position, HttpResponseContentHeaders headerStruct, HttpMethod requestMethod, StatusLine statusLine)
+		public static async Task<HttpContent> GetContentAsync(StreamReader reader, HttpResponseContentHeaders headerStruct, HttpMethod requestMethod, StatusLine statusLine)
 		{
 			// https://tools.ietf.org/html/rfc7230#section-3.3.3
 			// The length of a message body is determined by one of the following
@@ -167,7 +173,9 @@ namespace System.Net.Http
 				// status code and then close the connection.
 				else
 				{
-					return new StreamContent(new SubStream(reader.BaseStream, position, reader.BaseStream.Length - position));
+					var cs = await reader.ReadToEndAsync().ConfigureAwait(false);
+					var cb = reader.CurrentEncoding.GetBytes(cs);
+					return new ByteArrayContent(cb);
 				}
 			}
 			// https://tools.ietf.org/html/rfc7230#section-3.3.3
@@ -180,16 +188,11 @@ namespace System.Net.Http
 			else if (headerStruct.ContentHeaders.Contains("Content-Length"))
 			{				
 				long? contentLength = headerStruct.ContentHeaders?.ContentLength;
-				//return new StreamContent(new SubStream(reader.BaseStream, position, (long)contentLength));
-				long p = 0;
-				var buff = new List<byte>();
-				while (contentLength != p)
-				{
-					var c = reader.Read();
-					buff.Add(Convert.ToByte((char)c));
-					p++;
-				}
-				return new ByteArrayContent(buff.ToArray());
+
+				var buffer = new char[(long)contentLength];
+				// TODO: don't just cast to int, handle overflow!
+				await reader.ReadAsync(buffer, 0, (int)contentLength).ConfigureAwait(false);
+				return new ByteArrayContent(reader.CurrentEncoding.GetBytes(buffer));
 			}
 
 			// https://tools.ietf.org/html/rfc7230#section-3.3.3
@@ -199,7 +202,9 @@ namespace System.Net.Http
 			// body length, so the message body length is determined by the
 			// number of octets received prior to the server closing the
 			// connection.
-			return new StreamContent(new SubStream(reader.BaseStream, position, reader.BaseStream.Length - position));
+			var contentString = await reader.ReadToEndAsync().ConfigureAwait(false);
+			var contentBytes = reader.CurrentEncoding.GetBytes(contentString);
+			return new ByteArrayContent(contentBytes);
 		}
 
 		public static void AssertValidResponse(HttpHeaders messageHeaders, HttpContentHeaders contentHeaders)

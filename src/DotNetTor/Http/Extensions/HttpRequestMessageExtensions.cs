@@ -45,7 +45,7 @@ namespace System.Net.Http
 			HttpMessageHelper.CopyHeaders(headerStruct.RequestHeaders, request.Headers);
 
 			HttpMessageHelper.AssertValidResponse(headerStruct.RequestHeaders, headerStruct.ContentHeaders);
-			request.Content = HttpMessageHelper.GetContent(reader, position, headerStruct);
+			request.Content = await HttpMessageHelper.GetContentAsync(reader, headerStruct).ConfigureAwait(false);
 
 			if (request.Content != null)
 			{
