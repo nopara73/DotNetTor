@@ -106,8 +106,13 @@ namespace System.Net.Http
 				long? contentLength = headerStruct.ContentHeaders?.ContentLength;
 
 				var buffer = new char[(long)contentLength];
-				// TODO: don't just cast to int, handle overflow!
-				await reader.ReadAsync(buffer, 0, (int)contentLength).ConfigureAwait(false);
+				var left = contentLength;
+				while (left != 0)
+				{
+					// TODO: don't just cast to int, handle overflow!
+					var c = await reader.ReadAsync(buffer, 0, (int)left).ConfigureAwait(false);
+					left -= c;
+				}
 				return new ByteArrayContent(reader.CurrentEncoding.GetBytes(buffer));
 			}
 
@@ -190,8 +195,13 @@ namespace System.Net.Http
 				long? contentLength = headerStruct.ContentHeaders?.ContentLength;
 
 				var buffer = new char[(long)contentLength];
-				// TODO: don't just cast to int, handle overflow!
-				await reader.ReadAsync(buffer, 0, (int)contentLength).ConfigureAwait(false);
+				var left = contentLength;
+				while(left != 0)
+				{
+					// TODO: don't just cast to int, handle overflow!
+					var c = await reader.ReadAsync(buffer, 0, (int)left).ConfigureAwait(false);
+					left -= c;
+				}				
 				return new ByteArrayContent(reader.CurrentEncoding.GetBytes(buffer));
 			}
 
