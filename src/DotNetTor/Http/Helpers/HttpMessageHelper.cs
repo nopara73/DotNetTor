@@ -89,9 +89,7 @@ namespace System.Net.Http
 				// status code and then close the connection.
 				else
 				{
-					var contentString = await reader.ReadToEndAsync().ConfigureAwait(false);
-					var contentBytes = reader.CurrentEncoding.GetBytes(contentString);
-					return new ByteArrayContent(contentBytes);
+					return await GetContentTillEndAsync(reader).ConfigureAwait(false);
 				}
 			}
 			// https://tools.ietf.org/html/rfc7230#section-3.3.3
@@ -104,16 +102,7 @@ namespace System.Net.Http
 			else if (headerStruct.ContentHeaders.Contains("Content-Length"))
 			{
 				long? contentLength = headerStruct.ContentHeaders?.ContentLength;
-
-				var buffer = new char[(long)contentLength];
-				var left = contentLength;
-				while (left != 0)
-				{
-					// TODO: don't just cast to int, handle overflow!
-					var c = await reader.ReadAsync(buffer, 0, (int)left).ConfigureAwait(false);
-					left -= c;
-				}
-				return new ByteArrayContent(reader.CurrentEncoding.GetBytes(buffer));
+				return await GetContentTillLengthAsync(reader, contentLength).ConfigureAwait(false);
 			}
 
 			// https://tools.ietf.org/html/rfc7230#section-3.3.3
@@ -124,7 +113,7 @@ namespace System.Net.Http
 			// number of octets received prior to the server closing the
 			// connection.
 			return GetDummyOrNullContent(headerStruct.ContentHeaders);
-		}
+		}		
 
 		public static async Task<HttpContent> GetContentAsync(StreamReader reader, HttpResponseContentHeaders headerStruct, HttpMethod requestMethod, StatusLine statusLine)
 		{
@@ -178,9 +167,7 @@ namespace System.Net.Http
 				// status code and then close the connection.
 				else
 				{
-					var cs = await reader.ReadToEndAsync().ConfigureAwait(false);
-					var cb = reader.CurrentEncoding.GetBytes(cs);
-					return new ByteArrayContent(cb);
+					return await GetContentTillEndAsync(reader).ConfigureAwait(false);
 				}
 			}
 			// https://tools.ietf.org/html/rfc7230#section-3.3.3
@@ -191,18 +178,10 @@ namespace System.Net.Http
 			// received, the recipient MUST consider the message to be
 			// incomplete and close the connection.
 			else if (headerStruct.ContentHeaders.Contains("Content-Length"))
-			{				
+			{
 				long? contentLength = headerStruct.ContentHeaders?.ContentLength;
 
-				var buffer = new char[(long)contentLength];
-				var left = contentLength;
-				while(left != 0)
-				{
-					// TODO: don't just cast to int, handle overflow!
-					var c = await reader.ReadAsync(buffer, 0, (int)left).ConfigureAwait(false);
-					left -= c;
-				}				
-				return new ByteArrayContent(reader.CurrentEncoding.GetBytes(buffer));
+				return await GetContentTillLengthAsync(reader, contentLength).ConfigureAwait(false);
 			}
 
 			// https://tools.ietf.org/html/rfc7230#section-3.3.3
@@ -212,9 +191,27 @@ namespace System.Net.Http
 			// body length, so the message body length is determined by the
 			// number of octets received prior to the server closing the
 			// connection.
+			return await GetContentTillEndAsync(reader).ConfigureAwait(false);
+		}
+
+		private static async Task<HttpContent> GetContentTillEndAsync(StreamReader reader)
+		{
 			var contentString = await reader.ReadToEndAsync().ConfigureAwait(false);
 			var contentBytes = reader.CurrentEncoding.GetBytes(contentString);
 			return new ByteArrayContent(contentBytes);
+		}
+
+		private static async Task<HttpContent> GetContentTillLengthAsync(StreamReader reader, long? contentLength)
+		{
+			var buffer = new char[(long)contentLength];
+			var left = contentLength;
+			while (left != 0)
+			{
+				// TODO: don't just cast to int, handle overflow!
+				var c = await reader.ReadAsync(buffer, 0, (int)left).ConfigureAwait(false);
+				left -= c;
+			}
+			return new ByteArrayContent(reader.CurrentEncoding.GetBytes(buffer));
 		}
 
 		public static void AssertValidResponse(HttpHeaders messageHeaders, HttpContentHeaders contentHeaders)
