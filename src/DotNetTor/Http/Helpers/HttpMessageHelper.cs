@@ -313,7 +313,7 @@ namespace System.Net.Http
 			return new ByteArrayContent(decodedBody.ToArray());
 		}
 
-		private static void RemoveInvalidTrailers(HeaderSection trailerHeaderSection)
+		public static void RemoveInvalidTrailers(HeaderSection trailerHeaderSection)
 		{
 			// https://tools.ietf.org/html/rfc7230#section-4.1.2
 			// A sender MUST NOT generate a trailer that contains a field necessary
@@ -365,7 +365,7 @@ namespace System.Net.Http
 			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "Trailer");
 		}
 
-		private static void ParseFistChunkLine(string firstChunkLine, out long chunkSize, out IEnumerable<string> chunkExtensions)
+		public static void ParseFistChunkLine(string firstChunkLine, out long chunkSize, out IEnumerable<string> chunkExtensions)
 		{
 			// https://tools.ietf.org/html/rfc7230#section-4.1
 			// chunk          = chunk-size [ chunk-ext ] CRLF

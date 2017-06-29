@@ -18,22 +18,7 @@ namespace DotNetTor
 		{
 			return source.IndexOf(toCheck, comp) >= 0;
 		}
-
-		internal static async Task AssertPortOpenAsync(IPEndPoint ipEndPoint)
-		{
-			using (TcpClient tcpClient = new TcpClient())
-			{
-				try
-				{
-					await tcpClient.ConnectAsync(ipEndPoint.Address, ipEndPoint.Port).ConfigureAwait(false);
-				}
-				catch (Exception ex)
-				{
-					throw new TorException($"{ipEndPoint.Address}:{ipEndPoint.Port} is closed.", ex);
-				}
-			}
-		}
-
+		
 		private const byte SocksVersion = 0x05;
 
 		private enum AddressType : byte
@@ -80,9 +65,6 @@ namespace DotNetTor
 						.Concat(BitConverter.GetBytes(IPAddress.HostToNetworkOrder((short) port))).ToArray());
 			return sendBuffer;
 		}
-
-		internal static void ValidateConnectToDestinationResponse(ArraySegment<byte> receiveBuffer, int receiveCount)
-			=> ValidateConnectToDestinationResponse(receiveBuffer.Array, receiveCount);
 
 		internal static void ValidateConnectToDestinationResponse(byte[] receiveBuffer, int receiveCount)
 		{
@@ -137,9 +119,7 @@ namespace DotNetTor
 				throw new NotSupportedException(addressTypeNotSupportedMessage);
 			}
 		}
-
-		internal static void ValidateHandshakeResponse(ArraySegment<byte> receiveBuffer, int receiveCount) => ValidateHandshakeResponse(receiveBuffer.Array, receiveCount);
-
+		
 		internal static void ValidateHandshakeResponse(byte[] receiveBuffer, int receiveCount)
 		{
 			if(receiveCount != 2)
