@@ -13,7 +13,7 @@ namespace DotNetTor.Example
 		{
 			DoARandomRequest();
 			RequestWith3Ip();
-			CanRequestDifferentDomainsWithSameHandler();
+			//CanRequestDifferentDomainsWithSameHandler();
 
 			Console.WriteLine("Press a key to exit..");
 			Console.ReadKey();
