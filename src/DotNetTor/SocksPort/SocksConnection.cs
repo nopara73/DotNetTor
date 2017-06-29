@@ -141,14 +141,14 @@ namespace DotNetTor.SocksPort
 					}
 				}			
 
-				var requestString = await request.ToHttpStringAsync().ConfigureAwait(false);
+				var requestString = await request.ToHttpStringAsync(ctsToken).ConfigureAwait(false);
 				ctsToken.ThrowIfCancellationRequested();
 
 				Stream.Write(Encoding.UTF8.GetBytes(requestString), 0, requestString.Length);
 				Stream.Flush();
 				ctsToken.ThrowIfCancellationRequested();
 
-				return await new HttpResponseMessage().CreateNewAsync(Stream, request.Method).ConfigureAwait(false);
+				return await new HttpResponseMessage().CreateNewAsync(Stream, request.Method, ctsToken).ConfigureAwait(false);
 			}
 			catch (SocketException)
 			{

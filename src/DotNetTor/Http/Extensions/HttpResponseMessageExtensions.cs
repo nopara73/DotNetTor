@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using static DotNetTor.Http.Constants;
 
@@ -10,7 +11,7 @@ namespace System.Net.Http
 {
     public static class HttpResponseMessageExtensions
     {
-		public static async Task<HttpResponseMessage> CreateNewAsync(this HttpResponseMessage me, Stream responseStream, HttpMethod requestMethod)
+		public static async Task<HttpResponseMessage> CreateNewAsync(this HttpResponseMessage me, Stream responseStream, HttpMethod requestMethod, CancellationToken ctsToken = default(CancellationToken))
 		{
 			// https://tools.ietf.org/html/rfc7230#section-3
 			// The normal procedure for parsing an HTTP message is to read the
@@ -32,20 +33,20 @@ namespace System.Net.Http
 			//					[message - body]
 			var reader = new StreamReader(stream: responseStream); // todo: dispose StreamReader, but leave open the requestStream
 			var position = 0;
-			string startLine = await HttpMessageHelper.ReadStartLineAsync(reader).ConfigureAwait(false);
+			string startLine = await HttpMessageHelper.ReadStartLineAsync(reader, ctsToken).ConfigureAwait(false);
 			position += startLine.Length;
 
 			var statusLine = StatusLine.CreateNew(startLine);
 			var response = new HttpResponseMessage(statusLine.StatusCode);
 
-			string headers = await HttpMessageHelper.ReadHeadersAsync(reader).ConfigureAwait(false);
+			string headers = await HttpMessageHelper.ReadHeadersAsync(reader, ctsToken).ConfigureAwait(false);
 			position += headers.Length + 2;
 
 			var headerSection = HeaderSection.CreateNew(headers);
 			var headerStruct = headerSection.ToHttpResponseHeaders();
 
 			HttpMessageHelper.AssertValidHeaders(headerStruct.ResponseHeaders, headerStruct.ContentHeaders);
-			response.Content = await HttpMessageHelper.GetContentAsync(reader, headerStruct, requestMethod, statusLine).ConfigureAwait(false);
+			response.Content = await HttpMessageHelper.GetContentAsync(reader, headerStruct, requestMethod, statusLine, ctsToken).ConfigureAwait(false);
 
 			HttpMessageHelper.CopyHeaders(headerStruct.ResponseHeaders, response.Headers);
 			if (response.Content != null)

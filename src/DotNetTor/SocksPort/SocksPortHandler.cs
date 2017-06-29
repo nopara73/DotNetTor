@@ -92,8 +92,22 @@ namespace DotNetTor.SocksPort
 				// other than those acting as tunnels) MUST send their own HTTP - version
 				// in forwarded messages.
 				request.Version = Protocol.Version;
-				
-				return await connection.SendRequestAsync(request, ctsToken, IgnoreSslCertification).ConfigureAwait(false);
+
+				try
+				{
+					return await connection.SendRequestAsync(request, ctsToken, IgnoreSslCertification).ConfigureAwait(false);
+				}
+				catch(Exception ex)
+				{
+					if(ex is OperationCanceledException)
+					{
+						throw;
+					}
+					else
+					{
+						throw new TorException("Failed to send the request", ex);
+					}
+				}
 			}
 			finally
 			{

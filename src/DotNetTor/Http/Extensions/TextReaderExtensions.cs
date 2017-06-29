@@ -42,13 +42,13 @@ namespace System.IO
 			return null;
 		}
 
-		public static Task<string> ReadLineAsync(this TextReader me, bool strictCRLF = false)
+		public static Task<string> ReadLineAsync(this TextReader me, bool strictCRLF = false, CancellationToken ctsToken = default(CancellationToken))
 		{
 			return Task<String>.Factory.StartNew(state =>
 			{
 				return ((TextReader)state).ReadLine(strictCRLF);
 			},
-			me, CancellationToken.None, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default);
+			me, ctsToken, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default);
 		}
 		
 		public static string ReadPart(this TextReader me, char separator)
@@ -73,13 +73,13 @@ namespace System.IO
 			return null;
 		}
 
-		public static Task<string> ReadPartAsync(this TextReader me, char separator)
+		public static Task<string> ReadPartAsync(this TextReader me, char separator, CancellationToken ctsToken)
 		{
 			return Task<String>.Factory.StartNew(state =>
 			{
 				return ((TextReader)state).ReadPart(separator);
 			},
-			me, CancellationToken.None, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default);
+			me, ctsToken, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default);
 		}
 	}
 }

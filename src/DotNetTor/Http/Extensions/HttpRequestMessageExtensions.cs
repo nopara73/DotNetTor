@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using static DotNetTor.Http.Constants;
 
@@ -54,7 +55,7 @@ namespace System.Net.Http
 			return request;
 		}
 
-		public static async Task<string> ToHttpStringAsync(this HttpRequestMessage me)
+		public static async Task<string> ToHttpStringAsync(this HttpRequestMessage me, CancellationToken ctsToken = default(CancellationToken))
 		{
 			// https://tools.ietf.org/html/rfc7230#section-5.4
 			// The "Host" header field in a request provides the host and port
@@ -85,8 +86,8 @@ namespace System.Net.Http
 			{
 				var headerSection = HeaderSection.CreateNew(me.Headers);
 				headers += headerSection.ToString(endWithTwoCRLF: false);
-			}		
-
+			}
+			
 			string messageBody = "";
 			if (me.Content != null)
 			{
@@ -96,6 +97,7 @@ namespace System.Net.Http
 					headers += headerSection.ToString(endWithTwoCRLF: false);
 				}
 
+				ctsToken.ThrowIfCancellationRequested();
 				messageBody = await me.Content.ReadAsStringAsync().ConfigureAwait(false);
 			}
 
