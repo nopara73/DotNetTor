@@ -43,15 +43,17 @@ namespace DotNetTor.SocksPort
 			Socket.Connect(EndPoint);
 		}
 
-		private void ConnectToDestination(bool ignoreSslCertification = false)
+		private async Task ConnectToDestinationAsync(bool ignoreSslCertification = false, CancellationToken ctsToken = default(CancellationToken))
 		{
-			var sendBuffer = Util.BuildConnectToUri(Destination).Array;
-			Socket.Send(sendBuffer, SocketFlags.None);
+			var sendBuffer = new ArraySegment<byte>(Util.BuildConnectToUri(Destination).Array);
+			await Socket.SendAsync(sendBuffer, SocketFlags.None).ConfigureAwait(false);
+			ctsToken.ThrowIfCancellationRequested();
 
-			var recBuffer = new byte[Socket.ReceiveBufferSize];
-			var recCnt = Socket.Receive(recBuffer, SocketFlags.None);
+			var recBuffer = new ArraySegment<byte>(new byte[Socket.ReceiveBufferSize]);
+			var recCnt = await Socket.ReceiveAsync(recBuffer, SocketFlags.None).ConfigureAwait(false);
+			ctsToken.ThrowIfCancellationRequested();
 
-			Util.ValidateConnectToDestinationResponse(recBuffer, recCnt);
+			Util.ValidateConnectToDestinationResponse(recBuffer.Array, recCnt);
 
 			Stream stream = new NetworkStream(Socket, ownsSocket: false);
 			if (Destination.Scheme.Equals("https", StringComparison.Ordinal))
@@ -69,13 +71,13 @@ namespace DotNetTor.SocksPort
 					httpsStream = new SslStream(stream, leaveInnerStreamOpen: true);
 				}
 
-				httpsStream
+				await httpsStream
 					.AuthenticateAsClientAsync(
 						Destination.DnsSafeHost,
 						new X509CertificateCollection(),
 						SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12,
 						checkCertificateRevocation: true)
-					.Wait();
+					.ConfigureAwait(false);
 				stream = httpsStream;
 			}
 			Stream = stream;
@@ -109,7 +111,7 @@ namespace DotNetTor.SocksPort
 		{
 			try
 			{
-				EnsureConnectedToTor(ignoreSslCertification);
+				await EnsureConnectedToTorAsync(ignoreSslCertification, ctsToken).ConfigureAwait(false);
 				ctsToken.ThrowIfCancellationRequested();
 
 				// https://tools.ietf.org/html/rfc7230#section-3.3.2
@@ -157,14 +159,14 @@ namespace DotNetTor.SocksPort
 			}
 		}
 
-		private void EnsureConnectedToTor(bool ignoreSslCertification)
+		private async Task EnsureConnectedToTorAsync(bool ignoreSslCertification, CancellationToken ctsToken = default(CancellationToken))
 		{
 			if (!IsSocketConnected(throws: false)) // Socket.Connected is misleading, don't use that
 			{
 				DestroySocket();
 				ConnectSocket();
 				HandshakeTor();
-				ConnectToDestination(ignoreSslCertification);
+				await ConnectToDestinationAsync(ignoreSslCertification, ctsToken);
 			}
 		}
 
