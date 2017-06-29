@@ -1,18 +1,20 @@
 ﻿using DotNetTor.Http;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using static DotNetTor.Http.Constants;
 
 namespace System.Net.Http
 {
 	public static class HttpMessageHelper
-    {
+	{
 		public static async Task<string> ReadStartLineAsync(StreamReader reader)
 		{
 			// https://tools.ietf.org/html/rfc7230#section-3
@@ -74,9 +76,11 @@ namespace System.Net.Http
 		{
 			if (headerStruct.RequestHeaders != null && headerStruct.RequestHeaders.Contains("Transfer-Encoding"))
 			{
-				if (headerStruct.RequestHeaders.TransferEncoding.Last().Value == "chunked")
+				// https://tools.ietf.org/html/rfc7230#section-4
+				// All transfer-coding names are case-insensitive
+				if ("chunked".Equals(headerStruct.RequestHeaders.TransferEncoding.Last().Value, StringComparison.OrdinalIgnoreCase))
 				{
-					throw new NotImplementedException();
+					return await GetDecodedChunkedContent(reader, headerStruct).ConfigureAwait(false);
 				}
 				// https://tools.ietf.org/html/rfc7230#section-3.3.3
 				// If a Transfer - Encoding header field is present in a response and
@@ -113,7 +117,7 @@ namespace System.Net.Http
 			// number of octets received prior to the server closing the
 			// connection.
 			return GetDummyOrNullContent(headerStruct.ContentHeaders);
-		}		
+		}
 
 		public static async Task<HttpContent> GetContentAsync(StreamReader reader, HttpResponseContentHeaders headerStruct, HttpMethod requestMethod, StatusLine statusLine)
 		{
@@ -152,54 +156,11 @@ namespace System.Net.Http
 			// data until the transfer coding indicates the data is complete.
 			if (headerStruct.ResponseHeaders != null && headerStruct.ResponseHeaders.Contains("Transfer-Encoding"))
 			{
-				if (headerStruct.ResponseHeaders.TransferEncoding.Last().Value == "chunked")
+				// https://tools.ietf.org/html/rfc7230#section-4
+				// All transfer-coding names are case-insensitive
+				if ("chunked".Equals(headerStruct.ResponseHeaders.TransferEncoding.Last().Value, StringComparison.OrdinalIgnoreCase))
 				{
-					// https://tools.ietf.org/html/rfc7230#section-4.1.3
-					// A process for decoding the chunked transfer coding can be represented
-					// in pseudo - code as:
-					// length := 0
-					long length = 0;
-					// read chunk-size, chunk-ext (if any), and CRLF
-					var firstLine = await reader.ReadLineAsync(strictCRLF: true).ConfigureAwait(false);
-					var chunkSize = long.Parse(firstLine.Split(' ').First());
-					// while (chunk-size > 0) {
-					var buffer = new List<byte>();
-					while (chunkSize > 0)
-					{
-						// read chunk-data and CRLF
-						var readBytes = await ReadBytesTillLengthAsync(reader, chunkSize).ConfigureAwait(false);
-						var crlf = await ReadBytesTillLengthAsync(reader, 2).ConfigureAwait(false);
-						if(!crlf.SequenceEqual(new byte[] { (byte)CRLF[0], (byte)CRLF[1] }))
-						{
-							throw new FormatException("chunk-data must end with CRLF");
-						}
-
-						// append chunk-data to decoded-body
-						foreach (var b in readBytes)
-						{
-							buffer.Add(b);
-						}
-
-						// length := length + chunk-size
-						length += chunkSize;
-
-						// read chunk-size, chunk-ext (if any), and CRLF
-						firstLine = await reader.ReadLineAsync(strictCRLF: true).ConfigureAwait(false);
-						chunkSize = long.Parse(firstLine.Split(' ').First());
-					}
-					// read trailer field
-					// https://tools.ietf.org/html/rfc7230#section-4.1.2
-					// The trailer fields are identical to header fields, except
-					// they are sent in a chunked trailer instead of the message's header
-					// section.
-					await ReadHeadersAsync(reader).ConfigureAwait(false);
-
-					// Content-Length := length
-					// Remove "chunked" from Transfer-Encoding
-					headerStruct.ResponseHeaders.Remove("Transfer-Encoding");
-					headerStruct.ContentHeaders.TryAddWithoutValidation("Content-Length", length.ToString());
-					// Remove Trailer from existing header fields
-					headerStruct.ResponseHeaders.Remove("Trailer");
+					return await GetDecodedChunkedContent(reader, headerStruct).ConfigureAwait(false);
 				}
 				// https://tools.ietf.org/html/rfc7230#section-3.3.3
 				// If a Transfer - Encoding header field is present in a response and
@@ -239,6 +200,189 @@ namespace System.Net.Http
 			return await GetContentTillEndAsync(reader).ConfigureAwait(false);
 		}
 
+		private static async Task<HttpContent> GetDecodedChunkedContent(StreamReader reader, HttpRequestContentHeaders headerStruct)
+		{
+			return await GetDecodedChunkedContent(reader, headerStruct, null).ConfigureAwait(false);
+		}
+		private static async Task<HttpContent> GetDecodedChunkedContent(StreamReader reader, HttpResponseContentHeaders headerStruct)
+		{
+			return await GetDecodedChunkedContent(reader, null, headerStruct).ConfigureAwait(false);
+		}
+		private static async Task<HttpContent> GetDecodedChunkedContent(StreamReader reader, HttpRequestContentHeaders requestHeaders, HttpResponseContentHeaders responseHeaders)
+		{
+			if(responseHeaders == null && requestHeaders == null)
+			{
+				throw new ArgumentException("response and request headers cannot be both null");
+			}
+			if (responseHeaders != null && requestHeaders != null)
+			{
+				throw new ArgumentException("either response or request headers has to be null");
+			}
+
+			// https://tools.ietf.org/html/rfc7230#section-4.1.3
+			// 4.1.3.Decoding Chunked
+			// A process for decoding the chunked transfer coding can be represented
+			// in pseudo - code as:
+			// length := 0
+			// read chunk - size, chunk - ext(if any), and CRLF
+			// while (chunk - size > 0)
+			// {
+			//   read chunk-data and CRLF
+			//   append chunk-data to decoded-body
+			//   length:= length + chunk - size
+			//   read chunk-size, chunk - ext(if any), and CRLF
+			// }
+			// read trailer field
+			// while (trailer field is not empty) {
+			//   if (trailer field is allowed to be sent in a trailer) {
+			//      append trailer field to existing header fields				
+			//   }
+			//   read trailer-field
+			// }
+			// Content - Length := length
+			// Remove "chunked" from Transfer-Encoding
+			// Remove Trailer from existing header fields
+			long length = 0;
+			var firstChunkLine = await reader.ReadLineAsync(strictCRLF: true).ConfigureAwait(false);
+			ParseFistChunkLine(firstChunkLine, out long chunkSize, out IEnumerable<string> chunkExtensions);
+			// We will not do anything with the chunk extensions, because:
+			// https://tools.ietf.org/html/rfc7230#section-4.1.1
+			// A recipient MUST ignore unrecognized chunk extensions.
+
+			var decodedBody = new List<byte>();
+			// https://tools.ietf.org/html/rfc7230#section-4.1
+			// The chunked transfer coding is complete
+			// when a chunk with a chunk-size of zero is received, possibly followed
+			// by a trailer, and finally terminated by an empty line.
+			while (chunkSize > 0)
+			{
+				var chunkData = await ReadBytesTillLengthAsync(reader, chunkSize).ConfigureAwait(false);
+				if (await reader.ReadLineAsync(strictCRLF: true).ConfigureAwait(false) != "")
+				{
+					throw new FormatException("Chunk does not end with CRLF");
+				}
+
+				foreach (var b in chunkData)
+				{
+					decodedBody.Add(b);
+				}
+
+				length += chunkSize;
+
+				firstChunkLine = await reader.ReadLineAsync(strictCRLF: true).ConfigureAwait(false);
+				ParseFistChunkLine(firstChunkLine, out long cs, out IEnumerable<string> ces);
+				chunkSize = cs;
+				chunkExtensions = ces;
+			}
+			// https://tools.ietf.org/html/rfc7230#section-4.1.2
+			// A trailer allows the sender to include additional fields at the end
+			// of a chunked message in order to supply metadata that might be
+			// dynamically generated while the message body is sent
+			string trailerHeaders = await ReadHeadersAsync(reader).ConfigureAwait(false);
+			var trailerHeaderSection = HeaderSection.CreateNew(trailerHeaders);
+			RemoveInvalidTrailers(trailerHeaderSection);
+			if (responseHeaders != null)
+			{
+				var trailerHeaderStruct = trailerHeaderSection.ToHttpResponseHeaders();
+				AssertValidHeaders(trailerHeaderStruct.ResponseHeaders, trailerHeaderStruct.ContentHeaders);
+				// https://tools.ietf.org/html/rfc7230#section-4.1.2
+				// When a chunked message containing a non-empty trailer is received,
+				// the recipient MAY process the fields(aside from those forbidden
+				// above) as if they were appended to the message's header section.
+				CopyHeaders(trailerHeaderStruct.ResponseHeaders, responseHeaders.ResponseHeaders);
+
+				responseHeaders.ResponseHeaders.Remove("Transfer-Encoding");
+				responseHeaders.ContentHeaders.TryAddWithoutValidation("Content-Length", length.ToString());
+				responseHeaders.ResponseHeaders.Remove("Trailer");
+			}
+			if (requestHeaders != null)
+			{
+				var trailerHeaderStruct = trailerHeaderSection.ToHttpRequestHeaders();
+				AssertValidHeaders(trailerHeaderStruct.RequestHeaders, trailerHeaderStruct.ContentHeaders);
+				// https://tools.ietf.org/html/rfc7230#section-4.1.2
+				// When a chunked message containing a non-empty trailer is received,
+				// the recipient MAY process the fields(aside from those forbidden
+				// above) as if they were appended to the message's header section.
+				CopyHeaders(trailerHeaderStruct.RequestHeaders, requestHeaders.RequestHeaders);
+
+				requestHeaders.RequestHeaders.Remove("Transfer-Encoding");
+				requestHeaders.ContentHeaders.TryAddWithoutValidation("Content-Length", length.ToString());
+				requestHeaders.RequestHeaders.Remove("Trailer");
+			}
+
+			return new ByteArrayContent(decodedBody.ToArray());
+		}
+
+		private static void RemoveInvalidTrailers(HeaderSection trailerHeaderSection)
+		{
+			// https://tools.ietf.org/html/rfc7230#section-4.1.2
+			// A sender MUST NOT generate a trailer that contains a field necessary
+			// for message framing (e.g., Transfer - Encoding and Content - Length),
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "Transfer-Encoding");
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "Content-Length");
+			// routing (e.g., Host)
+			// request modifiers(e.g., controls and
+			// https://tools.ietf.org/html/rfc7231#section-5.1
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "Cache-Control");
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "Expect");
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "Host");
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "Max-Forwards");
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "Pragma");
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "Range");
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "TE");
+			// conditionals in Section 5 of[RFC7231]),
+			// https://tools.ietf.org/html/rfc7231#section-5.2
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "If-Match");
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "If-None-Match");
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "If-Modified-Since");
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "If-Unmodified-Since");
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "If-Range");
+			// authentication(e.g., see [RFC7235] 
+			// https://tools.ietf.org/html/rfc7235#section-5.3
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "Authorization");
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "Proxy-Authenticate");
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "Proxy-Authorization");
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "WWW-Authenticate");
+			// and[RFC6265]),
+			// https://tools.ietf.org/html/rfc6265
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "Set-Cookie");
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "Cookie");
+			// response control data(e.g., see Section 7.1 of[RFC7231]), 
+			// https://tools.ietf.org/html/rfc7231#section-7.1
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "Age");
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "Cache-Control");
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "Expires");
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "Date");
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "Location");
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "Retry-After");
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "Vary");
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "Warning");
+			// or determining how to process the payload(e.g.,
+			// Content - Encoding, Content - Type, Content - Range, and Trailer).
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "Content-Encoding");
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "Content-Type");
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "Content-Range");
+			trailerHeaderSection.Fields.RemoveAll(x => x.Name == "Trailer");
+		}
+
+		private static void ParseFistChunkLine(string firstChunkLine, out long chunkSize, out IEnumerable<string> chunkExtensions)
+		{
+			// https://tools.ietf.org/html/rfc7230#section-4.1
+			// chunk          = chunk-size [ chunk-ext ] CRLF
+			// https://tools.ietf.org/html/rfc7230#section-4.1.1
+			// chunk-ext      = *( ";" chunk-ext-name [ "=" chunk-ext-val ] )
+			var parts = firstChunkLine.Split(";", StringSplitOptions.RemoveEmptyEntries);
+			// https://tools.ietf.org/html/rfc7230#section-4.1
+			// The chunk-size field is a string of hex digits indicating the size of
+			// the chunk-data in octets.
+			chunkSize = Convert.ToInt64(parts.First().Trim(), 16);
+			chunkExtensions = null;
+			if (parts.Length > 1)
+			{
+				chunkExtensions = parts.Skip(1);
+			}
+		}
+
 		private static async Task<HttpContent> GetContentTillEndAsync(StreamReader reader)
 		{
 			var contentString = await reader.ReadToEndAsync().ConfigureAwait(false);
@@ -249,27 +393,26 @@ namespace System.Net.Http
 		private static async Task<HttpContent> GetContentTillLengthAsync(StreamReader reader, long? contentLength)
 			=> new ByteArrayContent(await ReadBytesTillLengthAsync(reader, contentLength).ConfigureAwait(false));
 		
-		private static async Task<byte[]> ReadBytesTillLengthAsync(StreamReader reader, long? contentLength)
+		private static async Task<byte[]> ReadBytesTillLengthAsync(StreamReader reader, long? length)
+			=> await Task.Run(() => ReadBytesTillLength(reader, length)).ConfigureAwait(false);
+		
+		private static byte[] ReadBytesTillLength(StreamReader reader, long? length)
 		{
-			var sb = new StringBuilder();
-
-			var buffer = new char[(long)contentLength];
-			var left = contentLength;
-			while (left != 0)
+			var allData = new char[(long)length];
+			for (int i = 0; i < length; i++)
 			{
-				// TODO: don't just cast to int, handle overflow!
-				var readCount = await reader.ReadAsync(buffer, 0, (int)left).ConfigureAwait(false);
-				left -= readCount;
-
-				foreach(var c in buffer)
+				int ch = 0;
+				while (ch == 0)
 				{
-					sb.Append(c);
+					ch = reader.Read();
 				}
+
+				allData[i] = (char)ch;
 			}
-			return reader.CurrentEncoding.GetBytes(sb.ToString());
+			return reader.CurrentEncoding.GetBytes(allData);
 		}
 
-		public static void AssertValidResponse(HttpHeaders messageHeaders, HttpContentHeaders contentHeaders)
+		public static void AssertValidHeaders(HttpHeaders messageHeaders, HttpContentHeaders contentHeaders)
 		{
 			if (messageHeaders != null && messageHeaders.Contains("Transfer-Encoding"))
 			{

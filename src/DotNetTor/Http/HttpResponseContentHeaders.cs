@@ -2,7 +2,7 @@
 
 namespace DotNetTor.Http
 {
-    public struct HttpResponseContentHeaders
+    public class HttpResponseContentHeaders
 	{
 		public HttpResponseHeaders ResponseHeaders { get; set; }
 		public HttpContentHeaders ContentHeaders { get; set; }

@@ -44,7 +44,7 @@ namespace System.Net.Http
 			var headerSection = HeaderSection.CreateNew(headers);
 			var headerStruct = headerSection.ToHttpResponseHeaders();
 
-			HttpMessageHelper.AssertValidResponse(headerStruct.ResponseHeaders, headerStruct.ContentHeaders);
+			HttpMessageHelper.AssertValidHeaders(headerStruct.ResponseHeaders, headerStruct.ContentHeaders);
 			response.Content = await HttpMessageHelper.GetContentAsync(reader, headerStruct, requestMethod, statusLine).ConfigureAwait(false);
 
 			HttpMessageHelper.CopyHeaders(headerStruct.ResponseHeaders, response.Headers);

@@ -140,15 +140,7 @@ namespace DotNetTor.SocksPort
 							}
 						}
 					}
-				}
-				if (request.Method != new HttpMethod("CONNECT"))
-				{
-					// Make sure we write the Host header
-					if (!request.Headers.Contains("Host"))
-					{
-						request.Headers.TryAddWithoutValidation("Host", request.RequestUri.DnsSafeHost);
-					}
-				}
+				}			
 
 				var requestString = await request.ToHttpStringAsync().ConfigureAwait(false);
 				ctsToken.ThrowIfCancellationRequested();

@@ -64,6 +64,32 @@ namespace DotNetTor.Http
 
 		private static void ValidateAndCorrectHeaders(HeaderSection hs)
 		{
+			// https://tools.ietf.org/html/rfc7230#section-5.4
+			// Since the Host field - value is critical information for handling a				 
+			// request, a user agent SHOULD generate Host as the first header field				 
+			// following the request - line.
+			HeaderField hostToCorrect = null;
+			foreach(var f in hs.Fields)
+			{
+				// if we find host
+				if(f.Name == "Host")
+				{
+					// if host is not first
+					if(hs.Fields.First().Name != "Host")
+					{
+						// then correct host
+						hostToCorrect = f;
+						break;
+					}
+				}
+			}
+
+			if (hostToCorrect != null)
+			{
+				hs.Fields.Remove(hostToCorrect);
+				hs.Fields.Insert(0, hostToCorrect);
+			}
+
 			// https://tools.ietf.org/html/rfc7230#section-3.3.2
 			// If a message is received that has multiple Content-Length header
 			// fields with field-values consisting of the same decimal value, or a
