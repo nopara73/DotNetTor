@@ -23,10 +23,10 @@ namespace DotNetTor.Tests
 					new KeyValuePair<string, string>("foo", "bar@98")
 				});
 
-				HttpResponseMessage message = await _client.PostAsync("http://posttestserver.com/post.php", content).ConfigureAwait(false);
+				HttpResponseMessage message = await _client.PostAsync("http://httpbin.org/post", content).ConfigureAwait(false);
 				var responseContentString = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-				Assert.True(responseContentString.Contains("Successfully dumped 1 post variables."));
+				Assert.True(responseContentString.Contains("bar@98"));
 			}
 		}
 		[Fact]
