@@ -14,7 +14,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanDoRequest1Async()
 		{
-			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true);
+			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var client = new HttpClient(handler))
 			{
 				var contents = await QBitTestAsync(client, 1).ConfigureAwait(false);
@@ -27,7 +27,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanRequestChunkEncodedAsync()
 		{
-			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true);
+			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var client = new HttpClient(handler))
 			{
 				var response = await client.GetAsync("https://jigsaw.w3.org/HTTP/ChunkedScript").ConfigureAwait(false);
@@ -47,7 +47,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task TestMicrosoftNCSI()
 		{
-			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true);
+			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var client = new HttpClient(handler))
 			{
 				var response = await client.GetAsync("http://www.msftncsi.com/ncsi.txt").ConfigureAwait(false);
@@ -58,7 +58,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanDoRequest2Async()
 		{
-			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true);
+			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var client = new HttpClient(handler))
 			{
 				var contents = await QBitTestAsync(client, 2).ConfigureAwait(false);
@@ -71,7 +71,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanDoRequestManyAsync()
 		{
-			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true);
+			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var client = new HttpClient(handler))
 			{
 				var contents = await QBitTestAsync(client, 15).ConfigureAwait(false);
@@ -84,7 +84,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanDoRequestManyDifferentAsync()
 		{
-			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true);
+			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var client = new HttpClient(handler))
 			{
 				await QBitTestAsync(client, 10, alterRequests: true).ConfigureAwait(false);
@@ -93,7 +93,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanDoHttpsRequestManyAsync()
 		{
-			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true);
+			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var client = new HttpClient(handler))
 			{
 				var contents = await QBitTestAsync(client, 15, https: true).ConfigureAwait(false);
@@ -107,7 +107,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanDoHttpsRequest1Async()
 		{
-			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true);
+			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var client = new HttpClient(handler))
 			{
 				var request = "https://api.qbit.ninja/whatisit/what%20is%20my%20future";

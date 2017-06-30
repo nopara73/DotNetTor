@@ -13,7 +13,7 @@ namespace DotNetTor.Tests
 		public async Task CanDoBasicRequestAsync()
 		{
 			var requestUri = "http://api.qbit.ninja/whatisit/what%20is%20my%20future";
-			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true))
+			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
 			using (var httpClient = new HttpClient(handler))
 			{
 				HttpResponseMessage message = await httpClient.GetAsync(requestUri).ConfigureAwait(false);
@@ -28,7 +28,7 @@ namespace DotNetTor.Tests
 		{
 			// YOU HAVE TO SET THE HTTP CLIENT NOT TO DISPOSE THE HANDLER
 			var requestUri = "http://api.qbit.ninja/whatisit/what%20is%20my%20future";
-			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true);
+			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var httpClient = new HttpClient(handler, disposeHandler: false))
 			{
 				HttpResponseMessage message = await httpClient.GetAsync(requestUri).ConfigureAwait(false);
@@ -55,7 +55,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanRequestDifferentWithSameHandlerAsync()
 		{
-			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true))
+			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
 			using (var httpClient = new HttpClient(handler))
 			{
 				HttpResponseMessage message =
@@ -91,7 +91,7 @@ namespace DotNetTor.Tests
 			}
 
 			// 2. Get TOR IP
-			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true))
+			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
 			using (var httpClient = new HttpClient(handler))
 			{
 				var content =
@@ -108,7 +108,7 @@ namespace DotNetTor.Tests
 		public async Task CanDoHttpsAsync()
 		{
 			var requestUri = "https://slack.com/api/api.test";
-			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true))
+			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
 			using (var httpClient = new HttpClient(handler))
 			{
 				var content =
@@ -124,7 +124,7 @@ namespace DotNetTor.Tests
 		{
 			var firstRequest = "http://api.qbit.ninja/transactions/38d4cfeb57d6685753b7a3b3534c3cb576c34ca7344cd4582f9613ebf0c2b02a?format=json&headeronly=true";
 
-			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true))
+			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
 			using (var httpClient = new HttpClient(handler))
 			{
 				await (await httpClient.GetAsync(firstRequest).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -136,7 +136,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanRequestInRowHttpsAsync()
 		{
-			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true))
+			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
 			{
 				for (int i = 0; i < 2; i++)
 				{
@@ -168,7 +168,7 @@ namespace DotNetTor.Tests
 		{
 			var requestUri = "http://bitmixer2whesjgj.onion/order.php?addr1=16HGUokcXuJXn9yiV6uQ4N3umAWteE2cRR&pr1=33&time1=8&addr2=1F1Afwxr2xrs3ZQpf6ifqfNMxJWZt2JupK&pr2=67&time2=16&bitcode=AcOw&fee=0.6523";
 
-			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true))
+			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
 			using (var httpClient = new HttpClient(handler))
 			{
 				var content =

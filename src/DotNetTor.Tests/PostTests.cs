@@ -17,7 +17,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanDoBasicPostRequestAsync()
 		{
-			using (_client = new HttpClient(new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true)))
+			using (_client = new HttpClient(new SocksPortHandler(Shared.HostAddress, Shared.SocksPort)))
 			{
 				HttpContent content = new FormUrlEncodedContent(new[]
 				{
@@ -33,7 +33,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanDoBasicPostHttpsRequestAsync()
 		{
-			using (_client = new HttpClient(new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true)))
+			using (_client = new HttpClient(new SocksPortHandler(Shared.HostAddress, Shared.SocksPort)))
 			{
 				HttpContent content = new StringContent("{\"hex\": \"01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff2d03a58605204d696e656420627920416e74506f6f6c20757361311f10b53620558903d80272a70c0000724c0600ffffffff010f9e5096000000001976a9142ef12bd2ac1416406d0e132e5bc8d0b02df3861b88ac00000000\"}");
 

@@ -17,9 +17,7 @@ namespace DotNetTor.SocksPort
 		// Tolerate errors
 		private const int MaxRetry = 3;
 		private static readonly TimeSpan RetryInterval = TimeSpan.FromMilliseconds(100);
-
-		public bool IgnoreSslCertification { get; set; }
-
+		
 		public readonly HttpProtocol Protocol = HttpProtocol.HTTP11;
 
 		private static ConcurrentDictionary<string, SocksConnection> _Connections;
@@ -32,29 +30,28 @@ namespace DotNetTor.SocksPort
 
 		#region Constructors
 
-		public SocksPortHandler(string address = "127.0.0.1", int socksPort = 9050, bool ignoreSslCertification = false)
+		public SocksPortHandler(string address = "127.0.0.1", int socksPort = 9050)
 		{
-			Init(new IPEndPoint(IPAddress.Parse(address), socksPort), ignoreSslCertification);
+			Init(new IPEndPoint(IPAddress.Parse(address), socksPort));
 		}
 
-		public SocksPortHandler(IPEndPoint endpoint, bool ignoreSslCertification = false)
+		public SocksPortHandler(IPEndPoint endpoint)
 		{
-			Init(endpoint, ignoreSslCertification);
+			Init(endpoint);
 		}
 
-		private void Init(IPEndPoint endpoint, bool ignoreSslCertification)
+		private void Init(IPEndPoint endpoint)
 		{
 			_disposed = false;
 			_References = new List<Uri>();
 			_Connections = new ConcurrentDictionary<string, SocksConnection>();
 			EndPoint = endpoint;
-			IgnoreSslCertification = ignoreSslCertification;
 
 			ControlPort.Client.CircuitChangeRequested += Client_CircuitChangeRequested;
 		}
 		private void Reset()
 		{
-			Init(EndPoint, IgnoreSslCertification);
+			Init(EndPoint);
 		}
 
 		private void Client_CircuitChangeRequested(object sender, EventArgs e)
@@ -96,7 +93,7 @@ namespace DotNetTor.SocksPort
 
 				try
 				{
-					return await connection.SendRequestAsync(request, ctsToken, IgnoreSslCertification).ConfigureAwait(false);
+					return await connection.SendRequestAsync(request, ctsToken).ConfigureAwait(false);
 				}
 				catch(Exception ex)
 				{

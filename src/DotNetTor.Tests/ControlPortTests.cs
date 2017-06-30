@@ -43,7 +43,7 @@ namespace DotNetTor.Tests
 
 	    private static async Task<IPAddress> GetTorIpAsync(string requestUri)
 	    {
-		    var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true);
+		    var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 
 			IPAddress torIp;
 		    using (var httpClient = new HttpClient(handler))
@@ -64,7 +64,7 @@ namespace DotNetTor.Tests
 		    IPAddress changedIp;
 
 			// 1. Get TOR IP
-		    var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true);
+		    var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var httpClient = new HttpClient(handler))
 			{
 				var content = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -77,7 +77,7 @@ namespace DotNetTor.Tests
 			await controlPortClient.ChangeCircuitAsync().ConfigureAwait(false);
 
 			// 3. Get changed TOR IP
-			var handler2 = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true);
+			var handler2 = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var httpClient = new HttpClient(handler2))
 			{
 				var content = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -96,7 +96,7 @@ namespace DotNetTor.Tests
 			IPAddress changedIp;
 
 			// 1. Get TOR IP
-			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort, ignoreSslCertification: true);
+			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var httpClient = new HttpClient(handler))
 			{
 				var content =
