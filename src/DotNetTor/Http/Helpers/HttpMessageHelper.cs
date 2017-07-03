@@ -419,7 +419,7 @@ namespace System.Net.Http
 					// supposedly chunked transfer coding fails, MUST record the message as
 					// incomplete.Cache requirements for incomplete responses are defined
 					// in Section 3 of[RFC7234].
-					throw new HttpRequestException($"Incomplete message. Expected length: {length}, actual: {i}");
+					throw new NotSupportedException($"Incomplete message. Expected length: {length}, actual: {i}");
 				}
 
 				allData[i] = (char)ch;
