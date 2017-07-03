@@ -406,6 +406,21 @@ namespace System.Net.Http
 				{
 					ch = reader.Read();
 				}
+				if (ch == -1)
+				{
+					// https://tools.ietf.org/html/rfc7230#section-3.3.3
+					// If the sender closes the connection or
+					// the recipient times out before the indicated number of octets are
+					// received, the recipient MUST consider the message to be
+					// incomplete and close the connection.
+					// https://tools.ietf.org/html/rfc7230#section-3.4
+					// A client that receives an incomplete response message, which can
+					// occur when a connection is closed prematurely or when decoding a
+					// supposedly chunked transfer coding fails, MUST record the message as
+					// incomplete.Cache requirements for incomplete responses are defined
+					// in Section 3 of[RFC7234].
+					throw new HttpRequestException($"Incomplete message. Expected length: {length}, actual: {i}");
+				}
 
 				allData[i] = (char)ch;
 			}
