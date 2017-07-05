@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using static DotNetTor.Http.Constants;
@@ -30,7 +31,7 @@ namespace System.Net.Http
 			//					* (header - field CRLF )
 			//					CRLF
 			//					[message - body]
-			var reader = new StreamReader(stream: requestStream); // todo: dispose StreamReader, but leave open the requestStream
+			var reader = new StreamReader(requestStream, Encoding.ASCII); // todo: dispose StreamReader, but leave open the requestStream
 			var position = 0;
 			string startLine = await HttpMessageHelper.ReadStartLineAsync(reader).ConfigureAwait(false);
 			position += startLine.Length;
