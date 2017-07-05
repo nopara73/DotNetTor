@@ -152,13 +152,6 @@ namespace DotNetTor.SocksPort
 					}
 				}
 
-				// QBitNinja's response breaks the HTTP specification if it's not removed:
-				// If this issue is properly resolved it can be removed: https://github.com/MetacoSA/QBitNinja/issues/26
-				if (request.RequestUri.Host.Contains("qbit.ninja", StringComparison.OrdinalIgnoreCase))
-				{
-					request.Headers.Remove("Accept-Encoding");
-				}
-
 				var requestString = await request.ToHttpStringAsync(ctsToken).ConfigureAwait(false);
 				ctsToken.ThrowIfCancellationRequested();
 

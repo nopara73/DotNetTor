@@ -31,7 +31,7 @@ namespace System.Net.Http
 			//					* (header - field CRLF )
 			//					CRLF
 			//					[message - body]
-			var reader = new StreamReader(stream: responseStream); // todo: dispose StreamReader, but leave open the requestStream
+			var reader = new StreamReader(responseStream, Encoding.ASCII); // todo: dispose StreamReader, but leave open the requestStream
 			var position = 0;
 			string startLine = await HttpMessageHelper.ReadStartLineAsync(reader, ctsToken).ConfigureAwait(false);
 			position += startLine.Length;
