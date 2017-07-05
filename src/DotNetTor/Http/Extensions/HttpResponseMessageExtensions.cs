@@ -31,29 +31,31 @@ namespace System.Net.Http
 			//					* (header - field CRLF )
 			//					CRLF
 			//					[message - body]
-			var reader = new StreamReader(responseStream, Encoding.ASCII); // todo: dispose StreamReader, but leave open the requestStream
-			var position = 0;
-			string startLine = await HttpMessageHelper.ReadStartLineAsync(reader, ctsToken).ConfigureAwait(false);
-			position += startLine.Length;
-
-			var statusLine = StatusLine.CreateNew(startLine);
-			var response = new HttpResponseMessage(statusLine.StatusCode);
-
-			string headers = await HttpMessageHelper.ReadHeadersAsync(reader, ctsToken).ConfigureAwait(false);
-			position += headers.Length + 2;
-
-			var headerSection = HeaderSection.CreateNew(headers);
-			var headerStruct = headerSection.ToHttpResponseHeaders();
-
-			HttpMessageHelper.AssertValidHeaders(headerStruct.ResponseHeaders, headerStruct.ContentHeaders);
-			response.Content = await HttpMessageHelper.GetContentAsync(reader, headerStruct, requestMethod, statusLine, ctsToken).ConfigureAwait(false);
-
-			HttpMessageHelper.CopyHeaders(headerStruct.ResponseHeaders, response.Headers);
-			if (response.Content != null)
+			using (var reader = new StreamReader(responseStream, Encoding.ASCII, false, 1024, true))
 			{
-				HttpMessageHelper.CopyHeaders(headerStruct.ContentHeaders, response.Content.Headers);
+				var position = 0;
+				string startLine = await HttpMessageHelper.ReadStartLineAsync(reader, ctsToken).ConfigureAwait(false);
+				position += startLine.Length;
+
+				var statusLine = StatusLine.CreateNew(startLine);
+				var response = new HttpResponseMessage(statusLine.StatusCode);
+
+				string headers = await HttpMessageHelper.ReadHeadersAsync(reader, ctsToken).ConfigureAwait(false);
+				position += headers.Length + 2;
+
+				var headerSection = HeaderSection.CreateNew(headers);
+				var headerStruct = headerSection.ToHttpResponseHeaders();
+
+				HttpMessageHelper.AssertValidHeaders(headerStruct.ResponseHeaders, headerStruct.ContentHeaders);
+				response.Content = await HttpMessageHelper.GetContentAsync(reader, headerStruct, requestMethod, statusLine, ctsToken).ConfigureAwait(false);
+
+				HttpMessageHelper.CopyHeaders(headerStruct.ResponseHeaders, response.Headers);
+				if (response.Content != null)
+				{
+					HttpMessageHelper.CopyHeaders(headerStruct.ContentHeaders, response.Content.Headers);
+				}
+				return response;
 			}
-			return response;
 		}		
 
 		public static async Task<Stream> ToStreamAsync(this HttpResponseMessage me)

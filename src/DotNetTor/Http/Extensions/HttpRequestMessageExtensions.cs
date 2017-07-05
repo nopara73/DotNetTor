@@ -31,29 +31,31 @@ namespace System.Net.Http
 			//					* (header - field CRLF )
 			//					CRLF
 			//					[message - body]
-			var reader = new StreamReader(requestStream, Encoding.ASCII); // todo: dispose StreamReader, but leave open the requestStream
-			var position = 0;
-			string startLine = await HttpMessageHelper.ReadStartLineAsync(reader).ConfigureAwait(false);
-			position += startLine.Length;
-
-			var requestLine = RequestLine.CreateNew(startLine);
-			var request = new HttpRequestMessage(requestLine.Method, requestLine.URI);
-
-			string headers = await HttpMessageHelper.ReadHeadersAsync(reader).ConfigureAwait(false);
-			position += headers.Length + 2;
-
-			var headerSection = HeaderSection.CreateNew(headers);
-			var headerStruct = headerSection.ToHttpRequestHeaders();
-
-			HttpMessageHelper.AssertValidHeaders(headerStruct.RequestHeaders, headerStruct.ContentHeaders);
-			request.Content = await HttpMessageHelper.GetContentAsync(reader, headerStruct).ConfigureAwait(false);
-
-			HttpMessageHelper.CopyHeaders(headerStruct.RequestHeaders, request.Headers);
-			if (request.Content != null)
+			using (var reader = new StreamReader(requestStream, Encoding.ASCII, false, 1024, true))
 			{
-				HttpMessageHelper.CopyHeaders(headerStruct.ContentHeaders, request.Content.Headers);
+				var position = 0;
+				string startLine = await HttpMessageHelper.ReadStartLineAsync(reader).ConfigureAwait(false);
+				position += startLine.Length;
+
+				var requestLine = RequestLine.CreateNew(startLine);
+				var request = new HttpRequestMessage(requestLine.Method, requestLine.URI);
+
+				string headers = await HttpMessageHelper.ReadHeadersAsync(reader).ConfigureAwait(false);
+				position += headers.Length + 2;
+
+				var headerSection = HeaderSection.CreateNew(headers);
+				var headerStruct = headerSection.ToHttpRequestHeaders();
+
+				HttpMessageHelper.AssertValidHeaders(headerStruct.RequestHeaders, headerStruct.ContentHeaders);
+				request.Content = await HttpMessageHelper.GetContentAsync(reader, headerStruct).ConfigureAwait(false);
+
+				HttpMessageHelper.CopyHeaders(headerStruct.RequestHeaders, request.Headers);
+				if (request.Content != null)
+				{
+					HttpMessageHelper.CopyHeaders(headerStruct.ContentHeaders, request.Content.Headers);
+				}
+				return request;
 			}
-			return request;
 		}
 
 		public static async Task<string> ToHttpStringAsync(this HttpRequestMessage me, CancellationToken ctsToken = default(CancellationToken))
