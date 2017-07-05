@@ -409,27 +409,21 @@ namespace System.Net.Http
 			}
 
 			var allData = new char[(int)length];
-			var left = (int)length;
-
-			while(left != 0)
+			var num = await reader.ReadBlockAsync(allData, 0, (int)length).ConfigureAwait(false);
+			if (num == 0)
 			{
-				var num = await reader.ReadAsync(allData, (int)length - left, left).ConfigureAwait(false);
-				if (num == 0)
-				{
-					// https://tools.ietf.org/html/rfc7230#section-3.3.3
-					// If the sender closes the connection or
-					// the recipient times out before the indicated number of octets are
-					// received, the recipient MUST consider the message to be
-					// incomplete and close the connection.
-					// https://tools.ietf.org/html/rfc7230#section-3.4
-					// A client that receives an incomplete response message, which can
-					// occur when a connection is closed prematurely or when decoding a
-					// supposedly chunked transfer coding fails, MUST record the message as
-					// incomplete.Cache requirements for incomplete responses are defined
-					// in Section 3 of[RFC7234].
-					throw new NotSupportedException($"Incomplete message. Expected length: {length}, actual: {length - left}");
-				}
-				left -= num;
+				// https://tools.ietf.org/html/rfc7230#section-3.3.3
+				// If the sender closes the connection or
+				// the recipient times out before the indicated number of octets are
+				// received, the recipient MUST consider the message to be
+				// incomplete and close the connection.
+				// https://tools.ietf.org/html/rfc7230#section-3.4
+				// A client that receives an incomplete response message, which can
+				// occur when a connection is closed prematurely or when decoding a
+				// supposedly chunked transfer coding fails, MUST record the message as
+				// incomplete.Cache requirements for incomplete responses are defined
+				// in Section 3 of[RFC7234].
+				throw new NotSupportedException($"Incomplete message. Expected length: {length}, actual: {num}");
 			}
 			return reader.CurrentEncoding.GetBytes(allData);
 		}
