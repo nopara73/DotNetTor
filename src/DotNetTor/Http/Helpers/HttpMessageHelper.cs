@@ -413,7 +413,7 @@ namespace System.Net.Http
 
 			while(left != 0)
 			{
-				var num = await reader.ReadAsync(allData, (int)length - left, left);
+				var num = await reader.ReadAsync(allData, (int)length - left, left).ConfigureAwait(false);
 				if (num == 0)
 				{
 					// https://tools.ietf.org/html/rfc7230#section-3.3.3
