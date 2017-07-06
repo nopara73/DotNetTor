@@ -5,6 +5,8 @@ using DotNetTor.SocksPort;
 using Xunit;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
+using QBitNinja.Client;
+using NBitcoin;
 
 namespace DotNetTor.Tests
 {
@@ -53,6 +55,21 @@ namespace DotNetTor.Tests
 				var response = await client.GetAsync("http://www.msftncsi.com/ncsi.txt").ConfigureAwait(false);
 				var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 				Assert.Equal(content, "Microsoft NCSI");
+			}
+		}
+		[Fact]
+		public async Task CanRequestGzipEncoded()
+		{
+			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
+			{
+				var client = new QBitNinjaClient(Network.Main);
+				client.SetHttpMessageHandler(handler);
+
+				var response = await client.GetBlock(new QBitNinja.Client.Models.BlockFeature(new uint256("0000000000000000004e24d06073aef7a5313d4ea83a5c105b3cadd0d38cc1f0")), true).ConfigureAwait(false);
+
+				Assert.Equal(474010, response.AdditionalInformation.Height);
+				Assert.Equal(null, response.Block);
+				Assert.Equal(null, response.ExtendedInformation);
 			}
 		}
 		[Fact]
