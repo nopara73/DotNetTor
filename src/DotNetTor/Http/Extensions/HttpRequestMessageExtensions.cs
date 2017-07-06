@@ -11,7 +11,7 @@ namespace System.Net.Http
 {
     public static class HttpRequestMessageExtensions
     {
-		public static async Task<HttpRequestMessage> CreateNewAsync(this HttpRequestMessage me, Stream requestStream)
+		public static async Task<HttpRequestMessage> CreateNewAsync(this HttpRequestMessage me, Stream requestStream, CancellationToken ctsToken = default(CancellationToken))
 		{
 			// https://tools.ietf.org/html/rfc7230#section-3
 			// The normal procedure for parsing an HTTP message is to read the
@@ -31,31 +31,29 @@ namespace System.Net.Http
 			//					* (header - field CRLF )
 			//					CRLF
 			//					[message - body]
-			using (var reader = new StreamReader(requestStream, Encoding.ASCII, false, 1024, true))
+			
+			var position = 0;
+			string startLine = await HttpMessageHelper.ReadStartLineAsync(requestStream, ctsToken).ConfigureAwait(false);
+			position += startLine.Length;
+
+			var requestLine = RequestLine.CreateNew(startLine);
+			var request = new HttpRequestMessage(requestLine.Method, requestLine.URI);
+
+			string headers = await HttpMessageHelper.ReadHeadersAsync(requestStream, ctsToken).ConfigureAwait(false);
+			position += headers.Length + 2;
+
+			var headerSection = HeaderSection.CreateNew(headers);
+			var headerStruct = headerSection.ToHttpRequestHeaders();
+
+			HttpMessageHelper.AssertValidHeaders(headerStruct.RequestHeaders, headerStruct.ContentHeaders);
+			request.Content = await HttpMessageHelper.GetContentAsync(requestStream, headerStruct, ctsToken).ConfigureAwait(false);
+
+			HttpMessageHelper.CopyHeaders(headerStruct.RequestHeaders, request.Headers);
+			if (request.Content != null)
 			{
-				var position = 0;
-				string startLine = await HttpMessageHelper.ReadStartLineAsync(reader).ConfigureAwait(false);
-				position += startLine.Length;
-
-				var requestLine = RequestLine.CreateNew(startLine);
-				var request = new HttpRequestMessage(requestLine.Method, requestLine.URI);
-
-				string headers = await HttpMessageHelper.ReadHeadersAsync(reader).ConfigureAwait(false);
-				position += headers.Length + 2;
-
-				var headerSection = HeaderSection.CreateNew(headers);
-				var headerStruct = headerSection.ToHttpRequestHeaders();
-
-				HttpMessageHelper.AssertValidHeaders(headerStruct.RequestHeaders, headerStruct.ContentHeaders);
-				request.Content = await HttpMessageHelper.GetContentAsync(reader, headerStruct).ConfigureAwait(false);
-
-				HttpMessageHelper.CopyHeaders(headerStruct.RequestHeaders, request.Headers);
-				if (request.Content != null)
-				{
-					HttpMessageHelper.CopyHeaders(headerStruct.ContentHeaders, request.Content.Headers);
-				}
-				return request;
+				HttpMessageHelper.CopyHeaders(headerStruct.ContentHeaders, request.Content.Headers);
 			}
+			return request;
 		}
 
 		public static async Task<string> ToHttpStringAsync(this HttpRequestMessage me, CancellationToken ctsToken = default(CancellationToken))
