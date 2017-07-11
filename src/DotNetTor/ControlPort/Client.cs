@@ -18,10 +18,27 @@ namespace DotNetTor.ControlPort
 		private readonly byte[] _authenticationToken;
 		private Socket _socket;
 		
+		/// <param name="password">UTF8</param>
 		public Client(string address = "127.0.0.1", int controlPort = 9051, string password = "")
 		{
 			_controlEndPoint = new IPEndPoint(IPAddress.Parse(address), controlPort);
-			_authenticationToken = Encoding.UTF8.GetBytes(password);
+			if (password == "") _authenticationToken = null;
+			else _authenticationToken = Encoding.UTF8.GetBytes(password);
+		}
+		
+		/// <param name="authenticationToken">
+		/// For example unicode password or the content of the cookie file
+		/// </param>
+		public Client(string address, int controlPort, byte[] authenticationToken)
+		{
+			_controlEndPoint = new IPEndPoint(IPAddress.Parse(address), controlPort);
+			_authenticationToken = authenticationToken;
+		}
+		
+		public Client(string address, int controlPort, FileInfo cookieFile)
+		{
+			_controlEndPoint = new IPEndPoint(IPAddress.Parse(address), controlPort);
+			_authenticationToken = File.ReadAllBytes(cookieFile.Name);
 		}
 
 		public async Task<bool> IsCircuitEstabilishedAsync()
@@ -30,8 +47,8 @@ namespace DotNetTor.ControlPort
 			{
 				await InitializeConnectSocketAsync().ConfigureAwait(false);
 
-				await SendCommandAsync($"AUTHENTICATE {Util.ByteArrayToString(_authenticationToken)}").ConfigureAwait(false);
-				
+				await AuthenticateAsync().ConfigureAwait(false);
+
 				// Get info
 				var response = await SendCommandAsync("GETINFO status/circuit-established").ConfigureAwait(false);
 								
@@ -66,7 +83,7 @@ namespace DotNetTor.ControlPort
 
 				await InitializeConnectSocketAsync().ConfigureAwait(false);
 
-				await SendCommandAsync($"AUTHENTICATE {Util.ByteArrayToString(_authenticationToken)}").ConfigureAwait(false);
+				await AuthenticateAsync().ConfigureAwait(false);
 
 				// Subscribe to SIGNAL events
 				await SendCommandAsync("SETEVENTS SIGNAL").ConfigureAwait(false);
@@ -88,6 +105,16 @@ namespace DotNetTor.ControlPort
 				// safety delay, in case the tor client is not quick enough with the actions
 				await Task.Delay(100).ConfigureAwait(false);
 			}
+		}
+
+		private async Task AuthenticateAsync()
+		{
+			string authString = "\"\"";
+			if (_authenticationToken != null)
+			{
+				authString = Util.ByteArrayToString(_authenticationToken);
+			}
+			await SendCommandAsync($"AUTHENTICATE {authString}").ConfigureAwait(false);
 		}
 
 		private static HashSet<string> _eventsSet = new HashSet<string>();
