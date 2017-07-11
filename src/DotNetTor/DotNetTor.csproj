@@ -10,7 +10,7 @@
     <AssemblyName>DotNetTor</AssemblyName>
     <PackageId>DotNetTor</PackageId>
     <PackageTags>tor</PackageTags>
-    <PackageReleaseNotes>Make Ssl certificate check optional.</PackageReleaseNotes>
+    <PackageReleaseNotes></PackageReleaseNotes>
     <PackageIconUrl>http://img.tamindir.com/ti_e_ul/lucifer/tor-ikon.gif</PackageIconUrl>
     <PackageProjectUrl>https://github.com/nopara73/DotNetTor</PackageProjectUrl>
     <NetStandardImplicitPackageVersion>1.6.1</NetStandardImplicitPackageVersion>
@@ -18,7 +18,7 @@
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-    <Version>2.2.0.2</Version>
+    <Version>2.2.0.3</Version>
   </PropertyGroup>
 
   <ItemGroup>

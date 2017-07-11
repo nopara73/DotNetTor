@@ -30,7 +30,7 @@ namespace DotNetTor.ControlPort
 		public Client(string address, int controlPort, FileInfo cookieFile)
 		{
 			_controlEndPoint = new IPEndPoint(IPAddress.Parse(address), controlPort);
-			_cookieFilePath = cookieFile.Name;
+			_cookieFilePath = cookieFile.FullName;
 			_authenticationToken = null;
 		}
 
