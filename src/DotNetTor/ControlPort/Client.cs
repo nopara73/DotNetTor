@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -14,13 +15,13 @@ namespace DotNetTor.ControlPort
 		public static void OnCircuitChangeRequested() => CircuitChangeRequested?.Invoke(null, EventArgs.Empty);
 
 		private readonly IPEndPoint _controlEndPoint;
-		private readonly string _password;
+		private readonly byte[] _authenticationToken;
 		private Socket _socket;
 		
 		public Client(string address = "127.0.0.1", int controlPort = 9051, string password = "")
 		{
 			_controlEndPoint = new IPEndPoint(IPAddress.Parse(address), controlPort);
-			_password = password;
+			_authenticationToken = Encoding.UTF8.GetBytes(password);
 		}
 
 		public async Task<bool> IsCircuitEstabilishedAsync()
@@ -29,7 +30,7 @@ namespace DotNetTor.ControlPort
 			{
 				await InitializeConnectSocketAsync().ConfigureAwait(false);
 
-				await SendCommandAsync($"AUTHENTICATE \"{_password}\"").ConfigureAwait(false);
+				await SendCommandAsync($"AUTHENTICATE {Util.ByteArrayToString(_authenticationToken)}").ConfigureAwait(false);
 				
 				// Get info
 				var response = await SendCommandAsync("GETINFO status/circuit-established").ConfigureAwait(false);
@@ -65,7 +66,7 @@ namespace DotNetTor.ControlPort
 
 				await InitializeConnectSocketAsync().ConfigureAwait(false);
 
-				await SendCommandAsync($"AUTHENTICATE \"{_password}\"").ConfigureAwait(false);
+				await SendCommandAsync($"AUTHENTICATE {Util.ByteArrayToString(_authenticationToken)}").ConfigureAwait(false);
 
 				// Subscribe to SIGNAL events
 				await SendCommandAsync("SETEVENTS SIGNAL").ConfigureAwait(false);

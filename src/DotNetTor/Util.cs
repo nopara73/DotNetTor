@@ -156,6 +156,12 @@ namespace DotNetTor
 			};
 			return builder.Uri;
 		}
+
+		public static string ByteArrayToString(byte[] ba)
+		{
+			string hex = BitConverter.ToString(ba);
+			return hex.Replace("-", "");
+		}
 	}
 
 	internal static class Retry
@@ -191,6 +197,6 @@ namespace DotNetTor
 			}
 
 			throw new AggregateException(exceptions);
-		}
+		}		
 	}
 }
