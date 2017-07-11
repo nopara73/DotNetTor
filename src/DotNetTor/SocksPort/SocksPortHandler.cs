@@ -51,6 +51,14 @@ namespace DotNetTor.SocksPort
 		}
 		private void Reset()
 		{
+			try
+			{
+				ReleaseUnmanagedResources();
+			}
+			catch (Exception)
+			{
+				// ignored
+			}
 			Init(EndPoint);
 		}
 
