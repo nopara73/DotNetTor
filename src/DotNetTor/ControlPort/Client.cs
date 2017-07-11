@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DotNetTor.ControlPort
@@ -34,58 +35,40 @@ namespace DotNetTor.ControlPort
 			_authenticationToken = null;
 		}
 
-		public async Task<bool> IsCircuitEstabilishedAsync()
+		public async Task<bool> IsCircuitEstabilishedAsync(CancellationToken ctsToken = default(CancellationToken))
 		{
-			try
-			{
-				await InitializeConnectSocketAsync().ConfigureAwait(false);
+			// Get info
+			var response = await SendCommandAsync("GETINFO status/circuit-established", ctsToken: ctsToken).ConfigureAwait(false);
 
-				await AuthenticateAsync().ConfigureAwait(false);
-
-				// Get info
-				var response = await SendCommandAsync("GETINFO status/circuit-established").ConfigureAwait(false);
-								
-				if (response.Contains("status/circuit-established=1", StringComparison.OrdinalIgnoreCase))
-				{
-					return true;
-				}
-				else if (response.Contains("status/circuit-established=0", StringComparison.OrdinalIgnoreCase))
-				{
-					return false;
-				}
-				else throw new TorException($"Wrong response to 'GETINFO status/circuit-established': '{response}'");
-			}
-			catch (Exception ex)
+			if (response.Contains("status/circuit-established=1", StringComparison.OrdinalIgnoreCase))
 			{
-				throw new TorException("Couldn't determine if circuit is estabilished", ex);
+				return true;
 			}
-			finally
+			else if (response.Contains("status/circuit-established=0", StringComparison.OrdinalIgnoreCase))
 			{
-				DisconnectDisposeSocket();
-
-				// safety delay, in case the tor client is not quick enough with the actions
-				await Task.Delay(100).ConfigureAwait(false);
+				return false;
 			}
+			else throw new TorException($"Wrong response to 'GETINFO status/circuit-established': '{response}'");
 		}
 
-		public async Task ChangeCircuitAsync()
+		public async Task ChangeCircuitAsync(CancellationToken ctsToken = default(CancellationToken))
 		{
 			try
 			{
 				OnCircuitChangeRequested();
 
-				await InitializeConnectSocketAsync().ConfigureAwait(false);
+				await InitializeConnectSocketAsync(ctsToken).ConfigureAwait(false);
 
-				await AuthenticateAsync().ConfigureAwait(false);
+				await AuthenticateAsync(ctsToken).ConfigureAwait(false);
 
 				// Subscribe to SIGNAL events
-				await SendCommandAsync("SETEVENTS SIGNAL").ConfigureAwait(false);
+				await SendCommandAsync("SETEVENTS SIGNAL", initAuthDispose: false, ctsToken: ctsToken).ConfigureAwait(false);
 
 				// Clear all existing circuits and build new ones
-				await SendCommandAsync("SIGNAL NEWNYM").ConfigureAwait(false);
+				await SendCommandAsync("SIGNAL NEWNYM", initAuthDispose: false, ctsToken: ctsToken).ConfigureAwait(false);
 
 				// Unsubscribe from all events
-				await SendCommandAsync("SETEVENTS").ConfigureAwait(false);
+				await SendCommandAsync("SETEVENTS", initAuthDispose: false, ctsToken: ctsToken).ConfigureAwait(false);
 			}
 			catch (Exception ex)
 			{
@@ -96,11 +79,11 @@ namespace DotNetTor.ControlPort
 				DisconnectDisposeSocket();
 
 				// safety delay, in case the tor client is not quick enough with the actions
-				await Task.Delay(100).ConfigureAwait(false);
+				await Task.Delay(100, ctsToken).ConfigureAwait(false);
 			}
 		}
 
-		private async Task AuthenticateAsync()
+		private async Task AuthenticateAsync(CancellationToken ctsToken)
 		{
 			string authString = "\"\"";
 			if (_authenticationToken != null)
@@ -111,7 +94,7 @@ namespace DotNetTor.ControlPort
 			{
 				authString = Util.ByteArrayToString(File.ReadAllBytes(_cookieFilePath));
 			}
-			await SendCommandAsync($"AUTHENTICATE {authString}").ConfigureAwait(false);
+			await SendCommandAsync($"AUTHENTICATE {authString}", initAuthDispose: false, ctsToken: ctsToken).ConfigureAwait(false);
 		}
 
 		private static HashSet<string> _eventsSet = new HashSet<string>();
@@ -122,9 +105,9 @@ namespace DotNetTor.ControlPort
 		/// <param name="eventStartsWith"></param>
 		/// <param name="timeout"></param>
 		/// <returns>Full event</returns>
-		private async Task<string> WaitForEventAsync(string eventStartsWith, TimeSpan timeout)
+		private async Task<string> WaitForEventAsync(string eventStartsWith, TimeSpan timeout, CancellationToken ctsToken)
 		{
-			var timeoutTask = Task.Delay(timeout);
+			var timeoutTask = Task.Delay(timeout, ctsToken);
 			while (true)
 			{
 				var bufferByteArraySegment = new ArraySegment<byte>(new byte[_socket.ReceiveBufferSize]);
@@ -144,90 +127,103 @@ namespace DotNetTor.ControlPort
 			}
 		}
 
-		private async Task<string> SendCommandAsync(string command)
+		public async Task<string> SendCommandAsync(string command, CancellationToken ctsToken)
+		{
+			return await SendCommandAsync(command, initAuthDispose: true, ctsToken: ctsToken).ConfigureAwait(false);
+		}
+
+		private async Task<string> SendCommandAsync(string command, bool initAuthDispose, CancellationToken ctsToken)
 		{
 			try
 			{
-				command = command.Trim();
-				if (!command.EndsWith("\r\n", StringComparison.Ordinal))
+				if (initAuthDispose)
 				{
-					command += "\r\n";
+					await InitializeConnectSocketAsync(ctsToken).ConfigureAwait(false);
+
+					await AuthenticateAsync(ctsToken).ConfigureAwait(false);
 				}
 
-				var commandByteArraySegment = new ArraySegment<byte>(Encoding.ASCII.GetBytes(command));
-				await _socket.SendAsync(commandByteArraySegment, SocketFlags.None).ConfigureAwait(false);
-			}
-			catch (Exception ex)
-			{
-				throw new TorException($"Failed to send command to TOR Control Port: {nameof(command)} : {command}", ex);
-			}
-
-			var bufferByteArraySegment = new ArraySegment<byte>(new byte[_socket.ReceiveBufferSize]);
-			try
-			{
-				var receivedCount = await _socket.ReceiveAsync(bufferByteArraySegment, SocketFlags.None).ConfigureAwait(false);
-				var response = Encoding.ASCII.GetString(bufferByteArraySegment.Array, 0, receivedCount);
-				var responseLines = new List<string>(response.Split(new [] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries));
-
-				if(!responseLines.Any(x => x.StartsWith("250 OK", StringComparison.OrdinalIgnoreCase)))
-					throw new TorException(
-						$"Unexpected {nameof(response)} from TOR Control Port to sent {nameof(command)} : {command} , {nameof(response)} : {response}");
-
-				// If we are tracking the signal events throw exception if didn't get the expected response
-				if (command.StartsWith("SIGNAL", StringComparison.OrdinalIgnoreCase))
+				try
 				{
-					if (_eventsSet.Any(x => x.Equals("SIGNAL", StringComparison.OrdinalIgnoreCase)))
+					command = command.Trim();
+					if (!command.EndsWith("\r\n", StringComparison.Ordinal))
 					{
-						command = command.Replace("\r\n", "");
-						var what = new List<string>(command.Split(' '))[1];
-						if (!responseLines.Any(x => x.StartsWith($"650 SIGNAL {what}", StringComparison.OrdinalIgnoreCase)))
+						command += "\r\n";
+					}
+
+					var commandByteArraySegment = new ArraySegment<byte>(Encoding.ASCII.GetBytes(command));
+					await _socket.SendAsync(commandByteArraySegment, SocketFlags.None).ConfigureAwait(false);
+					ctsToken.ThrowIfCancellationRequested();
+				}
+				catch (Exception ex)
+				{
+					throw new TorException($"Failed to send command to TOR Control Port: {nameof(command)} : {command}", ex);
+				}
+
+				var bufferByteArraySegment = new ArraySegment<byte>(new byte[_socket.ReceiveBufferSize]);
+				try
+				{
+					var receivedCount = await _socket.ReceiveAsync(bufferByteArraySegment, SocketFlags.None).ConfigureAwait(false);
+					var response = Encoding.ASCII.GetString(bufferByteArraySegment.Array, 0, receivedCount);
+					var responseLines = new List<string>(response.Split(new[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries));
+
+					if (!responseLines.Any(x => x.StartsWith("250 OK", StringComparison.OrdinalIgnoreCase)))
+						throw new TorException(
+							$"Unexpected {nameof(response)} from TOR Control Port to sent {nameof(command)} : {command} , {nameof(response)} : {response}");
+
+					// If we are tracking the signal events throw exception if didn't get the expected response
+					if (command.StartsWith("SIGNAL", StringComparison.OrdinalIgnoreCase))
+					{
+						if (_eventsSet.Any(x => x.Equals("SIGNAL", StringComparison.OrdinalIgnoreCase)))
 						{
-							// NEWNYM may be rate-limited (usually around 10 seconds, the max I've seen is 2 minutes)
-							if (what.StartsWith("NEWNYM", StringComparison.OrdinalIgnoreCase))
+							command = command.Replace("\r\n", "");
+							var what = new List<string>(command.Split(' '))[1];
+							if (!responseLines.Any(x => x.StartsWith($"650 SIGNAL {what}", StringComparison.OrdinalIgnoreCase)))
 							{
-								await WaitForEventAsync("650 SIGNAL NEWNYM", TimeSpan.FromMinutes(3)).ConfigureAwait(false);
-							}
-							else
-							{
-								throw new TorException(
-									$"Didn't receive 650 SIGNAL {what} confirmation from TOR Control Port to sent {nameof(command)} : {command} , {nameof(response)} : {response}");
+								// NEWNYM may be rate-limited (usually around 10 seconds, the max I've seen is 2 minutes)
+								if (what.StartsWith("NEWNYM", StringComparison.OrdinalIgnoreCase))
+								{
+									await WaitForEventAsync("650 SIGNAL NEWNYM", TimeSpan.FromMinutes(3), ctsToken).ConfigureAwait(false);
+								}
+								else
+								{
+									throw new TorException(
+										$"Didn't receive 650 SIGNAL {what} confirmation from TOR Control Port to sent {nameof(command)} : {command} , {nameof(response)} : {response}");
+								}
 							}
 						}
 					}
+					// Keep track of what events we are tracking
+					if (command.StartsWith("SETEVENTS", StringComparison.OrdinalIgnoreCase))
+					{
+						command = command.Replace("\r\n", "");
+						_eventsSet = new HashSet<string>();
+						var eventTypes = new List<string>(command.Split(' '));
+						eventTypes.RemoveAt(0);
+						foreach (string type in eventTypes) _eventsSet.Add(type);
+					}
+
+					return response;
 				}
-				// Keep track of what events we are tracking
-				if (command.StartsWith("SETEVENTS", StringComparison.OrdinalIgnoreCase))
+				catch (TorException)
 				{
-					command = command.Replace("\r\n", "");
-					_eventsSet = new HashSet<string>();
-					var eventTypes = new List<string>(command.Split(' '));
-					eventTypes.RemoveAt(0);
-					foreach (string type in eventTypes) _eventsSet.Add(type);
+					throw;
 				}
+				catch (Exception ex)
+				{
+					throw new TorException(
+						$"Didn't receive response for the sent {nameof(command)} from TOR Control Port: {nameof(command)} : {command}", ex);
+				}
+			}
+			finally
+			{
+				if (initAuthDispose)
+				{
+					DisconnectDisposeSocket();
 
-				return response;
-			}
-			catch (TorException)
-			{
-				throw;
-			}
-			catch (Exception ex)
-			{
-				throw new TorException(
-					$"Didn't receive response for the sent {nameof(command)} from TOR Control Port: {nameof(command)} : {command}", ex);
-			}
-		}
-
-		private async Task<bool> TrySendCommandAsync(string command)
-		{
-			try
-			{
-				await SendCommandAsync(command).ConfigureAwait(false);
-				return true;
-			}
-			catch
-			{
-				return false;
+					// safety delay, in case the tor client is not quick enough with the actions
+					await Task.Delay(100).ConfigureAwait(false);
+				}
 			}
 		}
 
@@ -256,11 +252,11 @@ namespace DotNetTor.ControlPort
 			}
 		}
 
-		private async Task InitializeConnectSocketAsync()
+		private async Task InitializeConnectSocketAsync(CancellationToken ctsToken)
 		{
 			try
 			{
-				await Util.Semaphore.WaitAsync().ConfigureAwait(false);
+				await Util.Semaphore.WaitAsync(ctsToken).ConfigureAwait(false);
 				_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 				await _socket.ConnectAsync(_controlEndPoint).ConfigureAwait(false);
 			}
