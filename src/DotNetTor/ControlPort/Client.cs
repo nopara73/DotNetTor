@@ -16,6 +16,7 @@ namespace DotNetTor.ControlPort
 
 		private readonly IPEndPoint _controlEndPoint;
 		private readonly byte[] _authenticationToken;
+		private readonly string _cookieFilePath;
 		private Socket _socket;
 		
 		/// <param name="password">UTF8</param>
@@ -26,19 +27,11 @@ namespace DotNetTor.ControlPort
 			else _authenticationToken = Encoding.UTF8.GetBytes(password);
 		}
 		
-		/// <param name="authenticationToken">
-		/// For example unicode password or the content of the cookie file
-		/// </param>
-		public Client(string address, int controlPort, byte[] authenticationToken)
-		{
-			_controlEndPoint = new IPEndPoint(IPAddress.Parse(address), controlPort);
-			_authenticationToken = authenticationToken;
-		}
-		
 		public Client(string address, int controlPort, FileInfo cookieFile)
 		{
 			_controlEndPoint = new IPEndPoint(IPAddress.Parse(address), controlPort);
-			_authenticationToken = File.ReadAllBytes(cookieFile.Name);
+			_cookieFilePath = cookieFile.Name;
+			_authenticationToken = null;
 		}
 
 		public async Task<bool> IsCircuitEstabilishedAsync()
@@ -113,6 +106,10 @@ namespace DotNetTor.ControlPort
 			if (_authenticationToken != null)
 			{
 				authString = Util.ByteArrayToString(_authenticationToken);
+			}
+			else if (_cookieFilePath != null && _cookieFilePath != "")
+			{
+				authString = Util.ByteArrayToString(File.ReadAllBytes(_cookieFilePath));
 			}
 			await SendCommandAsync($"AUTHENTICATE {authString}").ConfigureAwait(false);
 		}
