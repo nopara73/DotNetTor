@@ -127,12 +127,12 @@ namespace DotNetTor.ControlPort
 			}
 		}
 
-		public async Task<string> SendCommandAsync(string command, CancellationToken ctsToken)
+		public async Task<string> SendCommandAsync(string command, CancellationToken ctsToken = default(CancellationToken))
 		{
 			return await SendCommandAsync(command, initAuthDispose: true, ctsToken: ctsToken).ConfigureAwait(false);
 		}
 
-		private async Task<string> SendCommandAsync(string command, bool initAuthDispose, CancellationToken ctsToken)
+		private async Task<string> SendCommandAsync(string command, bool initAuthDispose, CancellationToken ctsToken = default(CancellationToken))
 		{
 			try
 			{
@@ -166,10 +166,18 @@ namespace DotNetTor.ControlPort
 					var receivedCount = await _socket.ReceiveAsync(bufferByteArraySegment, SocketFlags.None).ConfigureAwait(false);
 					var response = Encoding.ASCII.GetString(bufferByteArraySegment.Array, 0, receivedCount);
 					var responseLines = new List<string>(response.Split(new[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries));
-
-					if (!responseLines.Any(x => x.StartsWith("250 OK", StringComparison.OrdinalIgnoreCase)))
+					
+					// error check a few commands I use
+					if(command.StartsWith("AUTHENTICATE", StringComparison.OrdinalIgnoreCase)
+						|| command.StartsWith("SETEVENTS", StringComparison.OrdinalIgnoreCase)
+						|| command.StartsWith("SIGNAL", StringComparison.OrdinalIgnoreCase)
+						|| command.StartsWith("GETINFO", StringComparison.OrdinalIgnoreCase))
+					{
+						if (!responseLines.Any(x => x.StartsWith("250 OK", StringComparison.OrdinalIgnoreCase)))
 						throw new TorException(
 							$"Unexpected {nameof(response)} from TOR Control Port to sent {nameof(command)} : {command} , {nameof(response)} : {response}");
+
+					}
 
 					// If we are tracking the signal events throw exception if didn't get the expected response
 					if (command.StartsWith("SIGNAL", StringComparison.OrdinalIgnoreCase))

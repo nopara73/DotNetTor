@@ -89,6 +89,14 @@ namespace DotNetTor.Tests
 	    }
 
 		[Fact]
+		private static async Task CanSendCustomCommandAsync()
+		{
+			var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
+			var res = await controlPortClient.SendCommandAsync("GETCONF SOCKSPORT").ConfigureAwait(false);
+			Assert.StartsWith("250 SocksPort", res);
+		}
+
+		[Fact]
 		private static async Task CanChangeCircuitWithinSameHttpClientAsync()
 		{
 			var requestUri = "https://api.ipify.org/";
