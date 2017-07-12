@@ -83,7 +83,7 @@ namespace DotNetTor.ControlPort
 			}
 		}
 
-		private async Task AuthenticateAsync(CancellationToken ctsToken)
+		public async Task AuthenticateAsync(CancellationToken ctsToken)
 		{
 			string authString = "\"\"";
 			if (_authenticationToken != null)
@@ -132,7 +132,7 @@ namespace DotNetTor.ControlPort
 			return await SendCommandAsync(command, initAuthDispose: true, ctsToken: ctsToken).ConfigureAwait(false);
 		}
 
-		private async Task<string> SendCommandAsync(string command, bool initAuthDispose, CancellationToken ctsToken = default(CancellationToken))
+		public async Task<string> SendCommandAsync(string command, bool initAuthDispose, CancellationToken ctsToken = default(CancellationToken))
 		{
 			try
 			{
@@ -238,7 +238,7 @@ namespace DotNetTor.ControlPort
 		/// <summary>
 		/// Always use it in finally block.
 		/// </summary>
-		private void DisconnectDisposeSocket()
+		public void DisconnectDisposeSocket()
 		{
 			try
 			{
@@ -260,7 +260,7 @@ namespace DotNetTor.ControlPort
 			}
 		}
 
-		private async Task InitializeConnectSocketAsync(CancellationToken ctsToken)
+		public async Task InitializeConnectSocketAsync(CancellationToken ctsToken)
 		{
 			try
 			{
