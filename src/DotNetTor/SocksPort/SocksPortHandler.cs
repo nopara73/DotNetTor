@@ -156,6 +156,7 @@ namespace DotNetTor.SocksPort
 
 		private void ReleaseUnmanagedResources()
 		{
+			ControlPort.Client.CircuitChangeRequested -= Client_CircuitChangeRequested;
 			lock (_Connections)
 			{
 				foreach (var reference in _References)
