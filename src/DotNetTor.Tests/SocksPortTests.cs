@@ -166,7 +166,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanRequestOnionAsync()
 		{
-			var requestUri = "http://bitmixer2whesjgj.onion/order.php?addr1=16HGUokcXuJXn9yiV6uQ4N3umAWteE2cRR&pr1=33&time1=8&addr2=1F1Afwxr2xrs3ZQpf6ifqfNMxJWZt2JupK&pr2=67&time2=16&bitcode=AcOw&fee=0.6523";
+			var requestUri = "http://msydqstlz2kzerdg.onion/";
 
 			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
 			using (var httpClient = new HttpClient(handler))
@@ -175,7 +175,7 @@ namespace DotNetTor.Tests
 					await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync()
 						.ConfigureAwait(false);
 
-				Assert.Equal(content, "error=Invalid Bitcode");
+				Assert.True(content.Contains("Learn more about Ahmia and its team"));
 			}
 		}
 	}
