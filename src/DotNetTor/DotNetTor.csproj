@@ -14,14 +14,13 @@
     <PackageIconUrl>http://img.tamindir.com/ti_e_ul/lucifer/tor-ikon.gif</PackageIconUrl>
     <PackageProjectUrl>https://github.com/nopara73/DotNetTor</PackageProjectUrl>
     <NetStandardImplicitPackageVersion>1.6.1</NetStandardImplicitPackageVersion>
-    <PackageTargetFallback>$(PackageTargetFallback);dnxcore50</PackageTargetFallback>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
     <Version>2.2.4</Version>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+  <PropertyGroup>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
