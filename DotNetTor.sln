@@ -13,14 +13,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetTor", "src\DotNetTor\DotNetTor.csproj", "{C5D9FFC6-BE5B-448D-B746-2CFBC5D4E2C2}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetTor.Tests", "src\DotNetTor.Tests\DotNetTor.Tests.csproj", "{ECC736D1-D4A9-4CD3-954B-7A795E46550F}"
-	ProjectSection(ProjectDependencies) = postProject
-		{C5D9FFC6-BE5B-448D-B746-2CFBC5D4E2C2} = {C5D9FFC6-BE5B-448D-B746-2CFBC5D4E2C2}
-	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetTor.Example", "src\DotNetTor.Example\DotNetTor.Example.csproj", "{BB62E68F-F0AF-4583-A537-168C8B3448D2}"
-	ProjectSection(ProjectDependencies) = postProject
-		{C5D9FFC6-BE5B-448D-B746-2CFBC5D4E2C2} = {C5D9FFC6-BE5B-448D-B746-2CFBC5D4E2C2}
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
