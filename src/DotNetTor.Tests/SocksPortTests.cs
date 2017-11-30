@@ -19,7 +19,7 @@ namespace DotNetTor.Tests
 				HttpResponseMessage message = await httpClient.GetAsync(requestUri).ConfigureAwait(false);
 				var content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-				Assert.Equal(content, "\"Good question Holmes !\"");
+				Assert.Equal("\"Good question Holmes !\"", content);
 			}
 		}
 
@@ -34,21 +34,21 @@ namespace DotNetTor.Tests
 				HttpResponseMessage message = await httpClient.GetAsync(requestUri).ConfigureAwait(false);
 				var content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-				Assert.Equal(content, "\"Good question Holmes !\"");
+				Assert.Equal("\"Good question Holmes !\"", content);
 			}
 			using (var httpClient = new HttpClient(handler))
 			{
 				HttpResponseMessage message = await httpClient.GetAsync(requestUri).ConfigureAwait(false);
 				var content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-				Assert.Equal(content, "\"Good question Holmes !\"");
+				Assert.Equal("\"Good question Holmes !\"", content);
 			}
 			using (var httpClient = new HttpClient(handler))
 			{
 				HttpResponseMessage message = await httpClient.GetAsync(requestUri).ConfigureAwait(false);
 				var content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-				Assert.Equal(content, "\"Good question Holmes !\"");
+				Assert.Equal("\"Good question Holmes !\"", content);
 			}
 		}
 
@@ -61,7 +61,7 @@ namespace DotNetTor.Tests
 				HttpResponseMessage message =
 					await httpClient.GetAsync("http://api.qbit.ninja/whatisit/what%20is%20my%20future").ConfigureAwait(false);
 				var content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
-				Assert.Equal(content, "\"Good question Holmes !\"");
+				Assert.Equal("\"Good question Holmes !\"", content);
 
 				message = await httpClient.GetAsync("https://api.ipify.org/").ConfigureAwait(false);
 				content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -71,7 +71,7 @@ namespace DotNetTor.Tests
 
 				message = await httpClient.GetAsync("http://api.qbit.ninja/whatisit/what%20is%20my%20future").ConfigureAwait(false);
 				content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
-				Assert.Equal(content, "\"Good question Holmes !\"");
+				Assert.Equal("\"Good question Holmes !\"", content);
 			}
 		}
 
@@ -115,7 +115,7 @@ namespace DotNetTor.Tests
 					await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync()
 						.ConfigureAwait(false);
 
-				Assert.Equal(content, "{\"ok\":true}");
+				Assert.Equal("{\"ok\":true}", content);
 			}
 		}
 
@@ -175,7 +175,7 @@ namespace DotNetTor.Tests
 					await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync()
 						.ConfigureAwait(false);
 
-				Assert.True(content.Contains("Learn more about Ahmia and its team"));
+				Assert.Contains("Learn more about Ahmia and its team", content);
 			}
 		}
 	}

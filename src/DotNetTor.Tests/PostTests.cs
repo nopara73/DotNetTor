@@ -27,7 +27,7 @@ namespace DotNetTor.Tests
 				HttpResponseMessage message = await _client.PostAsync("http://httpbin.org/post", content).ConfigureAwait(false);
 				var responseContentString = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-				Assert.True(responseContentString.Contains("bar@98"));
+				Assert.Contains("bar@98", responseContentString);
 			}
 		}
 		[Fact]

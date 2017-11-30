@@ -22,7 +22,7 @@ namespace DotNetTor.Tests
 				var contents = await QBitTestAsync(client, 1).ConfigureAwait(false);
 				foreach (var content in contents)
 				{
-					Assert.Equal(content, "\"Good question Holmes !\"");
+					Assert.Equal("\"Good question Holmes !\"", content);
 				}
 			}
 		}
@@ -45,7 +45,7 @@ namespace DotNetTor.Tests
 			{
 				var response = await client.GetAsync("http://www.msftncsi.com/ncsi.txt").ConfigureAwait(false);
 				var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-				Assert.Equal(content, "Microsoft NCSI");
+				Assert.Equal("Microsoft NCSI", content);
 			}
 		}
 		[Fact]
@@ -59,8 +59,8 @@ namespace DotNetTor.Tests
 				var response = await client.GetBlock(new QBitNinja.Client.Models.BlockFeature(new uint256("0000000000000000004e24d06073aef7a5313d4ea83a5c105b3cadd0d38cc1f0")), true).ConfigureAwait(false);
 
 				Assert.Equal(474010, response.AdditionalInformation.Height);
-				Assert.Equal(null, response.Block);
-				Assert.Equal(null, response.ExtendedInformation);
+				Assert.Null(response.Block);
+				Assert.Null(response.ExtendedInformation);
 			}
 		}
 		[Fact]
@@ -72,7 +72,7 @@ namespace DotNetTor.Tests
 				var contents = await QBitTestAsync(client, 2).ConfigureAwait(false);
 				foreach (var content in contents)
 				{
-					Assert.Equal(content, "\"Good question Holmes !\"");
+					Assert.Equal("\"Good question Holmes !\"", content);
 				}
 			}
 		}
@@ -85,7 +85,7 @@ namespace DotNetTor.Tests
 				var contents = await QBitTestAsync(client, 15).ConfigureAwait(false);
 				foreach (var content in contents)
 				{
-					Assert.Equal(content, "\"Good question Holmes !\"");
+					Assert.Equal("\"Good question Holmes !\"", content);
 				}
 			}
 		}
@@ -108,7 +108,7 @@ namespace DotNetTor.Tests
 
 				foreach (var content in contents)
 				{
-					Assert.Equal(content, "\"Good question Holmes !\"");
+					Assert.Equal("\"Good question Holmes !\"", content);
 				}
 			}
 		}
