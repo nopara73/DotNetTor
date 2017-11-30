@@ -11,10 +11,10 @@ namespace DotNetTor.Tests
 	public class ControlPortTests
     {
 		[Fact]
-		private static async Task IsCircuitEstabilishedAsync()
+		private static async Task IsCircuitEstablishedAsync()
 		{
 			var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
-			var yes = await controlPortClient.IsCircuitEstabilishedAsync().ConfigureAwait(false);
+			var yes = await controlPortClient.IsCircuitEstablishedAsync().ConfigureAwait(false);
 			Assert.True(yes);
 		}
 

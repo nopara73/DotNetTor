@@ -35,7 +35,7 @@ namespace DotNetTor.ControlPort
 			_authenticationToken = null;
 		}
 
-		public async Task<bool> IsCircuitEstabilishedAsync(CancellationToken ctsToken = default(CancellationToken))
+		public async Task<bool> IsCircuitEstablishedAsync(CancellationToken ctsToken = default(CancellationToken))
 		{
 			// Get info
 			var response = await SendCommandAsync("GETINFO status/circuit-established", ctsToken: ctsToken).ConfigureAwait(false);
