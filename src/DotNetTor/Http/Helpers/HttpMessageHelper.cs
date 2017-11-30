@@ -15,7 +15,7 @@ namespace System.Net.Http
 {
 	public static class HttpMessageHelper
 	{
-		public static async Task<string> ReadStartLineAsync(Stream stream, CancellationToken ctsToken = default(CancellationToken))
+		public static async Task<string> ReadStartLineAsync(Stream stream, CancellationToken ctsToken = default)
 		{
 			// https://tools.ietf.org/html/rfc7230#section-3
 			// A recipient MUST parse an HTTP message as a sequence of octets in an
@@ -44,7 +44,7 @@ namespace System.Net.Http
 			return startLine;
 		}
 
-		public static async Task<string> ReadHeadersAsync(Stream stream, CancellationToken ctsToken = default(CancellationToken))
+		public static async Task<string> ReadHeadersAsync(Stream stream, CancellationToken ctsToken = default)
 		{
 			var headers = "";
 			var firstRead = true;
@@ -68,7 +68,7 @@ namespace System.Net.Http
 					// processing of it(i.e., ignore the entire line, along with any				 
 					// subsequent lines preceded by whitespace, until a properly formed				 
 					// header field is received or the header section is terminated).
-					if (Char.IsWhiteSpace(header[0]))
+					if (char.IsWhiteSpace(header[0]))
 					{
 						throw new FormatException($"Invalid HTTP message: Cannot be whitespace between the start line and the headers");
 					}
@@ -85,7 +85,7 @@ namespace System.Net.Http
 			return headers;
 		}
 
-		private static async Task<string> ReadCRLFLineAsync(Stream stream, Encoding encoding, CancellationToken ctsToken = default(CancellationToken))
+		private static async Task<string> ReadCRLFLineAsync(Stream stream, Encoding encoding, CancellationToken ctsToken = default)
 		{
 			var bab = new ByteArrayBuilder();
 			while (true)
@@ -116,7 +116,7 @@ namespace System.Net.Http
 			return null;
 		}
 
-		public static async Task<HttpContent> GetContentAsync(Stream stream, HttpRequestContentHeaders headerStruct, CancellationToken ctsToken = default(CancellationToken))
+		public static async Task<HttpContent> GetContentAsync(Stream stream, HttpRequestContentHeaders headerStruct, CancellationToken ctsToken = default)
 		{
 			if (headerStruct.RequestHeaders != null && headerStruct.RequestHeaders.Contains("Transfer-Encoding"))
 			{
@@ -124,7 +124,7 @@ namespace System.Net.Http
 				// All transfer-coding names are case-insensitive
 				if ("chunked".Equals(headerStruct.RequestHeaders.TransferEncoding.Last().Value, StringComparison.OrdinalIgnoreCase))
 				{
-					return await GetDecodedChunkedContent(stream, headerStruct, ctsToken).ConfigureAwait(false);
+					return await GetDecodedChunkedContentAsync(stream, headerStruct, ctsToken).ConfigureAwait(false);
 				}
 				// https://tools.ietf.org/html/rfc7230#section-3.3.3
 				// If a Transfer - Encoding header field is present in a response and
@@ -163,7 +163,7 @@ namespace System.Net.Http
 			return GetDummyOrNullContent(headerStruct.ContentHeaders);
 		}
 
-		public static async Task<HttpContent> GetContentAsync(Stream stream, HttpResponseContentHeaders headerStruct, HttpMethod requestMethod, StatusLine statusLine, CancellationToken ctsToken = default(CancellationToken))
+		public static async Task<HttpContent> GetContentAsync(Stream stream, HttpResponseContentHeaders headerStruct, HttpMethod requestMethod, StatusLine statusLine, CancellationToken ctsToken = default)
 		{
 			// https://tools.ietf.org/html/rfc7230#section-3.3.3
 			// The length of a message body is determined by one of the following
@@ -204,7 +204,7 @@ namespace System.Net.Http
 				// All transfer-coding names are case-insensitive
 				if ("chunked".Equals(headerStruct.ResponseHeaders.TransferEncoding.Last().Value, StringComparison.OrdinalIgnoreCase))
 				{
-					return await GetDecodedChunkedContent(stream, headerStruct, ctsToken).ConfigureAwait(false);
+					return await GetDecodedChunkedContentAsync(stream, headerStruct, ctsToken).ConfigureAwait(false);
 				}
 				// https://tools.ietf.org/html/rfc7230#section-3.3.3
 				// If a Transfer - Encoding header field is present in a response and
@@ -244,15 +244,15 @@ namespace System.Net.Http
 			return await GetContentTillEndAsync(stream, ctsToken).ConfigureAwait(false);
 		}
 
-		private static async Task<HttpContent> GetDecodedChunkedContent(Stream stream, HttpRequestContentHeaders headerStruct, CancellationToken ctsToken = default(CancellationToken))
+		private static async Task<HttpContent> GetDecodedChunkedContentAsync(Stream stream, HttpRequestContentHeaders headerStruct, CancellationToken ctsToken = default)
 		{
-			return await GetDecodedChunkedContent(stream, headerStruct, null, ctsToken).ConfigureAwait(false);
+			return await GetDecodedChunkedContentAsync(stream, headerStruct, null, ctsToken).ConfigureAwait(false);
 		}
-		private static async Task<HttpContent> GetDecodedChunkedContent(Stream stream, HttpResponseContentHeaders headerStruct, CancellationToken ctsToken = default(CancellationToken))
+		private static async Task<HttpContent> GetDecodedChunkedContentAsync(Stream stream, HttpResponseContentHeaders headerStruct, CancellationToken ctsToken = default)
 		{
-			return await GetDecodedChunkedContent(stream, null, headerStruct, ctsToken).ConfigureAwait(false);
+			return await GetDecodedChunkedContentAsync(stream, null, headerStruct, ctsToken).ConfigureAwait(false);
 		}
-		private static async Task<HttpContent> GetDecodedChunkedContent(Stream stream, HttpRequestContentHeaders requestHeaders, HttpResponseContentHeaders responseHeaders, CancellationToken ctsToken = default(CancellationToken))
+		private static async Task<HttpContent> GetDecodedChunkedContentAsync(Stream stream, HttpRequestContentHeaders requestHeaders, HttpResponseContentHeaders responseHeaders, CancellationToken ctsToken = default)
 		{
 			if(responseHeaders == null && requestHeaders == null)
 			{
@@ -437,7 +437,7 @@ namespace System.Net.Http
 			}
 		}
 
-		private static async Task<HttpContent> GetContentTillLengthAsync(Stream stream, long? contentLength, CancellationToken ctsToken = default(CancellationToken))
+		private static async Task<HttpContent> GetContentTillLengthAsync(Stream stream, long? contentLength, CancellationToken ctsToken = default)
 			=> new ByteArrayContent(await ReadBytesTillLengthAsync(stream, contentLength, ctsToken).ConfigureAwait(false));
 		
 		private static async Task<byte[]> ReadBytesTillLengthAsync(Stream stream, long? length, CancellationToken ctsToken)

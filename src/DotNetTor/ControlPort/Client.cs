@@ -35,7 +35,7 @@ namespace DotNetTor.ControlPort
 			_authenticationToken = null;
 		}
 
-		public async Task<bool> IsCircuitEstablishedAsync(CancellationToken ctsToken = default(CancellationToken))
+		public async Task<bool> IsCircuitEstablishedAsync(CancellationToken ctsToken = default)
 		{
 			// Get info
 			var response = await SendCommandAsync("GETINFO status/circuit-established", ctsToken: ctsToken).ConfigureAwait(false);
@@ -51,7 +51,7 @@ namespace DotNetTor.ControlPort
 			else throw new TorException($"Wrong response to 'GETINFO status/circuit-established': '{response}'");
 		}
 
-		public async Task ChangeCircuitAsync(CancellationToken ctsToken = default(CancellationToken))
+		public async Task ChangeCircuitAsync(CancellationToken ctsToken = default)
 		{
 			try
 			{
@@ -127,12 +127,12 @@ namespace DotNetTor.ControlPort
 			}
 		}
 
-		public async Task<string> SendCommandAsync(string command, CancellationToken ctsToken = default(CancellationToken))
+		public async Task<string> SendCommandAsync(string command, CancellationToken ctsToken = default)
 		{
 			return await SendCommandAsync(command, initAuthDispose: true, ctsToken: ctsToken).ConfigureAwait(false);
 		}
 
-		public async Task<string> SendCommandAsync(string command, bool initAuthDispose, CancellationToken ctsToken = default(CancellationToken))
+		public async Task<string> SendCommandAsync(string command, bool initAuthDispose, CancellationToken ctsToken = default)
 		{
 			try
 			{

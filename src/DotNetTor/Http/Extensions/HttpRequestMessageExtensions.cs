@@ -11,7 +11,7 @@ namespace System.Net.Http
 {
     public static class HttpRequestMessageExtensions
     {
-		public static async Task<HttpRequestMessage> CreateNewAsync(this HttpRequestMessage me, Stream requestStream, CancellationToken ctsToken = default(CancellationToken))
+		public static async Task<HttpRequestMessage> CreateNewAsync(this HttpRequestMessage me, Stream requestStream, CancellationToken ctsToken = default)
 		{
 			// https://tools.ietf.org/html/rfc7230#section-3
 			// The normal procedure for parsing an HTTP message is to read the
@@ -56,7 +56,7 @@ namespace System.Net.Http
 			return request;
 		}
 
-		public static async Task<string> ToHttpStringAsync(this HttpRequestMessage me, CancellationToken ctsToken = default(CancellationToken))
+		public static async Task<string> ToHttpStringAsync(this HttpRequestMessage me, CancellationToken ctsToken = default)
 		{
 			// https://tools.ietf.org/html/rfc7230#section-5.4
 			// The "Host" header field in a request provides the host and port

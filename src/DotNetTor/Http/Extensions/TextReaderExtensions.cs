@@ -42,9 +42,9 @@ namespace System.IO
 			return null;
 		}
 
-		public static Task<string> ReadLineAsync(this TextReader me, bool strictCRLF = false, CancellationToken ctsToken = default(CancellationToken))
+		public static Task<string> ReadLineAsync(this TextReader me, bool strictCRLF = false, CancellationToken ctsToken = default)
 		{
-			return Task<String>.Factory.StartNew(state =>
+			return Task<string>.Factory.StartNew(state =>
 			{
 				return ((TextReader)state).ReadLine(strictCRLF);
 			},
@@ -75,7 +75,7 @@ namespace System.IO
 
 		public static Task<string> ReadPartAsync(this TextReader me, char separator, CancellationToken ctsToken)
 		{
-			return Task<String>.Factory.StartNew(state =>
+			return Task<string>.Factory.StartNew(state =>
 			{
 				return ((TextReader)state).ReadPart(separator);
 			},

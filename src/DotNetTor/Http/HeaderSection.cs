@@ -176,7 +176,7 @@ namespace DotNetTor.Http
 			var message = new HttpRequestMessage();
 			foreach (var header in headers)
 			{
-				hs.Fields.Add(new HeaderField(header.Key, String.Join(",", header.Value)));
+				hs.Fields.Add(new HeaderField(header.Key, string.Join(",", header.Value)));
 			}
 
 			// -- Start [SECTION] Crazy VS2017/.NET Core 1.1 bug ---

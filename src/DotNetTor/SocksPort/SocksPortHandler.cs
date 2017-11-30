@@ -24,7 +24,7 @@ namespace DotNetTor.SocksPort
 		
 		public IPEndPoint EndPoint { get; private set; }
 
-		private List<Uri> _References;
+		private List<Uri> _references;
 		
 		private volatile bool _disposed;
 
@@ -43,7 +43,7 @@ namespace DotNetTor.SocksPort
 		private void Init(IPEndPoint endpoint)
 		{
 			_disposed = false;
-			_References = new List<Uri>();
+			_references = new List<Uri>();
 			_Connections = new ConcurrentDictionary<string, SocksConnection>();
 			EndPoint = endpoint;
 
@@ -130,10 +130,10 @@ namespace DotNetTor.SocksPort
 			{
 				if (_Connections.TryGetValue(uri.AbsoluteUri, out SocksConnection connection))
 				{
-					if (!_References.Contains(uri))
+					if (!_references.Contains(uri))
 					{
 						connection.AddReference();
-						_References.Add(uri);
+						_references.Add(uri);
 					}
 					return connection;
 				}
@@ -144,7 +144,7 @@ namespace DotNetTor.SocksPort
 					Destination = uri
 				};
 				connection.AddReference();
-				_References.Add(uri);
+				_references.Add(uri);
 				_Connections.TryAdd(uri.AbsoluteUri, connection);
 				return connection;
 			}
@@ -159,7 +159,7 @@ namespace DotNetTor.SocksPort
 			ControlPort.Client.CircuitChangeRequested -= Client_CircuitChangeRequested;
 			lock (_Connections)
 			{
-				foreach (var reference in _References)
+				foreach (var reference in _references)
 				{
 					if (_Connections.TryGetValue(reference.AbsoluteUri, out SocksConnection connection))
 					{

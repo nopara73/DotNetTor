@@ -45,7 +45,7 @@ namespace DotNetTor.SocksPort
 			Socket.Connect(EndPoint);
 		}
 
-		private async Task ConnectToDestinationAsync(CancellationToken ctsToken = default(CancellationToken))
+		private async Task ConnectToDestinationAsync(CancellationToken ctsToken = default)
 		{
 			var sendBuffer = new ArraySegment<byte>(Util.BuildConnectToUri(Destination).Array);
 			await Socket.SendAsync(sendBuffer, SocketFlags.None).ConfigureAwait(false);
@@ -168,7 +168,7 @@ namespace DotNetTor.SocksPort
 			}
 		}
 
-		private async Task EnsureConnectedToTorAsync(CancellationToken ctsToken = default(CancellationToken))
+		private async Task EnsureConnectedToTorAsync(CancellationToken ctsToken = default)
 		{
 			if (!IsSocketConnected(throws: false)) // Socket.Connected is misleading, don't use that
 			{
