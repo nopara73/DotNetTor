@@ -129,7 +129,7 @@ namespace DotNetTor.SocksPort
 				{
 					if (!_references.Contains(uri))
 					{
-						connection.AddReference();
+						connection.ReferenceCount++;
 						_references.Add(uri);
 					}
 					return connection;
@@ -140,7 +140,7 @@ namespace DotNetTor.SocksPort
 					EndPoint = EndPoint,
 					Destination = uri
 				};
-				connection.AddReference();
+				connection.ReferenceCount++;
 				_references.Add(uri);
 				_connections.TryAdd(uri.AbsoluteUri, connection);
 				return connection;
@@ -153,40 +153,54 @@ namespace DotNetTor.SocksPort
 
 		private void ReleaseUnmanagedResources()
 		{
-			ControlPort.Client.CircuitChangeRequested -= Client_CircuitChangeRequested;
-			using (_connectionsAsyncLock.Lock())
+			try
 			{
-				foreach (var reference in _references)
+				using (_connectionsAsyncLock.Lock())
 				{
-					if (_connections.TryGetValue(reference.AbsoluteUri, out SocksConnection connection))
+					ControlPort.Client.CircuitChangeRequested -= Client_CircuitChangeRequested;
+					foreach (var reference in _references)
 					{
-						connection.RemoveReference(out bool disposedSockets);
-						if (disposedSockets)
+						if (_connections.TryGetValue(reference.AbsoluteUri, out SocksConnection connection))
 						{
-							_connections.TryRemove(reference.AbsoluteUri, out connection);
+							connection.RemoveReference(out bool disposedSockets);
+							if (disposedSockets)
+							{
+								_connections.TryRemove(reference.AbsoluteUri, out connection);
+							}
 						}
 					}
 				}
+			}
+			catch
+			{
+				// ignored
 			}
 		}
 
 		protected override void Dispose(bool disposing)
 		{
-			if (!_disposed)
+			try
 			{
-				try
+				if (!_disposed)
 				{
-					ReleaseUnmanagedResources();
-				}
-				catch (Exception)
-				{
-					// ignored
+					try
+					{
+						ReleaseUnmanagedResources();
+					}
+					catch (Exception)
+					{
+						// ignored
+					}
+
+					_disposed = true;
 				}
 
-				_disposed = true;
+				base.Dispose(disposing);
 			}
-
-			base.Dispose(disposing);
+			catch
+			{
+				// ignored
+			}
 		}
 		~SocksPortHandler()
 		{

@@ -22,7 +22,7 @@ namespace DotNetTor.SocksPort
 		public Uri Destination;
 		public Socket Socket;
 		public Stream Stream;
-		public int ReferenceCount;
+		public volatile int ReferenceCount;
 		private AsyncLock _asyncLock;
 
 		public SocksConnection()
@@ -186,38 +186,50 @@ namespace DotNetTor.SocksPort
 			}
 		}
 
-		public void AddReference() => Interlocked.Increment(ref ReferenceCount);
-
 		public void RemoveReference(out bool disposed)
 		{
 			disposed = false;
-			var value = Interlocked.Decrement(ref ReferenceCount);
-			if (value == 0)
+			try
 			{
-				using (_asyncLock.Lock())
+				var value = ReferenceCount--;
+				if (value == 0)
 				{
-					DestroySocket();
-					disposed = true;
+					using (_asyncLock.Lock())
+					{
+						DestroySocket();
+						disposed = true;
+					}
 				}
+			}
+			catch
+			{
+				// ignored
 			}
 		}
 
 		private void DestroySocket()
 		{
-			if (Stream != null)
+			try
 			{
-				Stream.Dispose();
-				Stream = null;
-			}
-			if (Socket != null)
-			{
-				try
+				if (Stream != null)
 				{
-					Socket.Shutdown(SocketShutdown.Both);
+					Stream.Dispose();
+					Stream = null;
 				}
-				catch (SocketException) { }
-				Socket.Dispose();
-				Socket = null;
+				if (Socket != null)
+				{
+					try
+					{
+						Socket.Shutdown(SocketShutdown.Both);
+					}
+					catch (SocketException) { }
+					Socket.Dispose();
+					Socket = null;
+				}
+			}
+			catch
+			{
+				// ignore
 			}
 		}
 	}

@@ -256,9 +256,9 @@ namespace DotNetTor.ControlPort
 			{
 				// good, it's already disposed
 			}
-			catch (Exception ex)
+			catch
 			{
-				throw new TorException("Couldn't properly disconnect from the TOR Control Port.", ex);
+				// ignore
 			}
 		}
 
