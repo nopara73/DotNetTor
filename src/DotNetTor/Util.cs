@@ -166,16 +166,16 @@ namespace DotNetTor
 
 	internal static class Retry
 	{
-		internal static void Do(
+		internal static async Task DoAsync(
 			Action action,
 			TimeSpan retryInterval,
-			int retryCount = 3) => Do<object>(() =>
+			int retryCount = 3) => await DoAsync<object>(() =>
 		{
 			action();
 			return null;
-		}, retryInterval, retryCount);
+		}, retryInterval, retryCount).ConfigureAwait(false);
 
-		internal static T Do<T>(
+		internal static async Task<T> DoAsync<T>(
 			Func<T> action,
 			TimeSpan retryInterval,
 			int retryCount = 3)
@@ -187,7 +187,7 @@ namespace DotNetTor
 				try
 				{
 					if (retry > 0)
-						Task.Delay(retryInterval).Wait();
+						await Task.Delay(retryInterval).ConfigureAwait(false);
 					return action();
 				}
 				catch (Exception ex)

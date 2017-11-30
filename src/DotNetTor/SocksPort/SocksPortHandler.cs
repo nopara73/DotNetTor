@@ -78,10 +78,10 @@ namespace DotNetTor.SocksPort
 				SocksConnection connection = null;
 				try
 				{
-					Retry.Do(() =>
+					await Retry.DoAsync(() =>
 					{
 						connection = ConnectToDestinationIfNotConnected(request.RequestUri);
-					}, RetryInterval, MaxRetry);
+					}, RetryInterval, MaxRetry).ConfigureAwait(false);
 				}
 				catch (Exception ex)
 				{
