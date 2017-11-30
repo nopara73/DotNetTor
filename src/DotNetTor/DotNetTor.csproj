@@ -6,7 +6,7 @@
     <AssemblyTitle>DotNetTor</AssemblyTitle>
     <VersionPrefix>2.1.3</VersionPrefix>
     <Authors>nopara73;NicolasDorier</Authors>
-    <TargetFramework>netstandard1.6</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>DotNetTor</AssemblyName>
     <PackageId>DotNetTor</PackageId>
     <PackageTags>tor</PackageTags>
