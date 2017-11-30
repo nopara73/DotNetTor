@@ -37,49 +37,55 @@ namespace DotNetTor.ControlPort
 
 		public async Task<bool> IsCircuitEstablishedAsync(CancellationToken ctsToken = default)
 		{
-			// Get info
-			var response = await SendCommandAsync("GETINFO status/circuit-established", ctsToken: ctsToken).ConfigureAwait(false);
+			using (await Util.AsyncLock.LockAsync(ctsToken).ConfigureAwait(false))
+			{
+				// Get info
+				var response = await SendCommandAsync("GETINFO status/circuit-established", ctsToken: ctsToken).ConfigureAwait(false);
 
-			if (response.Contains("status/circuit-established=1", StringComparison.OrdinalIgnoreCase))
-			{
-				return true;
+				if (response.Contains("status/circuit-established=1", StringComparison.OrdinalIgnoreCase))
+				{
+					return true;
+				}
+				else if (response.Contains("status/circuit-established=0", StringComparison.OrdinalIgnoreCase))
+				{
+					return false;
+				}
+				else throw new TorException($"Wrong response to 'GETINFO status/circuit-established': '{response}'");
 			}
-			else if (response.Contains("status/circuit-established=0", StringComparison.OrdinalIgnoreCase))
-			{
-				return false;
-			}
-			else throw new TorException($"Wrong response to 'GETINFO status/circuit-established': '{response}'");
 		}
 
 		public async Task ChangeCircuitAsync(CancellationToken ctsToken = default)
 		{
-			try
+			using (await Util.AsyncLock.LockAsync(ctsToken).ConfigureAwait(false))
 			{
-				OnCircuitChangeRequested();
+				try
+				{
+					OnCircuitChangeRequested();
 
-				await InitializeConnectSocketAsync(ctsToken).ConfigureAwait(false);
+					await InitializeConnectSocketAsync(ctsToken).ConfigureAwait(false);
 
-				await AuthenticateAsync(ctsToken).ConfigureAwait(false);
+					await AuthenticateAsync(ctsToken).ConfigureAwait(false);
 
-				// Subscribe to SIGNAL events
-				await SendCommandAsync("SETEVENTS SIGNAL", initAuthDispose: false, ctsToken: ctsToken).ConfigureAwait(false);
+					// Subscribe to SIGNAL events
+					await SendCommandAsync("SETEVENTS SIGNAL", initAuthDispose: false, ctsToken: ctsToken).ConfigureAwait(false);
 
-				// Clear all existing circuits and build new ones
-				await SendCommandAsync("SIGNAL NEWNYM", initAuthDispose: false, ctsToken: ctsToken).ConfigureAwait(false);
+					// Clear all existing circuits and build new ones
+					await SendCommandAsync("SIGNAL NEWNYM", initAuthDispose: false, ctsToken: ctsToken).ConfigureAwait(false);
 
-				// Unsubscribe from all events
-				await SendCommandAsync("SETEVENTS", initAuthDispose: false, ctsToken: ctsToken).ConfigureAwait(false);
-			}
-			catch (Exception ex)
-			{
-				throw new TorException("Couldn't change circuit", ex);
-			}
-			finally
-			{
-				DisconnectDisposeSocket();
+					// Unsubscribe from all events
+					await SendCommandAsync("SETEVENTS", initAuthDispose: false, ctsToken: ctsToken).ConfigureAwait(false);
+				}
+				catch (Exception ex)
+				{
+					throw new TorException("Couldn't change circuit", ex);
+				}
+				finally
+				{
+					DisconnectDisposeSocket();
 
-				// safety delay, in case the tor client is not quick enough with the actions
-				await Task.Delay(100, ctsToken).ConfigureAwait(false);
+					// safety delay, in case the tor client is not quick enough with the actions
+					await Task.Delay(100, ctsToken).ConfigureAwait(false);
+				}
 			}
 		}
 
@@ -254,17 +260,12 @@ namespace DotNetTor.ControlPort
 			{
 				throw new TorException("Couldn't properly disconnect from the TOR Control Port.", ex);
 			}
-			finally
-			{
-				Util.Semaphore.Release();
-			}
 		}
 
 		public async Task InitializeConnectSocketAsync(CancellationToken ctsToken)
 		{
 			try
 			{
-				await Util.Semaphore.WaitAsync(ctsToken).ConfigureAwait(false);
 				_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 				await _socket.ConnectAsync(_controlEndPoint).ConfigureAwait(false);
 			}

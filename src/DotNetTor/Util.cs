@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Nito.AsyncEx;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -12,7 +13,7 @@ namespace DotNetTor
 {
 	internal static class Util
 	{
-		public static readonly SemaphoreSlim Semaphore = new SemaphoreSlim(1, 1);
+		public static readonly AsyncLock AsyncLock = new AsyncLock();
 
 		public static bool Contains(this string source, string toCheck, StringComparison comp)
 		{

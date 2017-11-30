@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using Nito.AsyncEx;
 
 namespace DotNetTor.SocksPort
 {
@@ -20,7 +21,8 @@ namespace DotNetTor.SocksPort
 		
 		public readonly HttpProtocol Protocol = HttpProtocol.HTTP11;
 
-		private static ConcurrentDictionary<string, SocksConnection> _Connections;
+		private static ConcurrentDictionary<string, SocksConnection> _connections;
+		private static AsyncLock _connectionsAsyncLock;
 		
 		public IPEndPoint EndPoint { get; private set; }
 
@@ -42,9 +44,10 @@ namespace DotNetTor.SocksPort
 
 		private void Init(IPEndPoint endpoint)
 		{
+			_connectionsAsyncLock = new AsyncLock();
 			_disposed = false;
 			_references = new List<Uri>();
-			_Connections = new ConcurrentDictionary<string, SocksConnection>();
+			_connections = new ConcurrentDictionary<string, SocksConnection>();
 			EndPoint = endpoint;
 
 			ControlPort.Client.CircuitChangeRequested += Client_CircuitChangeRequested;
@@ -71,9 +74,7 @@ namespace DotNetTor.SocksPort
 
 		protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ctsToken)
 		{			
-			await Util.Semaphore.WaitAsync().ConfigureAwait(false);
-
-			try
+			using(await Util.AsyncLock.LockAsync().ConfigureAwait(false))
 			{
 				SocksConnection connection = null;
 				try
@@ -115,10 +116,6 @@ namespace DotNetTor.SocksPort
 					}
 				}
 			}
-			finally
-			{
-				Util.Semaphore.Release();
-			}
 		}
 
 		#region DestinationConnections
@@ -126,9 +123,9 @@ namespace DotNetTor.SocksPort
 		private SocksConnection ConnectToDestinationIfNotConnected(Uri uri)
 		{
 			uri = Util.StripPath(uri);
-			lock (_Connections)
+			using (_connectionsAsyncLock.Lock())
 			{
-				if (_Connections.TryGetValue(uri.AbsoluteUri, out SocksConnection connection))
+				if (_connections.TryGetValue(uri.AbsoluteUri, out SocksConnection connection))
 				{
 					if (!_references.Contains(uri))
 					{
@@ -145,7 +142,7 @@ namespace DotNetTor.SocksPort
 				};
 				connection.AddReference();
 				_references.Add(uri);
-				_Connections.TryAdd(uri.AbsoluteUri, connection);
+				_connections.TryAdd(uri.AbsoluteUri, connection);
 				return connection;
 			}
 		}
@@ -157,16 +154,16 @@ namespace DotNetTor.SocksPort
 		private void ReleaseUnmanagedResources()
 		{
 			ControlPort.Client.CircuitChangeRequested -= Client_CircuitChangeRequested;
-			lock (_Connections)
+			using (_connectionsAsyncLock.Lock())
 			{
 				foreach (var reference in _references)
 				{
-					if (_Connections.TryGetValue(reference.AbsoluteUri, out SocksConnection connection))
+					if (_connections.TryGetValue(reference.AbsoluteUri, out SocksConnection connection))
 					{
 						connection.RemoveReference(out bool disposedSockets);
 						if (disposedSockets)
 						{
-							_Connections.TryRemove(reference.AbsoluteUri, out connection);
+							_connections.TryRemove(reference.AbsoluteUri, out connection);
 						}
 					}
 				}

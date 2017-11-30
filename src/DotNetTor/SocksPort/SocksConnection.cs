@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Nito.AsyncEx;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -17,12 +18,18 @@ namespace DotNetTor.SocksPort
 {
 	internal sealed class SocksConnection
 	{
-		public IPEndPoint EndPoint = null;
+		public IPEndPoint EndPoint;
 		public Uri Destination;
 		public Socket Socket;
 		public Stream Stream;
 		public int ReferenceCount;
-		private object _lock = new object();
+		private AsyncLock _asyncLock;
+
+		public SocksConnection()
+		{
+			EndPoint = null;
+			_asyncLock = new AsyncLock();
+		}
 
 		private void HandshakeTor()
 		{
@@ -187,7 +194,7 @@ namespace DotNetTor.SocksPort
 			var value = Interlocked.Decrement(ref ReferenceCount);
 			if (value == 0)
 			{
-				lock (_lock)
+				using (_asyncLock.Lock())
 				{
 					DestroySocket();
 					disposed = true;
