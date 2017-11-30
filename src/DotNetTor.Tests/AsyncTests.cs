@@ -38,7 +38,7 @@ namespace DotNetTor.Tests
 			}
 		}
 		[Fact]
-		public async Task TestMicrosoftNCSI()
+		public async Task TestMicrosoftNCSIAsync()
 		{
 			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var client = new HttpClient(handler))
@@ -49,7 +49,7 @@ namespace DotNetTor.Tests
 			}
 		}
 		[Fact]
-		public async Task CanRequestGzipEncoded()
+		public async Task CanRequestGzipEncodedAsync()
 		{
 			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
 			{
