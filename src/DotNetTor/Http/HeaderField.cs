@@ -40,7 +40,7 @@ namespace DotNetTor.Http
 			var ret = Name + ":" + Value;
 			if (endWithCRLF)
 			{
-                ret += $";{CRLF}";
+                ret += CRLF;
 			}
 			return ret;
 		}
