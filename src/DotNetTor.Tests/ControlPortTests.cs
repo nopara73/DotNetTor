@@ -14,7 +14,7 @@ namespace DotNetTor.Tests
 		private static async Task IsCircuitEstablishedAsync()
 		{
 			var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
-			var yes = await controlPortClient.IsCircuitEstablishedAsync().ConfigureAwait(false);
+			var yes = await controlPortClient.IsCircuitEstablishedAsync();
 			Assert.True(yes);
 		}
 
@@ -24,7 +24,7 @@ namespace DotNetTor.Tests
 		    var requestUri = "https://api.ipify.org/";
 
 		    // 1. Get TOR IP
-		    IPAddress currIp = await GetTorIpAsync(requestUri).ConfigureAwait(false);
+		    IPAddress currIp = await GetTorIpAsync(requestUri);
 
 		    var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
 		    for (int i = 0; i < 5; i++)
@@ -32,10 +32,10 @@ namespace DotNetTor.Tests
 			    IPAddress prevIp = currIp;
 			    // Change TOR IP
 
-			    await controlPortClient.ChangeCircuitAsync().ConfigureAwait(false);
+			    await controlPortClient.ChangeCircuitAsync();
 
 			    // Get changed TOR IP
-			    currIp = await GetTorIpAsync(requestUri).ConfigureAwait(false);
+			    currIp = await GetTorIpAsync(requestUri);
 
 			    Assert.NotEqual(prevIp, currIp);
 		    }
@@ -49,7 +49,7 @@ namespace DotNetTor.Tests
 		    using (var httpClient = new HttpClient(handler))
 		    {
 			    var content =
-				    await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
+				    await (await httpClient.GetAsync(requestUri)).Content.ReadAsStringAsync();
 			    var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out torIp);
 			    Assert.True(gotIp);
 		    }
@@ -67,20 +67,20 @@ namespace DotNetTor.Tests
 		    var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var httpClient = new HttpClient(handler))
 			{
-				var content = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
+				var content = await (await httpClient.GetAsync(requestUri)).Content.ReadAsStringAsync();
 				var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out torIp);
 				Assert.True(gotIp);
 			}
 
 			// 2. Change TOR IP
 			var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
-			await controlPortClient.ChangeCircuitAsync().ConfigureAwait(false);
+			await controlPortClient.ChangeCircuitAsync();
 
 			// 3. Get changed TOR IP
 			var handler2 = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var httpClient = new HttpClient(handler2))
 			{
-				var content = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
+				var content = await (await httpClient.GetAsync(requestUri)).Content.ReadAsStringAsync();
 				var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out changedIp);
 				Assert.True(gotIp);
 			}
@@ -92,7 +92,7 @@ namespace DotNetTor.Tests
 		private static async Task CanSendCustomCommandAsync()
 		{
 			var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
-			var res = await controlPortClient.SendCommandAsync("GETCONF SOCKSPORT").ConfigureAwait(false);
+			var res = await controlPortClient.SendCommandAsync("GETCONF SOCKSPORT");
 			Assert.StartsWith("250 SocksPort", res);
 		}
 
@@ -108,19 +108,19 @@ namespace DotNetTor.Tests
 			using (var httpClient = new HttpClient(handler))
 			{
 				var content =
-					await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync()
-						.ConfigureAwait(false);
+					await (await httpClient.GetAsync(requestUri)).Content.ReadAsStringAsync()
+						;
 				var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out torIp);
 				Assert.True(gotIp);
 
 				// 2. Change TOR IP
 				var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
-				await controlPortClient.ChangeCircuitAsync().ConfigureAwait(false);
+				await controlPortClient.ChangeCircuitAsync();
 			
 				// 3. Get changed TOR IP
 				content =
-					await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync()
-						.ConfigureAwait(false);
+					await (await httpClient.GetAsync(requestUri)).Content.ReadAsStringAsync()
+						;
 				gotIp = IPAddress.TryParse(content.Replace("\n", ""), out changedIp);
 				Assert.True(gotIp);
 			}

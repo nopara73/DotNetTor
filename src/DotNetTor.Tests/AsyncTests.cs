@@ -19,7 +19,7 @@ namespace DotNetTor.Tests
 			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var client = new HttpClient(handler))
 			{
-				var contents = await QBitTestAsync(client, 1).ConfigureAwait(false);
+				var contents = await QBitTestAsync(client, 1);
 				foreach (var content in contents)
 				{
 					Assert.Equal("\"Good question Holmes !\"", content);
@@ -32,7 +32,7 @@ namespace DotNetTor.Tests
 			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var client = new HttpClient(handler))
 			{
-				var response = await client.GetAsync("https://jigsaw.w3.org/HTTP/ChunkedScript").ConfigureAwait(false);
+				var response = await client.GetAsync("https://jigsaw.w3.org/HTTP/ChunkedScript");
 				var content = await response.Content.ReadAsStringAsync();
 				Assert.Equal(1000, Regex.Matches(content, "01234567890123456789012345678901234567890123456789012345678901234567890").Count);
 			}
@@ -43,8 +43,8 @@ namespace DotNetTor.Tests
 			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var client = new HttpClient(handler))
 			{
-				var response = await client.GetAsync("http://www.msftncsi.com/ncsi.txt").ConfigureAwait(false);
-				var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+				var response = await client.GetAsync("http://www.msftncsi.com/ncsi.txt");
+				var content = await response.Content.ReadAsStringAsync();
 				Assert.Equal("Microsoft NCSI", content);
 			}
 		}
@@ -56,7 +56,7 @@ namespace DotNetTor.Tests
 				var client = new QBitNinjaClient(Network.Main);
 				client.SetHttpMessageHandler(handler);
 
-				var response = await client.GetBlock(new QBitNinja.Client.Models.BlockFeature(new uint256("0000000000000000004e24d06073aef7a5313d4ea83a5c105b3cadd0d38cc1f0")), true).ConfigureAwait(false);
+				var response = await client.GetBlock(new QBitNinja.Client.Models.BlockFeature(new uint256("0000000000000000004e24d06073aef7a5313d4ea83a5c105b3cadd0d38cc1f0")), true);
 
 				Assert.Equal(474010, response.AdditionalInformation.Height);
 				Assert.Null(response.Block);
@@ -69,7 +69,7 @@ namespace DotNetTor.Tests
 			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var client = new HttpClient(handler))
 			{
-				var contents = await QBitTestAsync(client, 2).ConfigureAwait(false);
+				var contents = await QBitTestAsync(client, 2);
 				foreach (var content in contents)
 				{
 					Assert.Equal("\"Good question Holmes !\"", content);
@@ -82,7 +82,7 @@ namespace DotNetTor.Tests
 			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var client = new HttpClient(handler))
 			{
-				var contents = await QBitTestAsync(client, 15).ConfigureAwait(false);
+				var contents = await QBitTestAsync(client, 15);
 				foreach (var content in contents)
 				{
 					Assert.Equal("\"Good question Holmes !\"", content);
@@ -95,7 +95,7 @@ namespace DotNetTor.Tests
 			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var client = new HttpClient(handler))
 			{
-				await QBitTestAsync(client, 10, alterRequests: true).ConfigureAwait(false);
+				await QBitTestAsync(client, 10, alterRequests: true);
 			}
 		}
 		[Fact]
@@ -104,7 +104,7 @@ namespace DotNetTor.Tests
 			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var client = new HttpClient(handler))
 			{
-				var contents = await QBitTestAsync(client, 15, https: true).ConfigureAwait(false);
+				var contents = await QBitTestAsync(client, 15, https: true);
 
 				foreach (var content in contents)
 				{
@@ -119,8 +119,8 @@ namespace DotNetTor.Tests
 			using (var client = new HttpClient(handler))
 			{
 				var request = "https://api.qbit.ninja/whatisit/what%20is%20my%20future";
-				var res = await client.GetAsync(request).ConfigureAwait(false);
-				var content = await res.Content.ReadAsStringAsync().ConfigureAwait(false);
+				var res = await client.GetAsync(request);
+				var content = await res.Content.ReadAsStringAsync();
 				Assert.Equal("\"Good question Holmes !\"", content);
 			}
 		}
@@ -142,12 +142,12 @@ namespace DotNetTor.Tests
 				tasks.Add(task);
 			}
 
-			await Task.WhenAll(tasks).ConfigureAwait(false);
+			await Task.WhenAll(tasks);
 
 			var contents = new List<string>();
 			foreach (var task in tasks)
 			{
-				contents.Add(await (await task.ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false));
+				contents.Add(await (await task).Content.ReadAsStringAsync());
 			}
 
 			return contents;

@@ -16,8 +16,8 @@ namespace DotNetTor.Tests
 			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
 			using (var httpClient = new HttpClient(handler))
 			{
-				HttpResponseMessage message = await httpClient.GetAsync(requestUri).ConfigureAwait(false);
-				var content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
+				HttpResponseMessage message = await httpClient.GetAsync(requestUri);
+				var content = await message.Content.ReadAsStringAsync();
 
 				Assert.Equal("\"Good question Holmes !\"", content);
 			}
@@ -31,22 +31,22 @@ namespace DotNetTor.Tests
 			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var httpClient = new HttpClient(handler, disposeHandler: false))
 			{
-				HttpResponseMessage message = await httpClient.GetAsync(requestUri).ConfigureAwait(false);
-				var content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
+				HttpResponseMessage message = await httpClient.GetAsync(requestUri);
+				var content = await message.Content.ReadAsStringAsync();
 
 				Assert.Equal("\"Good question Holmes !\"", content);
 			}
 			using (var httpClient = new HttpClient(handler))
 			{
-				HttpResponseMessage message = await httpClient.GetAsync(requestUri).ConfigureAwait(false);
-				var content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
+				HttpResponseMessage message = await httpClient.GetAsync(requestUri);
+				var content = await message.Content.ReadAsStringAsync();
 
 				Assert.Equal("\"Good question Holmes !\"", content);
 			}
 			using (var httpClient = new HttpClient(handler))
 			{
-				HttpResponseMessage message = await httpClient.GetAsync(requestUri).ConfigureAwait(false);
-				var content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
+				HttpResponseMessage message = await httpClient.GetAsync(requestUri);
+				var content = await message.Content.ReadAsStringAsync();
 
 				Assert.Equal("\"Good question Holmes !\"", content);
 			}
@@ -59,18 +59,18 @@ namespace DotNetTor.Tests
 			using (var httpClient = new HttpClient(handler))
 			{
 				HttpResponseMessage message =
-					await httpClient.GetAsync("http://api.qbit.ninja/whatisit/what%20is%20my%20future").ConfigureAwait(false);
-				var content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
+					await httpClient.GetAsync("http://api.qbit.ninja/whatisit/what%20is%20my%20future");
+				var content = await message.Content.ReadAsStringAsync();
 				Assert.Equal("\"Good question Holmes !\"", content);
 
-				message = await httpClient.GetAsync("https://api.ipify.org/").ConfigureAwait(false);
-				content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
+				message = await httpClient.GetAsync("https://api.ipify.org/");
+				content = await message.Content.ReadAsStringAsync();
 				var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out IPAddress ip);
 				Assert.True(gotIp);
 
 
-				message = await httpClient.GetAsync("http://api.qbit.ninja/whatisit/what%20is%20my%20future").ConfigureAwait(false);
-				content = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
+				message = await httpClient.GetAsync("http://api.qbit.ninja/whatisit/what%20is%20my%20future");
+				content = await message.Content.ReadAsStringAsync();
 				Assert.Equal("\"Good question Holmes !\"", content);
 			}
 		}
@@ -85,7 +85,7 @@ namespace DotNetTor.Tests
 			// 1. Get real IP
 			using (var httpClient = new HttpClient())
 			{
-				var content = await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
+				var content = await (await httpClient.GetAsync(requestUri)).Content.ReadAsStringAsync();
 				var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out realIp);
 				Assert.True(gotIp);
 			}
@@ -95,8 +95,8 @@ namespace DotNetTor.Tests
 			using (var httpClient = new HttpClient(handler))
 			{
 				var content =
-					await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync()
-						.ConfigureAwait(false);
+					await (await httpClient.GetAsync(requestUri)).Content.ReadAsStringAsync()
+						;
 				var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out torIp);
 				Assert.True(gotIp);
 			}
@@ -112,8 +112,8 @@ namespace DotNetTor.Tests
 			using (var httpClient = new HttpClient(handler))
 			{
 				var content =
-					await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync()
-						.ConfigureAwait(false);
+					await (await httpClient.GetAsync(requestUri)).Content.ReadAsStringAsync()
+						;
 
 				Assert.Equal("{\"ok\":true}", content);
 			}
@@ -127,9 +127,9 @@ namespace DotNetTor.Tests
 			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
 			using (var httpClient = new HttpClient(handler))
 			{
-				await (await httpClient.GetAsync(firstRequest).ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
-				await (await httpClient.GetAsync("http://api.qbit.ninja/balances/15sYbVpRh6dyWycZMwPdxJWD4xbfxReeHe?unspentonly=true").ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
-				await (await httpClient.GetAsync("http://api.qbit.ninja/balances/akEBcY5k1dn2yeEdFnTMwdhVbHxtgHb6GGi?from=tip&until=336000").ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
+				await (await httpClient.GetAsync(firstRequest)).Content.ReadAsStringAsync();
+				await (await httpClient.GetAsync("http://api.qbit.ninja/balances/15sYbVpRh6dyWycZMwPdxJWD4xbfxReeHe?unspentonly=true")).Content.ReadAsStringAsync();
+				await (await httpClient.GetAsync("http://api.qbit.ninja/balances/akEBcY5k1dn2yeEdFnTMwdhVbHxtgHb6GGi?from=tip&until=336000")).Content.ReadAsStringAsync();
 			}
 		}
 
@@ -144,7 +144,7 @@ namespace DotNetTor.Tests
 					{
 						await (await httpClient.GetAsync(
 								"https://api.qbit.ninja/transactions/38d4cfeb57d6685753b7a3b3534c3cb576c34ca7344cd4582f9613ebf0c2b02a?format=json&headeronly=true")
-							.ConfigureAwait(false)).Content.ReadAsStringAsync().ConfigureAwait(false);
+							).Content.ReadAsStringAsync();
 					}
 				}
 			}
@@ -155,12 +155,12 @@ namespace DotNetTor.Tests
 		{
 			await Assert.ThrowsAsync<TorException>(
 				async () =>
-				await new ControlPort.Client("127.0.0.1", 9054).ChangeCircuitAsync().ConfigureAwait(false)
-				).ConfigureAwait(false);
+				await new ControlPort.Client("127.0.0.1", 9054).ChangeCircuitAsync()
+				);
 			await Assert.ThrowsAsync<TorException>(
 				async () =>
-					await new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword + "a").ChangeCircuitAsync().ConfigureAwait(false)
-			).ConfigureAwait(false);
+					await new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword + "a").ChangeCircuitAsync()
+			);
 		}
 
 		[Fact]
@@ -172,8 +172,8 @@ namespace DotNetTor.Tests
 			using (var httpClient = new HttpClient(handler))
 			{
 				var content =
-					await (await httpClient.GetAsync(requestUri).ConfigureAwait(false)).Content.ReadAsStringAsync()
-						.ConfigureAwait(false);
+					await (await httpClient.GetAsync(requestUri)).Content.ReadAsStringAsync()
+						;
 
 				Assert.Contains("Learn more about Ahmia and its team", content);
 			}
