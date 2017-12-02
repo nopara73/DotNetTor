@@ -163,7 +163,7 @@ namespace DotNetTor.SocksPort
 				ctsToken.ThrowIfCancellationRequested();
 
                 var bytes = Encoding.UTF8.GetBytes(requestString);
-				await Stream.WriteAsync(bytes, 0, bytes.Length, ctsToken).ConfigureAwait(false);
+				await Stream.WriteAsync(bytes, 0, requestString.Length, ctsToken).ConfigureAwait(false);
 				await Stream.FlushAsync(ctsToken).ConfigureAwait(false);
 				ctsToken.ThrowIfCancellationRequested();
 
