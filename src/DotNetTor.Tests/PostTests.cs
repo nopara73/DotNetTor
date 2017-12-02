@@ -14,22 +14,38 @@ namespace DotNetTor.Tests
 	{
 		private static HttpClient _client;
 
-		[Fact]
-		public async Task CanDoBasicPostRequestAsync()
-		{
-			using (_client = new HttpClient(new SocksPortHandler(Shared.HostAddress, Shared.SocksPort)))
-			{
-				HttpContent content = new FormUrlEncodedContent(new[]
-				{
-					new KeyValuePair<string, string>("foo", "bar@98")
-				});
+        [Fact]
+        public async Task CanDoBasicPostRequestAsync()
+        {
+            using (_client = new HttpClient(new SocksPortHandler(Shared.HostAddress, Shared.SocksPort)))
+            {
+                HttpContent content = new FormUrlEncodedContent(new[]
+                {
+                    new KeyValuePair<string, string>("foo", "bar@98")
+                });
 
-				HttpResponseMessage message = await _client.PostAsync("http://httpbin.org/post", content).ConfigureAwait(false);
-				var responseContentString = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
+                HttpResponseMessage message = await _client.PostAsync("http://httpbin.org/post", content).ConfigureAwait(false);
+                var responseContentString = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-				Assert.Contains("bar@98", responseContentString);
-			}
-		}
+                Assert.Contains("bar@98", responseContentString);
+            }
+        }
+        [Fact]
+        public async Task CanDoBasicPostRequestWithNonAsciiCharsAsync()
+        {
+            using (_client = new HttpClient(new SocksPortHandler(Shared.HostAddress, Shared.SocksPort)))
+            {
+                HttpContent content = new FormUrlEncodedContent(new[]
+                {
+                    new KeyValuePair<string, string>("foño", "béar@98")
+                });
+
+                HttpResponseMessage message = await _client.PostAsync("http://httpbin.org/post", content).ConfigureAwait(false);
+                var responseContentString = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                Assert.Contains("béar@98", responseContentString);
+            }
+        }
 		[Fact]
 		public async Task CanDoBasicPostHttpsRequestAsync()
 		{
