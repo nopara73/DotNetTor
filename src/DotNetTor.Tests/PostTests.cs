@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using DotNetTor.SocksPort;
 using Xunit;
 using System.Diagnostics;
+using System.Text;
 
 namespace DotNetTor.Tests
 {
@@ -30,6 +31,22 @@ namespace DotNetTor.Tests
 				Assert.Contains("bar@98", responseContentString);
 			}
 		}
+
+		[Fact]
+		public async Task CanDoBasicPostRequestWithNonAsciiCharsAsync()
+		{
+			using (_client = new HttpClient(new SocksPortHandler(Shared.HostAddress, Shared.SocksPort)))
+			{
+				string json = "Hello ñ";
+				var httpContent = new StringContent(json, Encoding.UTF8, "application/json");
+
+				HttpResponseMessage message = await _client.PostAsync("http://httpbin.org/post", httpContent).ConfigureAwait(false);
+				var responseContentString = await message.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+				Assert.Contains(@"Hello \u00f1", responseContentString);
+			}
+		}
+
 		[Fact]
 		public async Task CanDoBasicPostHttpsRequestAsync()
 		{
