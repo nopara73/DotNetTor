@@ -38,25 +38,48 @@ namespace DotNetTor.Tests
 		{
 			using (_client = new HttpClient(new SocksPortHandler(Shared.HostAddress, Shared.SocksPort)))
 			{
-				for (int i = 0; i < 100; i++)
-				{
-					Debug.WriteLine("Start request");
+				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 1, times: 11);
+				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 2, times: 10);
+				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 4, times: 9);
+				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 8, times: 8);
+				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 16, times: 7);
+				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 32, times: 6);
+				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 64, times: 5);
+				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 128, times: 4);
+				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 256, times: 3);
+				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 512, times: 2);
+				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 1024, times: 1);
+			}
+		}
 
-					HttpContent content = new FormUrlEncodedContent(new[]
-				{
+		private static async Task TestRequestsWithTimeoutAsync(HttpClient client, int delayTillCancellation, int times)
+		{
+			HttpContent content = new FormUrlEncodedContent(new[]
+			{
 					new KeyValuePair<string, string>("foo", "bar@98")
 				});
-
-					using (var cts = new CancellationTokenSource(new Random().Next(100)))
+			for (int i = 0; i < times; i++)
+			{
+				using (var cts = new CancellationTokenSource(delayTillCancellation))
+				{
+					try
 					{
-						try
-						{
-							await _client.PostAsync("http://httpbin.org/post", content, cts.Token);
-						}
-						catch (OperationCanceledException)
-						{
+						await client.PostAsync("http://httpbin.org/post", content, cts.Token);
+					}
+					catch (OperationCanceledException)
+					{
 
-						}
+					}
+				}
+				using (var cts = new CancellationTokenSource(delayTillCancellation))
+				{
+					try
+					{
+						var response = await client.GetAsync("https://jigsaw.w3.org/HTTP/ChunkedScript");
+					}
+					catch (OperationCanceledException)
+					{
+
 					}
 				}
 			}
