@@ -45,7 +45,7 @@ namespace DotNetTor.Http
 			}
 			catch (Exception ex)
 			{
-				throw new NotSupportedException($"Invalid {nameof(StatusLine)}", ex);
+				throw new NotSupportedException($"Invalid {nameof(StatusLine)}: {statusLineString}", ex);
 			}
 		}
 	}

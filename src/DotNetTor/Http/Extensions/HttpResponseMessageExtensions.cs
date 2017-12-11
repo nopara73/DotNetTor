@@ -11,7 +11,7 @@ namespace System.Net.Http
 {
     public static class HttpResponseMessageExtensions
     {
-		public static async Task<HttpResponseMessage> CreateNewAsync(this HttpResponseMessage me, Stream responseStream, HttpMethod requestMethod, CancellationToken ctsToken = default)
+		public static async Task<HttpResponseMessage> CreateNewAsync(this HttpResponseMessage me, Stream responseStream, HttpMethod requestMethod)
 		{
 			// https://tools.ietf.org/html/rfc7230#section-3
 			// The normal procedure for parsing an HTTP message is to read the
@@ -33,20 +33,20 @@ namespace System.Net.Http
 			//					[message - body]
 			
 			var position = 0;
-			string startLine = await HttpMessageHelper.ReadStartLineAsync(responseStream, ctsToken).ConfigureAwait(false);
+			string startLine = await HttpMessageHelper.ReadStartLineAsync(responseStream).ConfigureAwait(false);
 			position += startLine.Length;
 
 			var statusLine = StatusLine.CreateNew(startLine);
 			var response = new HttpResponseMessage(statusLine.StatusCode);
 
-			string headers = await HttpMessageHelper.ReadHeadersAsync(responseStream, ctsToken).ConfigureAwait(false);
+			string headers = await HttpMessageHelper.ReadHeadersAsync(responseStream).ConfigureAwait(false);
 			position += headers.Length + 2;
 
 			var headerSection = HeaderSection.CreateNew(headers);
 			var headerStruct = headerSection.ToHttpResponseHeaders();
 
 			HttpMessageHelper.AssertValidHeaders(headerStruct.ResponseHeaders, headerStruct.ContentHeaders);
-			response.Content = await HttpMessageHelper.GetContentAsync(responseStream, headerStruct, requestMethod, statusLine, ctsToken).ConfigureAwait(false);
+			response.Content = await HttpMessageHelper.GetContentAsync(responseStream, headerStruct, requestMethod, statusLine).ConfigureAwait(false);
 
 			HttpMessageHelper.CopyHeaders(headerStruct.ResponseHeaders, response.Headers);
 			if (response.Content != null)

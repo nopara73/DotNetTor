@@ -159,15 +159,22 @@ namespace DotNetTor.SocksPort
 					}
 				}
 
-				var requestString = await request.ToHttpStringAsync(ctsToken).ConfigureAwait(false);
+				var requestString = await request.ToHttpStringAsync().ConfigureAwait(false);
 				ctsToken.ThrowIfCancellationRequested();
 
                 var bytes = Encoding.UTF8.GetBytes(requestString);
-				await Stream.WriteAsync(bytes, 0, bytes.Length, ctsToken).ConfigureAwait(false);
+				try
+				{
+					await Stream.WriteAsync(bytes, 0, bytes.Length, ctsToken).ConfigureAwait(false);
+				}
+				catch (NullReferenceException) // dotnet brainfart
+				{
+					throw new OperationCanceledException();
+				}
 				await Stream.FlushAsync(ctsToken).ConfigureAwait(false);
 				ctsToken.ThrowIfCancellationRequested();
 
-				return await new HttpResponseMessage().CreateNewAsync(Stream, request.Method, ctsToken).ConfigureAwait(false);
+				return await new HttpResponseMessage().CreateNewAsync(Stream, request.Method).ConfigureAwait(false);
 			}
 			catch (SocketException)
 			{

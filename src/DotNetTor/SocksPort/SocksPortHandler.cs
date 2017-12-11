@@ -72,7 +72,7 @@ namespace DotNetTor.SocksPort
 
 		#endregion
 
-		protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ctsToken)
+		protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancel)
 		{			
 			using(await Util.AsyncLock.LockAsync().ConfigureAwait(false))
 			{
@@ -86,9 +86,10 @@ namespace DotNetTor.SocksPort
 				}
 				catch (Exception ex)
 				{
+					ThrowIfFindsCancelException(ex, cancel);
 					throw new TorException("Failed to connect to the destination", ex);
 				}
-				ctsToken.ThrowIfCancellationRequested();
+				cancel.ThrowIfCancellationRequested();
 
 				// https://tools.ietf.org/html/rfc7230#section-2.7.1
 				// A sender MUST NOT generate an "http" URI with an empty host identifier.
@@ -102,20 +103,46 @@ namespace DotNetTor.SocksPort
 
 				try
 				{
-					return await connection.SendRequestAsync(request, ctsToken).ConfigureAwait(false);
+					return await connection.SendRequestAsync(request, cancel).ConfigureAwait(false);
 				}
 				catch(Exception ex)
 				{
-					if(ex is OperationCanceledException)
+					ThrowIfFindsCancelException(ex, cancel);
+					throw new TorException("Failed to send the request", ex);
+				}
+			}
+		}
+
+		private void ThrowIfFindsCancelException(Exception ex, CancellationToken cancel = default)
+		{
+			if (ex is OperationCanceledException)
+			{
+				throw ex;
+			}
+			if (ex is TaskCanceledException || ex is TimeoutException)
+			{
+				throw new OperationCanceledException(ex.Message, ex);
+			}
+
+			if (ex.InnerException != null)
+			{
+				ThrowIfFindsCancelException(ex.InnerException);
+			}
+
+			if (ex is AggregateException)
+			{
+				var aggrEx = ex as AggregateException;
+				if (aggrEx.InnerExceptions != null)
+				{
+					foreach (var innerEx in aggrEx.InnerExceptions)
 					{
-						throw;
-					}
-					else
-					{
-						throw new TorException("Failed to send the request", ex);
+						ThrowIfFindsCancelException(innerEx);
 					}
 				}
 			}
+			
+			// if doesn't find OperationCanceledException
+			cancel.ThrowIfCancellationRequested();
 		}
 
 		#region DestinationConnections

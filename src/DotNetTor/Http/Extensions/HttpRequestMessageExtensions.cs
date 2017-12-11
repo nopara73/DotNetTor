@@ -56,7 +56,7 @@ namespace System.Net.Http
 			return request;
 		}
 
-		public static async Task<string> ToHttpStringAsync(this HttpRequestMessage me, CancellationToken ctsToken = default)
+		public static async Task<string> ToHttpStringAsync(this HttpRequestMessage me)
 		{
 			// https://tools.ietf.org/html/rfc7230#section-5.4
 			// The "Host" header field in a request provides the host and port
@@ -97,8 +97,7 @@ namespace System.Net.Http
 					var headerSection = HeaderSection.CreateNew(me.Content.Headers);
 					headers += headerSection.ToString(endWithTwoCRLF: false);
 				}
-
-				ctsToken.ThrowIfCancellationRequested();
+				
 				messageBody = await me.Content.ReadAsStringAsync().ConfigureAwait(false);
 			}
 

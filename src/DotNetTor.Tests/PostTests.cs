@@ -7,6 +7,7 @@ using DotNetTor.SocksPort;
 using Xunit;
 using System.Diagnostics;
 using System.Text;
+using System.Threading;
 
 namespace DotNetTor.Tests
 {
@@ -29,6 +30,35 @@ namespace DotNetTor.Tests
 				var responseContentString = await message.Content.ReadAsStringAsync();
 
 				Assert.Contains("bar@98", responseContentString);
+			}
+		}
+
+		[Fact]
+		public async Task CanCancelAsync()
+		{
+			using (_client = new HttpClient(new SocksPortHandler(Shared.HostAddress, Shared.SocksPort)))
+			{
+				for (int i = 0; i < 100; i++)
+				{
+					Debug.WriteLine("Start request");
+
+					HttpContent content = new FormUrlEncodedContent(new[]
+				{
+					new KeyValuePair<string, string>("foo", "bar@98")
+				});
+
+					using (var cts = new CancellationTokenSource(new Random().Next(100)))
+					{
+						try
+						{
+							await _client.PostAsync("http://httpbin.org/post", content, cts.Token);
+						}
+						catch (OperationCanceledException)
+						{
+
+						}
+					}
+				}
 			}
 		}
 
