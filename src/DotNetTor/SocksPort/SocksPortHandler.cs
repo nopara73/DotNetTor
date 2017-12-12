@@ -101,14 +101,20 @@ namespace DotNetTor.SocksPort
 				// in forwarded messages.
 				request.Version = Protocol.Version;
 
-				try
+				// if the user would try to retry its message, it makes sure it won't fail
+				// it's a small performance hit, but doesn't matter until tens of megabytes are added to content on a slow computer
+				// https://stackoverflow.com/a/46026230/2061103
+				using (var clonedRequest = await request.CloneAsync())
 				{
-					return await connection.SendRequestAsync(request, cancel).ConfigureAwait(false);
-				}
-				catch(Exception ex)
-				{
-					ThrowIfFindsCancelException(ex, cancel);
-					throw new TorException("Failed to send the request", ex);
+					try
+					{
+						return await connection.SendRequestAsync(clonedRequest, cancel).ConfigureAwait(false);
+					}
+					catch (Exception ex)
+					{
+						ThrowIfFindsCancelException(ex, cancel);
+						throw new TorException("Failed to send the request", ex);
+					}
 				}
 			}
 		}
