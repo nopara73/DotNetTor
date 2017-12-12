@@ -11,7 +11,7 @@
 
     <StartupObject />
   </PropertyGroup>
-  
+
   <PropertyGroup>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
@@ -25,6 +25,12 @@
     <PackageReference Include="QBitNinja.Client" Version="1.0.3.44" />
     <PackageReference Include="xunit" Version="2.3.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="xunit.runner.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
