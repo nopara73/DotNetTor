@@ -44,7 +44,7 @@ namespace DotNetTor.Http
 		// HTTP-name "/" DIGIT "." DIGIT
 		public override string ToString() => $"{Protocol}/{Version.ToString()}";
 
-		#region EqualityAndComparison
+		#region Equality
 
 		public override bool Equals(object obj) => obj is HttpProtocol && this == (HttpProtocol)obj;
 		public bool Equals(HttpProtocol other) => this == other;
