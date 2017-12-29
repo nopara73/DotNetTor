@@ -45,10 +45,7 @@ namespace DotNetTor.SocksPort
 
 		private void ConnectSocket()
 		{
-			Socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
-			{
-				Blocking = true
-			};
+			Socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 			Socket.Connect(EndPoint);
 		}
 
