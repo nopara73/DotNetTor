@@ -39,15 +39,10 @@ namespace DotNetTor.Tests
 			using (_client = new HttpClient(new SocksPortHandler(Shared.HostAddress, Shared.SocksPort)))
 			{
 				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 1, times: 11);
-				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 2, times: 10);
 				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 4, times: 9);
-				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 8, times: 8);
 				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 16, times: 7);
-				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 32, times: 6);
 				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 64, times: 5);
-				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 128, times: 4);
 				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 256, times: 3);
-				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 512, times: 2);
 				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 1024, times: 1);
 			}
 		}

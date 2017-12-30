@@ -13,7 +13,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		private static async Task IsCircuitEstablishedAsync()
 		{
-			var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
+			var controlPortClient = new ControlPort.TorControlClient(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
 			var yes = await controlPortClient.IsCircuitEstablishedAsync();
 			Assert.True(yes);
 		}
@@ -26,7 +26,7 @@ namespace DotNetTor.Tests
 		    // 1. Get TOR IP
 		    IPAddress currIp = await GetTorIpAsync(requestUri);
 
-		    var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
+		    var controlPortClient = new ControlPort.TorControlClient(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
 		    for (int i = 0; i < 5; i++)
 		    {
 			    IPAddress prevIp = currIp;
@@ -73,7 +73,7 @@ namespace DotNetTor.Tests
 			}
 
 			// 2. Change TOR IP
-			var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
+			var controlPortClient = new ControlPort.TorControlClient(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
 			await controlPortClient.ChangeCircuitAsync();
 
 			// 3. Get changed TOR IP
@@ -91,7 +91,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		private static async Task CanSendCustomCommandAsync()
 		{
-			var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
+			var controlPortClient = new ControlPort.TorControlClient(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
 			var res = await controlPortClient.SendCommandAsync("GETCONF SOCKSPORT");
 			Assert.StartsWith("250 SocksPort", res);
 		}
@@ -114,7 +114,7 @@ namespace DotNetTor.Tests
 				Assert.True(gotIp);
 
 				// 2. Change TOR IP
-				var controlPortClient = new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
+				var controlPortClient = new ControlPort.TorControlClient(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
 				await controlPortClient.ChangeCircuitAsync();
 			
 				// 3. Get changed TOR IP

@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace DotNetTor.ControlPort
 {
-	public sealed class Client
+	public sealed class TorControlClient
 	{
 		public static event EventHandler CircuitChangeRequested;
 		public static void OnCircuitChangeRequested() => CircuitChangeRequested?.Invoke(null, EventArgs.Empty);
@@ -21,14 +21,14 @@ namespace DotNetTor.ControlPort
 		private Socket _socket;
 		
 		/// <param name="password">UTF8</param>
-		public Client(string address = "127.0.0.1", int controlPort = 9051, string password = "")
+		public TorControlClient(string address = "127.0.0.1", int controlPort = 9051, string password = "")
 		{
 			_controlEndPoint = new IPEndPoint(IPAddress.Parse(address), controlPort);
 			if (password == "") _authenticationToken = null;
 			else _authenticationToken = Encoding.UTF8.GetBytes(password);
 		}
 		
-		public Client(string address, int controlPort, FileInfo cookieFile)
+		public TorControlClient(string address, int controlPort, FileInfo cookieFile)
 		{
 			_controlEndPoint = new IPEndPoint(IPAddress.Parse(address), controlPort);
 			_cookieFilePath = cookieFile.FullName;
@@ -248,13 +248,14 @@ namespace DotNetTor.ControlPort
 		{
 			try
 			{
-				if (_socket.Connected)
-					_socket.Shutdown(SocketShutdown.Both);
-				_socket.Dispose();
-			}
-			catch (ObjectDisposedException)
-			{
-				// good, it's already disposed
+				if (_socket != null)
+				{
+					if (_socket.Connected)
+					{
+						_socket.Shutdown(SocketShutdown.Both);
+					}
+					_socket.Dispose();
+				}
 			}
 			catch
 			{

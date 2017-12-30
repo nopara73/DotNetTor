@@ -223,13 +223,11 @@ namespace DotNetTor.SocksPort
 				}
 				if (Socket != null)
 				{
-					try
-					{
+					if(Socket.Connected)
+					{ 
 						Socket.Shutdown(SocketShutdown.Both);
 					}
-					catch (SocketException) { }
 					Socket.Dispose();
-					Socket = null;
 				}
 			}
 			catch

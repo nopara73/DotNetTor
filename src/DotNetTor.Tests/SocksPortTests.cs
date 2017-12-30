@@ -155,11 +155,11 @@ namespace DotNetTor.Tests
 		{
 			await Assert.ThrowsAsync<TorException>(
 				async () =>
-				await new ControlPort.Client("127.0.0.1", 9054).ChangeCircuitAsync()
+				await new ControlPort.TorControlClient("127.0.0.1", 9054).ChangeCircuitAsync()
 				);
 			await Assert.ThrowsAsync<TorException>(
 				async () =>
-					await new ControlPort.Client(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword + "a").ChangeCircuitAsync()
+					await new ControlPort.TorControlClient(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword + "a").ChangeCircuitAsync()
 			);
 		}
 

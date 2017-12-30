@@ -50,7 +50,7 @@ namespace DotNetTor.SocksPort
 			_connections = new ConcurrentDictionary<string, SocksConnection>();
 			EndPoint = endpoint;
 
-			ControlPort.Client.CircuitChangeRequested += Client_CircuitChangeRequested;
+			ControlPort.TorControlClient.CircuitChangeRequested += Client_CircuitChangeRequested;
 		}
 		private void Reset()
 		{
@@ -190,7 +190,7 @@ namespace DotNetTor.SocksPort
 			{
 				using (_connectionsAsyncLock.Lock())
 				{
-					ControlPort.Client.CircuitChangeRequested -= Client_CircuitChangeRequested;
+					ControlPort.TorControlClient.CircuitChangeRequested -= Client_CircuitChangeRequested;
 					foreach (var reference in _references)
 					{
 						if (_connections.TryGetValue(reference.AbsoluteUri, out SocksConnection connection))
