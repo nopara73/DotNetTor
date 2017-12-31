@@ -256,6 +256,7 @@ namespace DotNetTor.ControlPort
 
 		public void DisposeTcpClient()
 		{
+			TcpClient?.GetStream()?.Dispose();
 			TcpClient?.Dispose();
 			TcpClient = null; // without this, canchangecircuitmultiple times test will fail
 		}
