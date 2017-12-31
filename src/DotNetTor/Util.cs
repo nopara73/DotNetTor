@@ -12,16 +12,6 @@ namespace DotNetTor
 {
 	internal static class Util
 	{
-
-		public static void Dispose(this TcpClient me, bool bugFix)
-		{
-			me?.Dispose();
-			if(bugFix)
-			{
-				me = null;
-			}
-		}
-
 		public static readonly AsyncLock AsyncLock = new AsyncLock();
 
 		public static bool Contains(this string source, string toCheck, StringComparison comp)

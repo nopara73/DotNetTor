@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Nito.AsyncEx;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -255,7 +256,8 @@ namespace DotNetTor.ControlPort
 
 		public void DisposeTcpClient()
 		{
-			TcpClient?.Dispose(true);
+			TcpClient?.Dispose();
+			TcpClient = null;
 		}
 
 		public async Task InitializeConnectTcpConnectionAsync(CancellationToken ctsToken)
