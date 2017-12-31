@@ -257,7 +257,7 @@ namespace DotNetTor.ControlPort
 		public void DisposeTcpClient()
 		{
 			TcpClient?.Dispose();
-			TcpClient = null;
+			TcpClient = null; // without this, canchangecircuitmultiple times test will fail
 		}
 
 		public async Task InitializeConnectTcpConnectionAsync(CancellationToken ctsToken)
