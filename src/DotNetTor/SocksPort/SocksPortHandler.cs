@@ -195,8 +195,8 @@ namespace DotNetTor.SocksPort
 					{
 						if (_connections.TryGetValue(reference.AbsoluteUri, out SocksConnection connection))
 						{
-							connection.RemoveReference(out bool disposedSockets);
-							if (disposedSockets)
+							connection.RemoveReference(out bool disposedSocks);
+							if (disposedSocks)
 							{
 								_connections.TryRemove(reference.AbsoluteUri, out connection);
 							}

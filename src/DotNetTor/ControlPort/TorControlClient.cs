@@ -15,22 +15,22 @@ namespace DotNetTor.ControlPort
 		public static event EventHandler CircuitChangeRequested;
 		public static void OnCircuitChangeRequested() => CircuitChangeRequested?.Invoke(null, EventArgs.Empty);
 
-		private readonly IPEndPoint _controlEndPoint;
+		public IPEndPoint EndPoint;
 		private readonly byte[] _authenticationToken;
 		private readonly string _cookieFilePath;
-		private Socket _socket;
-		
+		public TcpClient TcpClient;
+
 		/// <param name="password">UTF8</param>
 		public TorControlClient(string address = "127.0.0.1", int controlPort = 9051, string password = "")
 		{
-			_controlEndPoint = new IPEndPoint(IPAddress.Parse(address), controlPort);
+			EndPoint = new IPEndPoint(IPAddress.Parse(address), controlPort);
 			if (password == "") _authenticationToken = null;
 			else _authenticationToken = Encoding.UTF8.GetBytes(password);
 		}
 		
 		public TorControlClient(string address, int controlPort, FileInfo cookieFile)
 		{
-			_controlEndPoint = new IPEndPoint(IPAddress.Parse(address), controlPort);
+			EndPoint = new IPEndPoint(IPAddress.Parse(address), controlPort);
 			_cookieFilePath = cookieFile.FullName;
 			_authenticationToken = null;
 		}
@@ -62,7 +62,7 @@ namespace DotNetTor.ControlPort
 				{
 					OnCircuitChangeRequested();
 
-					await InitializeConnectSocketAsync(ctsToken).ConfigureAwait(false);
+					await InitializeConnectTcpConnectionAsync(ctsToken).ConfigureAwait(false);
 
 					await AuthenticateAsync(ctsToken).ConfigureAwait(false);
 
@@ -81,7 +81,7 @@ namespace DotNetTor.ControlPort
 				}
 				finally
 				{
-					DisconnectDisposeSocket();
+					DisposeTcpClient();
 
 					// safety delay, in case the tor client is not quick enough with the actions
 					await Task.Delay(100, ctsToken).ConfigureAwait(false);
@@ -116,16 +116,21 @@ namespace DotNetTor.ControlPort
 			var timeoutTask = Task.Delay(timeout, ctsToken);
 			while (true)
 			{
-				var bufferByteArraySegment = new ArraySegment<byte>(new byte[_socket.ReceiveBufferSize]);
-				Task<int> socketReceiveTask = _socket.ReceiveAsync(bufferByteArraySegment, SocketFlags.None);
+				var buffer = new byte[TcpClient.ReceiveBufferSize];
+				Task<int> receiveTask = TcpClient.GetStream().ReadAsync(buffer, 0, buffer.Length);
 
-				var firstTask = await Task.WhenAny(socketReceiveTask, timeoutTask).ConfigureAwait(false);
+				var firstTask = await Task.WhenAny(receiveTask, timeoutTask).ConfigureAwait(false);
 
 				if (firstTask == timeoutTask) throw new TimeoutException($"Did not receive the expected {nameof(eventStartsWith)} : {eventStartsWith} within the specified {nameof(timeout)} : {timeout}");
 
-				int receivedCount = await socketReceiveTask.ConfigureAwait(false);
+				int receivedCount = await receiveTask.ConfigureAwait(false);
 
-				var response = Encoding.ASCII.GetString(bufferByteArraySegment.Array, 0, receivedCount);
+				if (receivedCount <= 0)
+				{
+					throw new InvalidOperationException("Not connected to Tor Control port");
+				}
+
+				var response = Encoding.ASCII.GetString(buffer, 0, receivedCount);
 				if (response.StartsWith(eventStartsWith, StringComparison.OrdinalIgnoreCase))
 				{
 					return response;
@@ -144,10 +149,11 @@ namespace DotNetTor.ControlPort
 			{
 				if (initAuthDispose)
 				{
-					await InitializeConnectSocketAsync(ctsToken).ConfigureAwait(false);
+					await InitializeConnectTcpConnectionAsync(ctsToken).ConfigureAwait(false);
 
 					await AuthenticateAsync(ctsToken).ConfigureAwait(false);
 				}
+				var stream = TcpClient.GetStream();
 
 				try
 				{
@@ -157,8 +163,9 @@ namespace DotNetTor.ControlPort
 						command += "\r\n";
 					}
 
-					var commandByteArraySegment = new ArraySegment<byte>(Encoding.ASCII.GetBytes(command));
-					await _socket.SendAsync(commandByteArraySegment, SocketFlags.None).ConfigureAwait(false);
+					var commandBytes = Encoding.ASCII.GetBytes(command);
+					await stream.WriteAsync(commandBytes, 0, commandBytes.Length).ConfigureAwait(false);
+					await stream.FlushAsync().ConfigureAwait(false);
 					ctsToken.ThrowIfCancellationRequested();
 				}
 				catch (Exception ex)
@@ -166,11 +173,16 @@ namespace DotNetTor.ControlPort
 					throw new TorException($"Failed to send command to TOR Control Port: {nameof(command)} : {command}", ex);
 				}
 
-				var bufferByteArraySegment = new ArraySegment<byte>(new byte[_socket.ReceiveBufferSize]);
+				var bufferBytes = new byte[TcpClient.ReceiveBufferSize];
 				try
 				{
-					var receivedCount = await _socket.ReceiveAsync(bufferByteArraySegment, SocketFlags.None).ConfigureAwait(false);
-					var response = Encoding.ASCII.GetString(bufferByteArraySegment.Array, 0, receivedCount);
+					var receivedCount = await stream.ReadAsync(bufferBytes, 0, bufferBytes.Length).ConfigureAwait(false);
+					if (receivedCount <= 0)
+					{
+						throw new InvalidOperationException("Not connected to Tor Control port");
+					}
+
+					var response = Encoding.ASCII.GetString(bufferBytes, 0, receivedCount);
 					var responseLines = new List<string>(response.Split(new[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries));
 					
 					// error check a few commands I use
@@ -233,7 +245,7 @@ namespace DotNetTor.ControlPort
 			{
 				if (initAuthDispose)
 				{
-					DisconnectDisposeSocket();
+					DisposeTcpClient();
 
 					// safety delay, in case the tor client is not quick enough with the actions
 					await Task.Delay(100).ConfigureAwait(false);
@@ -241,34 +253,20 @@ namespace DotNetTor.ControlPort
 			}
 		}
 
-		/// <summary>
-		/// Always use it in finally block.
-		/// </summary>
-		public void DisconnectDisposeSocket()
+		public void DisposeTcpClient()
 		{
-			try
-			{
-				if (_socket != null)
-				{
-					if (_socket.Connected)
-					{
-						_socket.Shutdown(SocketShutdown.Both);
-					}
-					_socket.Dispose();
-				}
-			}
-			catch
-			{
-				// ignore
-			}
+			TcpClient?.Dispose();
 		}
 
-		public async Task InitializeConnectSocketAsync(CancellationToken ctsToken)
+		public async Task InitializeConnectTcpConnectionAsync(CancellationToken ctsToken)
 		{
 			try
 			{
-				_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-				await _socket.ConnectAsync(_controlEndPoint).ConfigureAwait(false);
+				if (TcpClient == null)
+				{
+					TcpClient = new TcpClient();
+				}
+				await TcpClient.ConnectAsync(EndPoint.Address, EndPoint.Port).ConfigureAwait(false);
 			}
 			catch (Exception ex)
 			{

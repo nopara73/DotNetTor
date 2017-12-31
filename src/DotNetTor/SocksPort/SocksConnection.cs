@@ -188,16 +188,16 @@ namespace DotNetTor.SocksPort
 			}
 			catch (SocketException)
 			{
-				DestroySocks();
+				DisposeTcpClient();
 				throw;
 			}
 		}
 
 		private async Task EnsureConnectedToTorAsync(CancellationToken ctsToken = default)
 		{
-			if (!IsSocksConnected(throws: false)) // Socket.Connected is misleading, don't use that
+			if (!IsSocksConnected(throws: false)) // TcpClient.Connected is misleading, don't use that
 			{
-				DestroySocks();
+				DisposeTcpClient();
 				await ConnectToSocksAsync().ConfigureAwait(false);
 				await HandshakeTorAsync().ConfigureAwait(false);
 				await ConnectToDestinationAsync(ctsToken).ConfigureAwait(false);
@@ -214,7 +214,7 @@ namespace DotNetTor.SocksPort
 				{
 					using (_asyncLock.Lock())
 					{
-						DestroySocks();
+						DisposeTcpClient();
 						disposed = true;
 					}
 				}
@@ -225,7 +225,7 @@ namespace DotNetTor.SocksPort
 			}
 		}
 
-		private void DestroySocks()
+		private void DisposeTcpClient()
 		{
 			Stream?.Dispose();
 			TcpClient?.Dispose();
