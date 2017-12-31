@@ -170,7 +170,7 @@ namespace DotNetTor.ControlPort
 				}
 				catch (Exception ex)
 				{
-					throw new TorException($"Failed to send command to TOR Control Port: {nameof(command)} : {command}", ex);
+					throw new TorException($"Failed to send command to Tor Control Port: {nameof(command)} : {command}", ex);
 				}
 
 				var bufferBytes = new byte[TcpClient.ReceiveBufferSize];
@@ -193,7 +193,7 @@ namespace DotNetTor.ControlPort
 					{
 						if (!responseLines.Any(x => x.StartsWith("250 OK", StringComparison.OrdinalIgnoreCase)))
 						throw new TorException(
-							$"Unexpected {nameof(response)} from TOR Control Port to sent {nameof(command)} : {command} , {nameof(response)} : {response}");
+							$"Unexpected {nameof(response)} from Tor Control Port to sent {nameof(command)} : {command} , {nameof(response)} : {response}");
 
 					}
 
@@ -214,7 +214,7 @@ namespace DotNetTor.ControlPort
 								else
 								{
 									throw new TorException(
-										$"Didn't receive 650 SIGNAL {what} confirmation from TOR Control Port to sent {nameof(command)} : {command} , {nameof(response)} : {response}");
+										$"Didn't receive 650 SIGNAL {what} confirmation from Tor Control Port to sent {nameof(command)} : {command} , {nameof(response)} : {response}");
 								}
 							}
 						}
@@ -238,7 +238,7 @@ namespace DotNetTor.ControlPort
 				catch (Exception ex)
 				{
 					throw new TorException(
-						$"Didn't receive response for the sent {nameof(command)} from TOR Control Port: {nameof(command)} : {command}", ex);
+						$"Didn't receive response for the sent {nameof(command)} from Tor Control Port: {nameof(command)} : {command}", ex);
 				}
 			}
 			finally
@@ -270,7 +270,7 @@ namespace DotNetTor.ControlPort
 			}
 			catch (Exception ex)
 			{
-				throw new TorException("Couldn't connect to the TOR Control Port.", ex);
+				throw new TorException("Couldn't connect to the Tor Control Port.", ex);
 			}
 		}
 	}

@@ -23,18 +23,18 @@ namespace DotNetTor.Tests
 	    {
 		    var requestUri = "https://api.ipify.org/";
 
-		    // 1. Get TOR IP
+		    // 1. Get Tor IP
 		    IPAddress currIp = await GetTorIpAsync(requestUri);
 
 		    var controlPortClient = new ControlPort.TorControlClient(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
 		    for (int i = 0; i < 5; i++)
 		    {
 			    IPAddress prevIp = currIp;
-			    // Change TOR IP
+			    // Change Tor IP
 
 			    await controlPortClient.ChangeCircuitAsync();
 
-			    // Get changed TOR IP
+			    // Get changed Tor IP
 			    currIp = await GetTorIpAsync(requestUri);
 
 			    Assert.NotEqual(prevIp, currIp);
@@ -63,7 +63,7 @@ namespace DotNetTor.Tests
 		    IPAddress torIp;
 		    IPAddress changedIp;
 
-			// 1. Get TOR IP
+			// 1. Get Tor IP
 		    var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var httpClient = new HttpClient(handler))
 			{
@@ -72,11 +72,11 @@ namespace DotNetTor.Tests
 				Assert.True(gotIp);
 			}
 
-			// 2. Change TOR IP
+			// 2. Change Tor IP
 			var controlPortClient = new ControlPort.TorControlClient(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
 			await controlPortClient.ChangeCircuitAsync();
 
-			// 3. Get changed TOR IP
+			// 3. Get changed Tor IP
 			var handler2 = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var httpClient = new HttpClient(handler2))
 			{
@@ -103,7 +103,7 @@ namespace DotNetTor.Tests
 			IPAddress torIp;
 			IPAddress changedIp;
 
-			// 1. Get TOR IP
+			// 1. Get Tor IP
 			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
 			using (var httpClient = new HttpClient(handler))
 			{
@@ -113,11 +113,11 @@ namespace DotNetTor.Tests
 				var gotIp = IPAddress.TryParse(content.Replace("\n", ""), out torIp);
 				Assert.True(gotIp);
 
-				// 2. Change TOR IP
+				// 2. Change Tor IP
 				var controlPortClient = new ControlPort.TorControlClient(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
 				await controlPortClient.ChangeCircuitAsync();
 			
-				// 3. Get changed TOR IP
+				// 3. Get changed Tor IP
 				content =
 					await (await httpClient.GetAsync(requestUri)).Content.ReadAsStringAsync()
 						;

@@ -90,7 +90,7 @@ namespace DotNetTor.Tests
 				Assert.True(gotIp);
 			}
 
-			// 2. Get TOR IP
+			// 2. Get Tor IP
 			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
 			using (var httpClient = new HttpClient(handler))
 			{

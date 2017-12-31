@@ -44,21 +44,21 @@ namespace DotNetTor.Example
 				Console.WriteLine($"Your real IP: \t\t{content}");
 			}
 
-			// 2. Get TOR IP
+			// 2. Get Tor IP
 			using (var httpClient = new HttpClient(new SocksPortHandler("127.0.0.1", socksPort: 9050)))
 			{
 				var message = await httpClient.GetAsync(requestUri);
 				var content = await message.Content.ReadAsStringAsync();
-				Console.WriteLine($"Your TOR IP: \t\t{content}");
+				Console.WriteLine($"Your Tor IP: \t\t{content}");
 
-				// 3. Change TOR IP
+				// 3. Change Tor IP
 				var controlPortClient = new ControlPort.TorControlClient("127.0.0.1", controlPort: 9051, password: "ILoveBitcoin21");
 				await controlPortClient.ChangeCircuitAsync();
 
-				// 4. Get changed TOR IP
+				// 4. Get changed Tor IP
 				message = await httpClient.GetAsync(requestUri);
 				content = await message.Content.ReadAsStringAsync();
-				Console.WriteLine($"Your other TOR IP: \t{content}");
+				Console.WriteLine($"Your other Tor IP: \t{content}");
 			}
 		}
 		private static async Task CanRequestDifferentDomainsWithSameHandlerAsync()
@@ -67,7 +67,7 @@ namespace DotNetTor.Example
 			{
 				var message = await httpClient.GetAsync("https://api.ipify.org/");
 				var content = await message.Content.ReadAsStringAsync();
-				Console.WriteLine($"Your TOR IP: \t\t{content}");
+				Console.WriteLine($"Your Tor IP: \t\t{content}");
 
 				try
 				{
