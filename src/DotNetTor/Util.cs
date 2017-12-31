@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,6 +12,16 @@ namespace DotNetTor
 {
 	internal static class Util
 	{
+
+		public static void Dispose(this TcpClient me, bool bugFix)
+		{
+			me?.Dispose();
+			if(bugFix)
+			{
+				me = null;
+			}
+		}
+
 		public static readonly AsyncLock AsyncLock = new AsyncLock();
 
 		public static bool Contains(this string source, string toCheck, StringComparison comp)

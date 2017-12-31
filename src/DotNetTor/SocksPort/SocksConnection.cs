@@ -228,7 +228,7 @@ namespace DotNetTor.SocksPort
 		private void DisposeTcpClient()
 		{
 			Stream?.Dispose();
-			TcpClient?.Dispose();
+			TcpClient?.Dispose(true);
 		}
 	}
 }

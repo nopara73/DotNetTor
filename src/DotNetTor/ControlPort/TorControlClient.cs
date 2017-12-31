@@ -255,7 +255,7 @@ namespace DotNetTor.ControlPort
 
 		public void DisposeTcpClient()
 		{
-			TcpClient?.Dispose();
+			TcpClient?.Dispose(true);
 		}
 
 		public async Task InitializeConnectTcpConnectionAsync(CancellationToken ctsToken)
