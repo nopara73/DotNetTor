@@ -20,7 +20,7 @@ namespace DotNetTor.SocksPort
 	{
 		public IPEndPoint EndPoint;
 		public Uri Destination;
-		public Socket Socket;
+		public TcpClient TcpClient;
 		public Stream Stream;
 		public volatile int ReferenceCount;
 		private AsyncLock _asyncLock;
@@ -29,39 +29,60 @@ namespace DotNetTor.SocksPort
 		{
 			EndPoint = null;
 			_asyncLock = new AsyncLock();
+			TcpClient = null;
 		}
 
-		private void HandshakeTor()
+		private async Task HandshakeTorAsync()
 		{
+			var stream = TcpClient.GetStream();
 			var sendBuffer = new byte[] { 5, 1, 0 };
-			Socket.Send(sendBuffer, SocketFlags.None);
 
-			var recBuffer = new byte[Socket.ReceiveBufferSize];
-			var recCnt = Socket.Receive(recBuffer, SocketFlags.None);
+			await stream.WriteAsync(sendBuffer, 0, sendBuffer.Length).ConfigureAwait(false);
+			await stream.FlushAsync().ConfigureAwait(false);
+
+			var recBuffer = new byte[TcpClient.ReceiveBufferSize];
+				
+			var recCnt = await stream.ReadAsync(recBuffer, 0, recBuffer.Length).ConfigureAwait(false);
+
+			if (recCnt <= 0)
+			{
+				throw new InvalidOperationException("Not connected to Tor Socks port");
+			}
 
 			Util.ValidateHandshakeResponse(recBuffer, recCnt);
 		}
-
-
-		private void ConnectSocket()
+		
+		private async Task ConnectToSocksAsync()
 		{
-			Socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-			Socket.Connect(EndPoint);
+			if (TcpClient == null)
+			{
+				TcpClient = new TcpClient();
+			}
+			await TcpClient.ConnectAsync(EndPoint.Address, EndPoint.Port).ConfigureAwait(false);
 		}
 
 		private async Task ConnectToDestinationAsync(CancellationToken ctsToken = default)
 		{
-			var sendBuffer = new ArraySegment<byte>(Util.BuildConnectToUri(Destination).Array);
-			await Socket.SendAsync(sendBuffer, SocketFlags.None).ConfigureAwait(false);
+			Stream stream = TcpClient.GetStream();
+			
+			var sendBuffer = Util.BuildConnectToUri(Destination).Array;
+			await stream.WriteAsync(sendBuffer, 0, sendBuffer.Length).ConfigureAwait(false);
+			await stream.FlushAsync().ConfigureAwait(false);
 			ctsToken.ThrowIfCancellationRequested();
 
-			var recBuffer = new ArraySegment<byte>(new byte[Socket.ReceiveBufferSize]);
-			var recCnt = await Socket.ReceiveAsync(recBuffer, SocketFlags.None).ConfigureAwait(false);
+			var recBuffer = new byte[TcpClient.ReceiveBufferSize];
+
+			var recCnt = await stream.ReadAsync(recBuffer, 0, recBuffer.Length).ConfigureAwait(false);
+
+			if (recCnt <= 0)
+			{
+				throw new InvalidOperationException("Not connected to Tor Socks port");
+			}
+
 			ctsToken.ThrowIfCancellationRequested();
 
-			Util.ValidateConnectToDestinationResponse(recBuffer.Array, recCnt);
-
-			Stream stream = new NetworkStream(Socket, ownsSocket: false);
+			Util.ValidateConnectToDestinationResponse(recBuffer, recCnt);
+			
 			if (Destination.Scheme.Equals("https", StringComparison.Ordinal))
 			{
 				SslStream httpsStream;
@@ -96,20 +117,12 @@ namespace DotNetTor.SocksPort
 			Stream = stream;
 		}
 
-		private bool IsSocketConnected(bool throws)
+		private bool IsSocksConnected(bool throws)
 		{
 			try
 			{
-				if (Socket == null)
-					return false;
-				if (!Socket.Connected)
-					return false;
-				//if (Socket.Available == 0)
-				//	return false;
-				//if (Socket.Poll(1000, SelectMode.SelectRead))
-				//	return false;
-
-				return true;
+				if (TcpClient == null) return false;
+				return TcpClient.Connected;
 			}
 			catch
 			{
@@ -175,19 +188,19 @@ namespace DotNetTor.SocksPort
 			}
 			catch (SocketException)
 			{
-				DestroySocket();
+				DestroySocks();
 				throw;
 			}
 		}
 
 		private async Task EnsureConnectedToTorAsync(CancellationToken ctsToken = default)
 		{
-			if (!IsSocketConnected(throws: false)) // Socket.Connected is misleading, don't use that
+			if (!IsSocksConnected(throws: false)) // Socket.Connected is misleading, don't use that
 			{
-				DestroySocket();
-				ConnectSocket();
-				HandshakeTor();
-				await ConnectToDestinationAsync(ctsToken);
+				DestroySocks();
+				await ConnectToSocksAsync().ConfigureAwait(false);
+				await HandshakeTorAsync().ConfigureAwait(false);
+				await ConnectToDestinationAsync(ctsToken).ConfigureAwait(false);
 			}
 		}
 
@@ -201,7 +214,7 @@ namespace DotNetTor.SocksPort
 				{
 					using (_asyncLock.Lock())
 					{
-						DestroySocket();
+						DestroySocks();
 						disposed = true;
 					}
 				}
@@ -212,28 +225,10 @@ namespace DotNetTor.SocksPort
 			}
 		}
 
-		private void DestroySocket()
+		private void DestroySocks()
 		{
-			try
-			{
-				if (Stream != null)
-				{
-					Stream.Dispose();
-					Stream = null;
-				}
-				if (Socket != null)
-				{
-					if(Socket.Connected)
-					{ 
-						Socket.Shutdown(SocketShutdown.Both);
-					}
-					Socket.Dispose();
-				}
-			}
-			catch
-			{
-				// ignore
-			}
+			Stream?.Dispose();
+			TcpClient?.Dispose();
 		}
 	}
 }
