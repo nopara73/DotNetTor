@@ -42,9 +42,8 @@ namespace DotNetTor
 			Unassigned = 0x09
 		}
 
-		internal static ArraySegment<byte> BuildConnectToUri(Uri uri)
+		internal static byte[] BuildConnectToUri(Uri uri)
 		{
-			ArraySegment<byte> sendBuffer;
 			int port = uri.Port;
 			byte[] nameBytes = Encoding.ASCII.GetBytes(uri.DnsSafeHost);
 
@@ -53,17 +52,14 @@ namespace DotNetTor
 				.Concat(new[] {(byte) nameBytes.Length})
 				.Concat(nameBytes).ToArray();
 
-			sendBuffer =
-				new ArraySegment<byte>(
-					Enumerable.Empty<byte>()
+			return Enumerable.Empty<byte>()
 					.Concat(
 						new[]
 						{
 							SocksVersion, (byte) 0x01, (byte) 0x00, (byte) AddressType.DomainName
 						})
 						.Concat(addressBytes)
-						.Concat(BitConverter.GetBytes(IPAddress.HostToNetworkOrder((short) port))).ToArray());
-			return sendBuffer;
+						.Concat(BitConverter.GetBytes(IPAddress.HostToNetworkOrder((short) port))).ToArray();
 		}
 
 		internal static void ValidateConnectToDestinationResponse(byte[] receiveBuffer, int receiveCount)

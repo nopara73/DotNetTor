@@ -65,7 +65,7 @@ namespace DotNetTor.SocksPort
 		{
 			Stream stream = TcpClient.GetStream();
 			
-			var sendBuffer = Util.BuildConnectToUri(Destination).Array;
+			var sendBuffer = Util.BuildConnectToUri(Destination);
 			await stream.WriteAsync(sendBuffer, 0, sendBuffer.Length).ConfigureAwait(false);
 			await stream.FlushAsync().ConfigureAwait(false);
 			ctsToken.ThrowIfCancellationRequested();
@@ -227,8 +227,14 @@ namespace DotNetTor.SocksPort
 
 		private void DisposeTcpClient()
 		{
-			Stream?.Dispose();
-			TcpClient?.Dispose();
+			if (TcpClient != null)
+			{
+				if (TcpClient.Connected)
+				{
+					Stream?.Dispose();
+				}
+				TcpClient.Dispose();
+			};
 			Stream = null;
 			TcpClient = null;
 		}
