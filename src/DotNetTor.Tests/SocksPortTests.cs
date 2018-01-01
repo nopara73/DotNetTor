@@ -112,10 +112,23 @@ namespace DotNetTor.Tests
 			using (var httpClient = new HttpClient(handler))
 			{
 				var content =
-					await (await httpClient.GetAsync(requestUri)).Content.ReadAsStringAsync()
-						;
+					await (await httpClient.GetAsync(requestUri)).Content.ReadAsStringAsync();
 
 				Assert.Equal("{\"ok\":true}", content);
+			}
+		}
+
+		[Fact]
+		public async Task CanDoIpAddressAsync()
+		{
+			var requestUri = "http://172.217.6.142";
+			using (var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort))
+			using (var httpClient = new HttpClient(handler))
+			{
+				var content =
+					await (await httpClient.GetAsync(requestUri)).Content.ReadAsStringAsync();
+
+				Assert.NotEmpty(content);
 			}
 		}
 
