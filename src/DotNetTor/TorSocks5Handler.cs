@@ -29,9 +29,7 @@ namespace DotNetTor
 		public IPEndPoint TorSocks5EndPoint => TorSocks5Manager?.TorSocks5EndPoint;
 
 		private AsyncLock ConnectLock { get; }
-
-		private volatile bool _connectionsDisposingForCircuitChange; // true while disposes connections for circuit change request, also detects redundant calls
-		private int _requestCounter; 
+		private AsyncReaderWriterLock DisposeRequestLock { get; }
 
 		#endregion
 
@@ -47,8 +45,7 @@ namespace DotNetTor
 
 			ConnectLock = new AsyncLock();
 
-			_connectionsDisposingForCircuitChange = false;
-			_requestCounter = 0;
+			DisposeRequestLock = new AsyncReaderWriterLock();
 
 			TorControlClient.CircuitChangeRequested += Client_CircuitChangeRequestedAsync;
 		}
@@ -68,35 +65,27 @@ namespace DotNetTor
 			// A sender MUST NOT generate an "http" URI with an empty host identifier.
 			var host = Guard.NotNullOrEmptyOrWhitespace($"{nameof(request)}.{nameof(request.RequestUri)}.{nameof(request.RequestUri.DnsSafeHost)}", request.RequestUri.DnsSafeHost, trim: true);
 
-			while (_connectionsDisposingForCircuitChange)
-			{
-				await Task.Delay(50).ConfigureAwait(false);
-			}
-
-			Interlocked.Increment(ref _requestCounter);
-			// this makes sure clients with the same host don't try to connect concurrently
-			// it is released after the connection is established or in the finally block
-			var connectLockTask = await ConnectLock.LockAsync().ConfigureAwait(false);
-			try
+			using (await DisposeRequestLock.ReaderLockAsync())
+			using (var connectLockTask = await ConnectLock.LockAsync().ConfigureAwait(false)) // this makes sure clients with the same host don't try to connect concurrently, it gets released after connection established
 			{
 				KeyValuePair<TorSocks5Client, AsyncLock> clientLockPair = TryFindClientLockPair(host, request.RequestUri.Port);
 				AsyncLock clientLock = clientLockPair.Value ?? new AsyncLock(); // this makes sure clients with the same host don't work concurrently
 				using (await clientLock.LockAsync().ConfigureAwait(false))
 				{
 					TorSocks5Client client;
-						// https://tools.ietf.org/html/rfc7230#section-2.6
-						// Intermediaries that process HTTP messages (i.e., all intermediaries
-						// other than those acting as tunnels) MUST send their own HTTP - version
-						// in forwarded messages.
-						request.Version = HttpProtocol.HTTP11.Version;
+					// https://tools.ietf.org/html/rfc7230#section-2.6
+					// Intermediaries that process HTTP messages (i.e., all intermediaries
+					// other than those acting as tunnels) MUST send their own HTTP - version
+					// in forwarded messages.
+					request.Version = HttpProtocol.HTTP11.Version;
 
-						client = clientLockPair.Key;
+					client = clientLockPair.Key;
 
-						if (client != null && !client.IsConnected)
-						{
-							Connections.TryRemove(client, out AsyncLock al);
-							client?.Dispose();
-						}
+					if (client != null && !client.IsConnected)
+					{
+						Connections.TryRemove(client, out AsyncLock al);
+						client?.Dispose();
+					}
 
 					if (client == null || !client.IsConnected)
 					{
@@ -195,11 +184,6 @@ namespace DotNetTor
 					return await new HttpResponseMessage().CreateNewAsync(client.Stream, request.Method).ConfigureAwait(false);
 				}
 			}
-			finally
-			{
-				Interlocked.Decrement(ref _requestCounter);
-				connectLockTask?.Dispose(); // just to be sure, if no exception it gets disposed way before
-			}
 		}
 
 		private KeyValuePair<TorSocks5Client, AsyncLock> TryFindClientLockPair(string host, int port)
@@ -213,27 +197,20 @@ namespace DotNetTor
 
 		#region Events
 
-		private async void Client_CircuitChangeRequestedAsync(object sender, EventArgs e)
+		private void Client_CircuitChangeRequestedAsync(object sender, EventArgs e)
 		{
-			if (_connectionsDisposingForCircuitChange) return; // don't dispose redundantly
+			DisposeConnections();
+		}
 
-			try
+		private void DisposeConnections()
+		{
+			using (DisposeRequestLock.WriterLock())
 			{
-				_connectionsDisposingForCircuitChange = true;
-				while (Interlocked.CompareExchange(ref _requestCounter, 0, 0) > 0) // probably the best way to read with interlocked: https://stackoverflow.com/a/24893231/2061103
-				{
-					await Task.Delay(50).ConfigureAwait(false);
-				}
-
 				foreach (var connection in Connections)
 				{
 					connection.Key?.Dispose();
 				}
 				Connections.Clear();
-			}
-			finally
-			{
-				_connectionsDisposingForCircuitChange = false;
 			}
 		}
 
@@ -252,10 +229,7 @@ namespace DotNetTor
 					try
 					{
 						TorControlClient.CircuitChangeRequested -= Client_CircuitChangeRequestedAsync;
-						foreach (var connection in Connections)
-						{
-							connection.Key?.Dispose();
-						}
+						DisposeConnections();
 					}
 					catch (Exception ex)
 					{
