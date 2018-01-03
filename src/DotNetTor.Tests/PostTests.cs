@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using DotNetTor.SocksPort;
 using Xunit;
 using System.Diagnostics;
 using System.Text;
@@ -19,7 +17,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanDoBasicPostRequestAsync()
 		{
-			using (_client = new HttpClient(new SocksPortHandler(Shared.HostAddress, Shared.SocksPort)))
+			using (_client = new HttpClient(new TorSocks5Handler(Shared.TorSock5EndPoint)))
 			{
 				HttpContent content = new FormUrlEncodedContent(new[]
 				{
@@ -36,7 +34,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanCancelAsync()
 		{
-			using (_client = new HttpClient(new SocksPortHandler(Shared.HostAddress, Shared.SocksPort)))
+			using (_client = new HttpClient(new TorSocks5Handler(Shared.TorSock5EndPoint)))
 			{
 				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 1, times: 11);
 				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 4, times: 9);
@@ -83,7 +81,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanDoBasicPostRequestWithNonAsciiCharsAsync()
 		{
-			using (_client = new HttpClient(new SocksPortHandler(Shared.HostAddress, Shared.SocksPort)))
+			using (_client = new HttpClient(new TorSocks5Handler(Shared.TorSock5EndPoint)))
 			{
 				string json = "Hello ñ";
 				var httpContent = new StringContent(json, Encoding.UTF8, "application/json");
@@ -98,7 +96,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanDoBasicPostHttpsRequestAsync()
 		{
-			using (_client = new HttpClient(new SocksPortHandler(Shared.HostAddress, Shared.SocksPort)))
+			using (_client = new HttpClient(new TorSocks5Handler(Shared.TorSock5EndPoint)))
 			{
 				HttpContent content = new StringContent("{\"hex\": \"01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff2d03a58605204d696e656420627920416e74506f6f6c20757361311f10b53620558903d80272a70c0000724c0600ffffffff010f9e5096000000001976a9142ef12bd2ac1416406d0e132e5bc8d0b02df3861b88ac00000000\"}");
 

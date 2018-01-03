@@ -1,4 +1,6 @@
-﻿namespace DotNetTor.Tests
+﻿using System.Net;
+
+namespace DotNetTor.Tests
 {
 	internal static class Shared
 	{
@@ -6,5 +8,6 @@
 		public const int SocksPort = 9050;
 		public const int ControlPort = 9051;
 		public const string ControlPortPassword = "ILoveBitcoin21";
+		public static IPEndPoint TorSock5EndPoint => new IPEndPoint(IPAddress.Parse(HostAddress), SocksPort);
 	}
 }

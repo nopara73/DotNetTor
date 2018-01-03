@@ -1,9 +1,7 @@
 ﻿using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using DotNetTor.SocksPort;
 using Xunit;
-using System.Diagnostics;
 
 namespace DotNetTor.Tests
 {
@@ -13,7 +11,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		private static async Task IsCircuitEstablishedAsync()
 		{
-			var controlPortClient = new ControlPort.TorControlClient(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
+			var controlPortClient = new TorControlClient(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
 			var yes = await controlPortClient.IsCircuitEstablishedAsync();
 			Assert.True(yes);
 		}
@@ -26,7 +24,7 @@ namespace DotNetTor.Tests
 		    // 1. Get Tor IP
 		    IPAddress currIp = await GetTorIpAsync(requestUri);
 
-		    var controlPortClient = new ControlPort.TorControlClient(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
+		    var controlPortClient = new TorControlClient(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
 		    for (int i = 0; i < 5; i++)
 		    {
 			    IPAddress prevIp = currIp;
@@ -43,7 +41,7 @@ namespace DotNetTor.Tests
 
 	    private static async Task<IPAddress> GetTorIpAsync(string requestUri)
 	    {
-		    var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
+			var handler = new TorSocks5Handler(Shared.TorSock5EndPoint);
 
 			IPAddress torIp;
 		    using (var httpClient = new HttpClient(handler))
@@ -64,7 +62,7 @@ namespace DotNetTor.Tests
 		    IPAddress changedIp;
 
 			// 1. Get Tor IP
-		    var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
+			var handler = new TorSocks5Handler(Shared.TorSock5EndPoint);
 			using (var httpClient = new HttpClient(handler))
 			{
 				var content = await (await httpClient.GetAsync(requestUri)).Content.ReadAsStringAsync();
@@ -73,11 +71,11 @@ namespace DotNetTor.Tests
 			}
 
 			// 2. Change Tor IP
-			var controlPortClient = new ControlPort.TorControlClient(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
+			var controlPortClient = new TorControlClient(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
 			await controlPortClient.ChangeCircuitAsync();
 
 			// 3. Get changed Tor IP
-			var handler2 = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
+			var handler2 = new TorSocks5Handler(Shared.TorSock5EndPoint);
 			using (var httpClient = new HttpClient(handler2))
 			{
 				var content = await (await httpClient.GetAsync(requestUri)).Content.ReadAsStringAsync();
@@ -91,7 +89,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		private static async Task CanSendCustomCommandAsync()
 		{
-			var controlPortClient = new ControlPort.TorControlClient(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
+			var controlPortClient = new TorControlClient(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
 			var res = await controlPortClient.SendCommandAsync("GETCONF SOCKSPORT");
 			Assert.StartsWith("250 SocksPort", res);
 		}
@@ -104,7 +102,7 @@ namespace DotNetTor.Tests
 			IPAddress changedIp;
 
 			// 1. Get Tor IP
-			var handler = new SocksPortHandler(Shared.HostAddress, Shared.SocksPort);
+			var handler = new TorSocks5Handler(Shared.TorSock5EndPoint);
 			using (var httpClient = new HttpClient(handler))
 			{
 				var content =
@@ -114,7 +112,7 @@ namespace DotNetTor.Tests
 				Assert.True(gotIp);
 
 				// 2. Change Tor IP
-				var controlPortClient = new ControlPort.TorControlClient(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
+				var controlPortClient = new TorControlClient(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
 				await controlPortClient.ChangeCircuitAsync();
 			
 				// 3. Get changed Tor IP
