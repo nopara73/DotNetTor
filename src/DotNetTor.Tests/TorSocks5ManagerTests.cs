@@ -10,7 +10,7 @@ using Xunit;
 
 namespace DotNetTor.Tests
 {
-	public class TorSocks5Tests
+	public class TorSocks5ManagerTests
 	{
 		[Fact]
 		public async Task IsolatesStreamsAsync()
