@@ -1,5 +1,4 @@
-﻿using ConcurrentCollections;
-using DotNetTor.Http.Models;
+﻿using DotNetTor.Http.Models;
 using Nito.AsyncEx;
 using System;
 using System.Collections.Concurrent;
