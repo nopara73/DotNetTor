@@ -55,12 +55,13 @@ namespace DotNetTor.Tests
 				clients.Add(await manager.EstablishTcpConnectionAsync("api.ipify.org", 80, isolateStream: false));
 
 
-				var ips = new HashSet<string>();
+				var ips = new HashSet<IPAddress>();
 				foreach (var client in clients)
 				{
 					var sendBuff = Encoding.UTF8.GetBytes("GET / HTTP/1.1\r\nHost:api.ipify.org\r\n\r\n");
 					byte[] response = await client.SendAsync(sendBuff);
-					ips.Add(Encoding.ASCII.GetString(response).Split("\n").Last());
+					string ipString = Encoding.ASCII.GetString(response).Split("\n").Last();
+					ips.Add(IPAddress.Parse(ipString));
 				}
 
 				Assert.True(ips.Count < 3);
@@ -71,6 +72,42 @@ namespace DotNetTor.Tests
 				{
 					client?.Dispose();
 				}
+			}
+		}
+
+		[Fact]
+		public async Task ReceiveBufferProperlySetAsync()
+		{
+			var manager = new TorSocks5Manager(Shared.TorSock5EndPoint);
+			using (var client = await manager.EstablishTcpConnectionAsync("api.ipify.org", 80, isolateStream: false))
+			{
+				var sendBuff = Encoding.UTF8.GetBytes("GET / HTTP/1.1\r\nHost:api.ipify.org\r\n\r\n");
+				byte[] response = await client.SendAsync(sendBuff);
+				IPAddress.Parse(Encoding.ASCII.GetString(response).Split("\n").Last());
+
+				response = await client.SendAsync(sendBuff, null);
+				IPAddress.Parse(Encoding.ASCII.GetString(response).Split("\n").Last());
+
+				response = await client.SendAsync(sendBuff, -1);
+				IPAddress.Parse(Encoding.ASCII.GetString(response).Split("\n").Last());
+
+				response = await client.SendAsync(sendBuff, 0);
+				IPAddress.Parse(Encoding.ASCII.GetString(response).Split("\n").Last());
+
+				response = await client.SendAsync(sendBuff, 1);
+				IPAddress.Parse(Encoding.ASCII.GetString(response).Split("\n").Last());
+
+				response = await client.SendAsync(sendBuff, 2);
+				IPAddress.Parse(Encoding.ASCII.GetString(response).Split("\n").Last());
+
+				response = await client.SendAsync(sendBuff, 21);
+				IPAddress.Parse(Encoding.ASCII.GetString(response).Split("\n").Last());
+
+				response = await client.SendAsync(sendBuff, int.MinValue);
+				IPAddress.Parse(Encoding.ASCII.GetString(response).Split("\n").Last());
+
+				response = await client.SendAsync(sendBuff, int.MaxValue);
+				IPAddress.Parse(Encoding.ASCII.GetString(response).Split("\n").Last());
 			}
 		}
 

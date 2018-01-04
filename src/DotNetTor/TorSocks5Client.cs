@@ -223,17 +223,51 @@ namespace DotNetTor
 				AssertConnected();
 				var stream = TcpClient.GetStream();
 
+				// Write data to the stream
 				await stream.WriteAsync(sendBuffer, 0, sendBuffer.Length).ConfigureAwait(false);
 				await stream.FlushAsync().ConfigureAwait(false);
 
-				int recBuffSize = receiveBufferSize ?? TcpClient.ReceiveBufferSize;
-				var receiveBuffer = new byte[recBuffSize];
-				var receiveCount = await stream.ReadAsync(receiveBuffer, 0, receiveBuffer.Length).ConfigureAwait(false);
+				// If receiveBufferSize is null, zero or negative or bigger than TcpClient.ReceiveBufferSize
+				// then work with TcpClient.ReceiveBufferSize
+				var tcpReceiveBuffSize = TcpClient.ReceiveBufferSize;
+				var actualReceiveBuffSize = 0;
+				if (receiveBufferSize == null || receiveBufferSize <= 0 || receiveBufferSize > tcpReceiveBuffSize)
+				{
+					actualReceiveBuffSize = tcpReceiveBuffSize;
+				}
+				else
+				{
+					actualReceiveBuffSize = (int)receiveBufferSize;
+				}
+
+				// Receive the response
+				var receiveBuffer = new byte[actualReceiveBuffSize];
+				int receiveCount = await stream.ReadAsync(receiveBuffer, 0, actualReceiveBuffSize).ConfigureAwait(false);
 				if (receiveCount <= 0)
 				{
 					throw new ConnectionException($"Not connected to Tor SOCKS5 proxy: `{TorSocks5EndPoint}`.");
 				}
-				return receiveBuffer.Take(receiveCount).ToArray();
+				// if we could fit everything into our buffer, then return it
+				if(!stream.DataAvailable)
+				{
+					return receiveBuffer.Take(receiveCount).ToArray();
+				}
+
+				// while we have data available, start building a bytearray
+				var builder = new ByteArrayBuilder();
+				builder.Append(receiveBuffer.Take(receiveCount).ToArray());
+				while (stream.DataAvailable)
+				{
+					Array.Clear(receiveBuffer, 0, receiveBuffer.Length);
+					receiveCount = await stream.ReadAsync(receiveBuffer, 0, actualReceiveBuffSize).ConfigureAwait(false);
+					if (receiveCount <= 0)
+					{
+						throw new ConnectionException($"Not connected to Tor SOCKS5 proxy: `{TorSocks5EndPoint}`.");
+					}
+					builder.Append(receiveBuffer.Take(receiveCount).ToArray());
+				}
+
+				return builder.ToArray();
 			}
 		}
 
