@@ -55,7 +55,7 @@ The `Purpose` of `SubscribeRequest`, `UnsubscribeRequest` and `Notification` is 
 
 ### 2.2.3 Purpose of Response
 
-`X'00'` - `Success`
+`X'00'` - `Success`  
 `X'01'` - `BadRequest`: The request was malformed.  
 `X'02'` - `VersionMismatch`  
 `X'03'` - `UnsuccessfulRequest`: The server was not able to execute the `Request` properly.
