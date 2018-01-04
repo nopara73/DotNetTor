@@ -4,7 +4,7 @@
 
 ## 1.1 Overview
 
-ToT is a simple, application layer, client-server, messaging protocol, that facilitates TCP communication over Tor. ToT defines a request-response and subscribe-notify patterns.
+ToT is a simple, application layer, client-server, messaging protocol, that facilitates TCP communication, optimized for Tor's SOCKS5 proxy. ToT defines request-response and subscribe-notify patterns.
 
 ## 1.2 Context
 
