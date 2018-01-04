@@ -35,10 +35,10 @@ ToT uses UTF8 byte encoding.
 
 ### 2.1 MessageType
 
-`X'01'` - `Request`: Issued by the client. A `Reply` MUST follow it.  
-`X'02'` - `Reply`: Issued by the server. A `Request` MUST precede it.  
-`X'03'` - `SubscribeRequest`: Issued by the client. A `Reply` MUST follow it.  
-`X'04'` - `UnSubscribeRequest`: Issued by the client. A `Reply` MUST follow it.  
+`X'01'` - `Request`: Issued by the client. A `Response` MUST follow it.  
+`X'02'` - `Response`: Issued by the server. A `Request` MUST precede it.  
+`X'03'` - `SubscribeRequest`: Issued by the client. A `Response` MUST follow it.  
+`X'04'` - `UnSubscribeRequest`: Issued by the client. A `Response` MUST follow it.  
 `X'05'` - `Notification`: Issued by the server. It MUST be issued between a `SubscribeRequest` and an `UnSubscribeRequest`.
 
 ### 2.2 Purpose
@@ -51,15 +51,33 @@ The `Purpose` of `Request` is arbitrary.
 
 The `Purpose` of `SubscribeRequest`, `UnSubscribeRequest` and `Notification` is arbitrary, but clients and servers MUST implement the same `Purpose` for all three.
 
-### 2.2.3 Purpose of Reply
+### 2.2.3 Purpose of Response
 
 `X'00'` - `Success`
 `X'01'` - `BadRequest`: The request was malformed.  
 `X'02'` - `VersionMismatch`  
 `X'03'` - `UnsuccessfulRequest`: The server was not able to execute the `Request` properly.
 
-If the reply is other than `Success`, the `Content` MAY hold the details of the error.
-
 `BadRequest` SHOULD be issued in case of client side errors, while `UnsuccessfulReqeust` SHOULD be issued in case of server side errors.  
 `BadRequest` is issued for example, if the specified `ContentLength` does not match the actual length of the content, an arbitrary, user defined parameter does not match the expected format, or the `Purpose` of a `SubscribeRequest` is not recognized by the server.  
-`UnsuccessfulRequest` is issued for example, if the server does not have the requested data available to `Reply`.
+`UnsuccessfulRequest` is issued for example, if the server does not have the requested data available to `Response`.
+
+### 2.2.3.1 Content as Error Details
+
+If the `Response` is other than `Success`, the `Content` MAY hold the details of the error.  
+
+* The server SHOULD use grammatically correct error messages.
+* The server SHOULD write clear sentences and include ending punctuation.
+
+## 3. Channel Isolation
+
+The server and client MUST either communicate through a `RequestResponse` channel or a `SubscribeNotify` channel. A client and the server MAY have multiple channels open through different TCP connections. If these TCP connection were opened through Tor's SOCKS5 proxy with stream isolation, it can be used in a way, that the server does not learn the channels are originated from the same client.
+
+The nature of the channel is defined by the first request of the client. If it is a `Request`, then the channel is a `RequestResponse` channel, if it is a `SubscribeRequest`, then the channel is a `SubscribeNotify` channel.
+
+For a `Request` to a `SubscribeNotify` channel the server MUST respond with `BadRequest`, where the `Content` is: `Cannot send Request to a SubscribeNotify channel.`  
+For a `SubscribeRequest` to a `RequestResponse` channel the server MUST respond with `BadRequest`, where the `Content` is: `Cannot send SubscribeRequest to a RequestResponse channel.`  
+
+## 4. Closing the Channel
+
+Closing the TCP connection both in `RequestResponse` and `SubscribeNotify` channels are a proper way to close the channel. In a `SubscribeNotify` channel, the client MAY issue the `UnSubscribeRequest`s, before closing the TCP connection.
