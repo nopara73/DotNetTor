@@ -4,11 +4,11 @@
 
 ## 1.1 Overview
 
-ToT is a simple, application layer messaging protocol for this library, that makes TCP communication over Tor easier. ToT defines a request - response and subscribe - broadcast pattern.
+ToT is a simple, application layer, client-server, messaging protocol, that facilitates TCP communication over Tor. ToT defines a request-response and subscribe-notify patterns.
 
 ## 1.2 Context
 
-HTTP is the most commonly used application layer protcol. However HTTP fingerprinting makes it not ideal for privacy and the subscribe - broadcast pattern HTTP implementations are hacks.  
+HTTP is the most commonly used application layer protcol. However HTTP fingerprinting makes it not ideal for privacy and the subscribe - notify pattern HTTP implementations are hacks.  
 Tor is similar to a SOCKS5 proxy that is restricted to TCP. In order to exchange data through well known TCP connections, the connection must be estabilished through the Tor's SOCKS5 proxy first. If the connection is successful, TCP data exchange happens as usual. 
 
 ## 1.3 Notation
@@ -35,23 +35,31 @@ ToT uses UTF8 byte encoding.
 
 ### 2.1 MessageType
 
-X'01' - Request: A Reply MUST follow it.  
-X'02' - Reply: A Request MUST precede it.  
-X'03' - SubscribeRequest: A Reply MUST follow it.
+`X'01'` - `Request`: Issued by the client. A `Reply` MUST follow it.  
+`X'02'` - `Reply`: Issued by the server. A `Request` MUST precede it.  
+`X'03'` - `SubscribeRequest`: Issued by the client. A `Reply` MUST follow it.  
+`X'04'` - `UnSubscribeRequest`: Issued by the client. A `Reply` MUST follow it.  
+`X'05'` - `Notification`: Issued by the server. It MUST be issued between a `SubscribeRequest` and an `UnSubscribeRequest`.
 
 ### 2.2 Purpose
 
-The Purpose of Request and Subscribe is arbitrary.
+### 2.2.1 Purpose of Request
 
-### 2.2.1 Purpose of Reply
+The `Purpose` of `Request` is arbitrary.
 
-X'00' - Success
-X'01' - BadRequest: The request was malformed.  
-X'02' - VersionMismatch  
-X'03' - UnsuccessfulRequest: The server was not able to create a proper Reply to the Request.
+### 2.2.1 Purpose of SubscribeRequest, UnSubscribeRequest and Notification
 
-If the reply is other than Success, the Content may holds the details of the error.
+The `Purpose` of `SubscribeRequest`, `UnSubscribeRequest` and `Notification` is arbitrary, but clients and servers MUST implement the same `Purpose` for all three.
 
-BadRequest SHOULD be issued in case of client side errors, while UnsuccessfulReqeust SHOULD be issued in case of server side errors.  
-BadRequest is issued for example, if the specified ContentLength does not match the actual length of the content, an arbitrary, user defined parameter doesn't match the expected format, or the Purpose of a SubscribeRequest is not recognized by the server.  
-UnsuccessfulRequest is issued for example, if the server doesn't have the requested data available to reply.
+### 2.2.3 Purpose of Reply
+
+`X'00'` - `Success`
+`X'01'` - `BadRequest`: The request was malformed.  
+`X'02'` - `VersionMismatch`  
+`X'03'` - `UnsuccessfulRequest`: The server was not able to execute the `Request` properly.
+
+If the reply is other than `Success`, the `Content` MAY hold the details of the error.
+
+`BadRequest` SHOULD be issued in case of client side errors, while `UnsuccessfulReqeust` SHOULD be issued in case of server side errors.  
+`BadRequest` is issued for example, if the specified `ContentLength` does not match the actual length of the content, an arbitrary, user defined parameter does not match the expected format, or the `Purpose` of a `SubscribeRequest` is not recognized by the server.  
+`UnsuccessfulRequest` is issued for example, if the server does not have the requested data available to `Reply`.
