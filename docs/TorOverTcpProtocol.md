@@ -39,7 +39,9 @@ ToT uses UTF8 byte encoding.
 `X'02'` - `Response`: Issued by the server. A `Request` MUST precede it.  
 `X'03'` - `SubscribeRequest`: Issued by the client. A `Response` MUST follow it.  
 `X'04'` - `UnsubscribeRequest`: Issued by the client. A `Response` MUST follow it.  
-`X'05'` - `Notification`: Issued by the server. It MUST be issued between a `SubscribeRequest` and an `UnsubscribeRequest`.
+`X'05'` - `Notification`: Issued by the server. It MUST be issued between a `SubscribeRequest` and an `UnsubscribeRequest`.  
+`X'06'` - `Ping`: A `Pong` MUST follow it.  
+`X'07'` - `Pong`: A `Ping` MUST precede it.
 
 ### 2.2 Purpose
 
@@ -62,6 +64,10 @@ The `Purpose` of `SubscribeRequest`, `UnsubscribeRequest` and `Notification` is 
 `BadRequest` is issued for example, if the specified `ContentLength` does not match the actual length of the content, an arbitrary, user defined parameter does not match the expected format, or the `Purpose` of a `SubscribeRequest` is not recognized by the server.  
 `UnsuccessfulRequest` is issued for example, if the server does not have the requested data available to `Response`.
 
+### 2.2.4 Purpose of Ping and Pong
+
+The `Purpose` field of `Ping` MUST be `ping` and the `Purpose` field of `Pong` MUST be `pong`.
+
 ### 2.2.3.1 Content as Error Details
 
 If the `Response` is other than `Success`, the `Content` MAY hold the details of the error.  
@@ -78,6 +84,27 @@ The nature of the channel is defined by the first request of the client. If it i
 For a `Request` to a `SubscribeNotify` channel the server MUST respond with `BadRequest`, where the `Content` is: `Cannot send Request to a SubscribeNotify channel.`  
 For a `SubscribeRequest` to a `RequestResponse` channel the server MUST respond with `BadRequest`, where the `Content` is: `Cannot send SubscribeRequest to a RequestResponse channel.`  
 
-## 4. Closing the Channel
+## 4. Keeping Channels Alive
+
+Tor keeps its circuits alive, as long as they are used. Potentially forever. If a circuit fails, Tor will switch to a new circuit immediately. To make sure is a `SubscribeNotify` channel all notifications are delivered, the developer MAY consider implementing a redundant `SubscribeNotify` channel on an isolated stream.  
+
+### 4.1 Ping Pong
+
+| Version | MessageType | PurposeLength | Purpose | ContentLength | Content |
+|---------|-------------|---------------|---------|---------------|---------|
+| X'01'   | X'06'       | X'04'         | ping    | X'00000000'   |         |
+| X'01'   | X'07'       | X'04'         | pong    | X'00000000'   |         |
+
+In order to detect silent network failures, the client and the server SHOULD ping-pong periodically. For privacy against network observers, this ping-pong SHOULD happen randomly, by deafult every 1 to 10 minutes, but it SHOULD be adjustable based on the context of the specific application.
+
+In a `RequestResponse` channel, the issuer of the ping is the client, while in a `SubscribeNotify` channel, the issuer of the ping is the server.
+
+This ping-pong MAY be also used to quicktest network performance.
+
+## 5. Closing the Channel
 
 Closing the TCP connection both in `RequestResponse` and `SubscribeNotify` channels are a proper way to close the channel. In a `SubscribeNotify` channel, the client MAY issue the `UnsubscribeRequest`s, before closing the TCP connection.
+
+## 6. Design Considerations
+
+Tor sends data in chunks of 512 bytes, called cells, to make it harder for intermediaries to guess exactly how many bytes are being communicated at each step. A developer that intends to build an application on top of ToT MAY utilize this information to gain more efficient network usage by aiming the `ContentLength` to be `512 - (1 + 1 + 1 + 255 + 4) = 250` bytes or little fewer bytes.
