@@ -38,8 +38,8 @@ ToT uses UTF8 byte encoding.
 `X'01'` - `Request`: Issued by the client. A `Response` MUST follow it.  
 `X'02'` - `Response`: Issued by the server. A `Request` MUST precede it.  
 `X'03'` - `SubscribeRequest`: Issued by the client. A `Response` MUST follow it.  
-`X'04'` - `UnSubscribeRequest`: Issued by the client. A `Response` MUST follow it.  
-`X'05'` - `Notification`: Issued by the server. It MUST be issued between a `SubscribeRequest` and an `UnSubscribeRequest`.
+`X'04'` - `UnsubscribeRequest`: Issued by the client. A `Response` MUST follow it.  
+`X'05'` - `Notification`: Issued by the server. It MUST be issued between a `SubscribeRequest` and an `UnsubscribeRequest`.
 
 ### 2.2 Purpose
 
@@ -47,9 +47,9 @@ ToT uses UTF8 byte encoding.
 
 The `Purpose` of `Request` is arbitrary.
 
-### 2.2.1 Purpose of SubscribeRequest, UnSubscribeRequest and Notification
+### 2.2.1 Purpose of SubscribeRequest, UnsubscribeRequest and Notification
 
-The `Purpose` of `SubscribeRequest`, `UnSubscribeRequest` and `Notification` is arbitrary, but clients and servers MUST implement the same `Purpose` for all three.
+The `Purpose` of `SubscribeRequest`, `UnsubscribeRequest` and `Notification` is arbitrary, but clients and servers MUST implement the same `Purpose` for all three.
 
 ### 2.2.3 Purpose of Response
 
@@ -80,4 +80,4 @@ For a `SubscribeRequest` to a `RequestResponse` channel the server MUST respond 
 
 ## 4. Closing the Channel
 
-Closing the TCP connection both in `RequestResponse` and `SubscribeNotify` channels are a proper way to close the channel. In a `SubscribeNotify` channel, the client MAY issue the `UnSubscribeRequest`s, before closing the TCP connection.
+Closing the TCP connection both in `RequestResponse` and `SubscribeNotify` channels are a proper way to close the channel. In a `SubscribeNotify` channel, the client MAY issue the `UnsubscribeRequest`s, before closing the TCP connection.
