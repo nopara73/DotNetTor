@@ -2,7 +2,7 @@
 
 ## 1. Introduction
 
-## 1.1 Purpose
+## 1.1 Overview
 
 ToT is a simple, application layer messaging protocol for this library, that makes TCP communication over Tor easier. ToT defines a request - response and subscribe - broadcast pattern.
 
