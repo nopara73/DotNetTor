@@ -31,7 +31,7 @@ ToT uses UTF8 byte encoding.
 
 | Version | MessageType | PurposeLength | Purpose | ContentLength | Content      |
 |---------|-------------|---------------|---------|---------------|--------------|
-| X'01'   | 1           | 1             | 0-255   | 4             | 0-2147483647 |
+| X'01'   | 1           | 1             | 0-255   | 4             | 0-2147483385 |
 
 ### 2.1 MessageType
 
@@ -70,7 +70,7 @@ The `Purpose` field of `Ping` MUST be `ping` and the `Purpose` field of `Pong` M
 
 ### 2.3 Content
 
-`2147483647` is the maximum positive value for a 32-bit signed binary integer and it is the maximum number of bytes the `Content` field can hold. At deserialization, compliant implementations MUST validate the `ContentLength` field is within range. 
+`2147483647` is the maximum positive value for a 32-bit signed binary integer. `2147483647 - (1 + 1 + 1 + 4 + 255) = 2147483385` is the maximum number of bytes the `Content` field can hold. At deserialization, compliant implementations MUST validate the `ContentLength` field is within range. 
 
 #### 2.3.1 Content as Error Details
 If the `Response` is other than `Success`, the `Content` MAY hold the details of the error.  
@@ -110,4 +110,4 @@ Closing the TCP connection both in `RequestResponse` and `SubscribeNotify` chann
 
 ## 6. Design Considerations
 
-Tor sends data in chunks of 512 bytes, called cells, to make it harder for intermediaries to guess exactly how many bytes are being communicated at each step. A developer that intends to build an application on top of ToT MAY utilize this information to gain more efficient network usage by aiming the `ContentLength` to be `512 - (1 + 1 + 1 + 255 + 4) = 250` bytes or little fewer bytes.
+Tor sends data in chunks of 512 bytes, called cells, to make it harder for intermediaries to guess exactly how many bytes are being communicated at each step. A developer that intends to build an application on top of ToT MAY utilize this information to gain more efficient network usage by aiming the `ContentLength` to be minimum around `512 - (1 + 1 + 1 + 4) = 505` bytes minus the `Purpose` bytes.
