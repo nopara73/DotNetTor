@@ -2,28 +2,28 @@
 
 ## 1. Introduction
 
-## 1.1 Overview
+### 1.1 Overview
 
 ToT is a simple, application layer, client-server, messaging protocol, that facilitates TCP communication, optimized for Tor's SOCKS5 proxy. ToT defines request-response and subscribe-notify patterns.
 
-## 1.2 Context
+### 1.2 Context
 
 HTTP is the most commonly used application layer protcol. However HTTP fingerprinting makes it not ideal for privacy and the subscribe - notify pattern HTTP implementations are hacks.  
 Tor is similar to a SOCKS5 proxy that is restricted to TCP. In order to exchange data through well known TCP connections, the connection must be estabilished through the Tor's SOCKS5 proxy first. If the connection is successful, TCP data exchange happens as usual. 
 
-## 1.3 Notation
+### 1.3 Notation
 
-### 1.3.1 Keywords
+#### 1.3.1 Keywords
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in RFC2119.
 
-### 1.3.2 Packet-format Diagrams
+#### 1.3.2 Packet-format Diagrams
 
 Unless otherwise noted, the decimal numbers appearing in packet-format diagrams represent the length of the corresponding field, in octets. Where a given octet must take on a specific value, the syntax X'hh' is used to denote the value of the single octet in that field.
 
-## 1.4 Requirements
+### 1.4 Requirements
 
-### 1.4.1 UTF8
+#### 1.4.1 UTF8
 
 ToT uses UTF8 byte encoding.
 
@@ -31,7 +31,7 @@ ToT uses UTF8 byte encoding.
 
 | Version | MessageType | PurposeLength | Purpose | ContentLength | Content      |
 |---------|-------------|---------------|---------|---------------|--------------|
-| X'01'   | 1           | 1             | 0-255   | 4             | 0-4294967295 |
+| X'01'   | 1           | 1             | 0-255   | 4             | 0-2147483647 |
 
 ### 2.1 MessageType
 
@@ -45,15 +45,15 @@ ToT uses UTF8 byte encoding.
 
 ### 2.2 Purpose
 
-### 2.2.1 Purpose of Request
+#### 2.2.1 Purpose of Request
 
 The `Purpose` of `Request` is arbitrary.
 
-### 2.2.1 Purpose of SubscribeRequest, UnsubscribeRequest and Notification
+#### 2.2.1 Purpose of SubscribeRequest, UnsubscribeRequest and Notification
 
 The `Purpose` of `SubscribeRequest`, `UnsubscribeRequest` and `Notification` is arbitrary, but clients and servers MUST implement the same `Purpose` for all three.
 
-### 2.2.3 Purpose of Response
+#### 2.2.3 Purpose of Response
 
 `X'00'` - `Success`  
 `X'01'` - `BadRequest`: The request was malformed.  
@@ -64,12 +64,15 @@ The `Purpose` of `SubscribeRequest`, `UnsubscribeRequest` and `Notification` is 
 `BadRequest` is issued for example, if the specified `ContentLength` does not match the actual length of the content, an arbitrary, user defined parameter does not match the expected format, or the `Purpose` of a `SubscribeRequest` is not recognized by the server.  
 `UnsuccessfulRequest` is issued for example, if the server does not have the requested data available to `Response`.
 
-### 2.2.4 Purpose of Ping and Pong
+#### 2.2.4 Purpose of Ping and Pong
 
 The `Purpose` field of `Ping` MUST be `ping` and the `Purpose` field of `Pong` MUST be `pong`.
 
-### 2.2.3.1 Content as Error Details
+### 2.3 Content
 
+`2147483647` is the maximum value of the content, which MUST be checked. This number is the maximum positive value for a 32-bit signed binary integer.
+
+#### 2.3.1 Content as Error Details
 If the `Response` is other than `Success`, the `Content` MAY hold the details of the error.  
 
 * The server SHOULD use grammatically correct error messages.
