@@ -31,7 +31,7 @@ ToT uses UTF8 byte encoding, except for its `Content` field. Encoding of the `Co
 
 | Version | MessageType | PurposeLength | Purpose | ContentLength | Content      |
 |---------|-------------|---------------|---------|---------------|--------------|
-| X'01'   | 1           | 1             | 0-255   | 4             | 0-2147483385 |
+| X'01'   | 1           | 1             | 0-255   | 4             | 0-536870912 |
 
 ### 2.1 MessageType
 
@@ -70,7 +70,7 @@ The `Purpose` field of `Ping` MUST be `ping` and the `Purpose` field of `Pong` M
 
 ### 2.3 Content
 
-`2147483647` is the maximum positive value for a 32-bit signed binary integer. `2147483647 - (1 + 1 + 1 + 4 + 255) = 2147483385` is the maximum number of bytes the `Content` field can hold. At deserialization, compliant implementations MUST validate the `ContentLength` field is within range. 
+`536870912` byte is 512MB and the maximum number of bytes the `Content` field can hold. At deserialization, compliant implementations MUST validate the `ContentLength` field is within range. 
 
 #### 2.3.1 Content as Error Details
 If the `Response` is other than `Success`, the `Content` MAY hold the details of the error.  
