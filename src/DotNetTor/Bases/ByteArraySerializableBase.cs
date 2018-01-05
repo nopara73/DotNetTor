@@ -21,7 +21,19 @@ namespace DotNetTor.Bases
 
 		public abstract void FromBytes(byte[] bytes);
 
-		public string ToHex() => ByteHelpers.ToHex(ToBytes());
+		public string ToHex() => ToHex(false);
+
+		public string ToHex(bool xhhSyntax = false)
+		{
+			if (xhhSyntax)
+			{
+				return $"X'{ByteHelpers.ToHex(ToBytes())}'";
+			}
+			else
+			{
+				return ByteHelpers.ToHex(ToBytes());
+			}
+		}
 
 		public void FromHex(string hex)
 		{
@@ -40,14 +52,14 @@ namespace DotNetTor.Bases
 
 		public override string ToString()
 		{
-			return ToHex();
+			return ToHex(xhhSyntax: true);
 		}
 
 		#endregion
 
 		#region EqualityAndComparison
 
-		public override bool Equals(object obj) => obj is OctetSerializableBase && this == (ByteArraySerializableBase)obj;
+		public override bool Equals(object obj) => obj is ByteArraySerializableBase && this == (ByteArraySerializableBase)obj;
 		public bool Equals(ByteArraySerializableBase other) => this == other;
 		public override int GetHashCode()
 		{

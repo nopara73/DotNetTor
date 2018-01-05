@@ -26,7 +26,19 @@ namespace DotNetTor.Bases
 
 		public void FromByte(byte b) => ByteValue = b;
 
-		public string ToHex() => ByteHelpers.ToHex(ToByte());
+		public string ToHex() => ToHex(false);
+
+		public string ToHex(bool xhhSyntax = false)
+		{
+			if(xhhSyntax)
+			{
+				return $"X'{ByteHelpers.ToHex(ToByte())}'";
+			}
+			else
+			{
+				return ByteHelpers.ToHex(ToByte());
+			}
+		}
 
 		public void FromHex(string hex)
 		{
@@ -43,7 +55,7 @@ namespace DotNetTor.Bases
 
 		public override string ToString()
 		{
-			return ByteValue.ToString();
+			return ToHex(xhhSyntax: true);
 		}
 
 		#endregion
