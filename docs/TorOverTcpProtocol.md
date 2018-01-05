@@ -70,7 +70,7 @@ The `Purpose` field of `Ping` MUST be `ping` and the `Purpose` field of `Pong` M
 
 ### 2.3 Content
 
-`2147483647` is the maximum value of the content, which MUST be checked. This number is the maximum positive value for a 32-bit signed binary integer.
+`2147483647` is the maximum positive value for a 32-bit signed binary integer and it is the maximum number of bytes the `Content` field can hold. At deserialization, compliant implementations MUST validate the `ContentLength` field is within range. 
 
 #### 2.3.1 Content as Error Details
 If the `Response` is other than `Success`, the `Content` MAY hold the details of the error.  
