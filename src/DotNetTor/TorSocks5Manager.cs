@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -15,9 +16,10 @@ namespace DotNetTor
 
 		#region ConstructorsAndInitializers
 
+		/// <param name="ipEndPoint">Opt out Tor with null.</param>
 		public TorSocks5Manager(IPEndPoint endPoint)
 		{
-			TorSocks5EndPoint = Guard.NotNull(nameof(endPoint), endPoint);
+			TorSocks5EndPoint = endPoint;
 		}
 
 		#endregion
@@ -34,6 +36,19 @@ namespace DotNetTor
 			await client.ConnectToDestinationAsync(destination);
 			return client;
 		}
+		
+		/// <param name="identity">Isolates streams by identity.</param>
+		public async Task<TorSocks5Client> EstablishTcpConnectionAsync(IPEndPoint destination, string identity)
+		{
+			identity = Guard.NotNullOrEmptyOrWhitespace(nameof(identity), identity, trim: true);
+			Guard.NotNull(nameof(destination), destination);
+
+			var client = new TorSocks5Client(TorSocks5EndPoint);
+			await client.ConnectAsync();
+			await client.HandshakeAsync(identity);
+			await client.ConnectToDestinationAsync(destination);
+			return client;
+		}
 
 		public async Task<TorSocks5Client> EstablishTcpConnectionAsync(string host, int port, bool isolateStream = true)
 		{
@@ -43,6 +58,56 @@ namespace DotNetTor
 			var client = new TorSocks5Client(TorSocks5EndPoint);
 			await client.ConnectAsync();
 			await client.HandshakeAsync(isolateStream);
+			await client.ConnectToDestinationAsync(host, port);
+			return client;
+		}
+
+		public async Task<TorOverTcpClient> EstablishTotConnectionAsync(IPEndPoint destination, bool isolateStream = true)
+		{
+			Guard.NotNull(nameof(destination), destination);
+
+			var client = new TorSocks5Client(TorSocks5EndPoint);
+			await client.ConnectAsync();
+			await client.HandshakeAsync(isolateStream);
+			await client.ConnectToDestinationAsync(destination);
+			return new TorOverTcpClient(client);
+		}
+
+		/// <param name="identity">Isolates streams by identity.</param>
+		public async Task<TorOverTcpClient> EstablishTotConnectionAsync(IPEndPoint destination, string identity)
+		{
+			identity = Guard.NotNullOrEmptyOrWhitespace(nameof(identity), identity, trim: true);
+			Guard.NotNull(nameof(destination), destination);
+
+			var client = new TorSocks5Client(TorSocks5EndPoint);
+			await client.ConnectAsync();
+			await client.HandshakeAsync(identity);
+			await client.ConnectToDestinationAsync(destination);
+			return new TorOverTcpClient(client);
+		}
+
+		public async Task<TorOverTcpClient> EstablishTotConnectionAsync(string host, int port, bool isolateStream = true)
+		{
+			host = Guard.NotNullOrEmptyOrWhitespace(nameof(host), host, true);
+			Guard.MinimumAndNotNull(nameof(port), port, 0);
+
+			var client = new TorSocks5Client(TorSocks5EndPoint);
+			await client.ConnectAsync();
+			await client.HandshakeAsync(isolateStream);
+			await client.ConnectToDestinationAsync(host, port);
+			return new TorOverTcpClient(client);
+		}
+
+		/// <param name="identity">Isolates streams by identity.</param>
+		public async Task<TorSocks5Client> EstablishTcpConnectionAsync(string host, int port, string identity)
+		{
+			identity = Guard.NotNullOrEmptyOrWhitespace(nameof(identity), identity, trim: true);
+			host = Guard.NotNullOrEmptyOrWhitespace(nameof(host), host, true);
+			Guard.MinimumAndNotNull(nameof(port), port, 0);
+
+			var client = new TorSocks5Client(TorSocks5EndPoint);
+			await client.ConnectAsync();
+			await client.HandshakeAsync(identity);
 			await client.ConnectToDestinationAsync(host, port);
 			return client;
 		}
@@ -70,7 +135,6 @@ namespace DotNetTor
 		public async Task<string> ReverseResolveAsync(IPAddress iPv4, bool isolateStream = true)
 		{
 			Guard.NotNull(nameof(iPv4), iPv4);
-			Guard.Same($"{nameof(iPv4)}.{nameof(iPv4.AddressFamily)}", AddressFamily.InterNetwork, iPv4.AddressFamily);
 			
 			using (var client = new TorSocks5Client(TorSocks5EndPoint))
 			{

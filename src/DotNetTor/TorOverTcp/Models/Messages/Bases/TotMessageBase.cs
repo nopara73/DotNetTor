@@ -44,19 +44,24 @@ namespace DotNetTor.TorOverTcp.Models.Messages.Bases
 		/// Tor sends data in chunks of 512 bytes, called cells,to make it harder for intermediaries to guess exactly how many bytes are being communicated at each step. 
 		/// A developer that intends to build an application on top of ToT MAY utilize this information to gain more efficient network usage.
 		/// </summary>
-		public int GetNumberOfCells() => ToBytes().Length;
+		public int GetNumberOfCells() => ToBytes().Length / 512 + 1;
 
 		/// <summary>
 		/// Tor sends data in chunks of 512 bytes, called cells,to make it harder for intermediaries to guess exactly how many bytes are being communicated at each step. 
 		/// A developer that intends to build an application on top of ToT MAY utilize this information to gain more efficient network usage.
 		/// </summary>
-		public int GetLastCellFullnessPercentage() => (GetNumberOfDummyBytesInLastCell() / 512) * 100;
+		public int GetLastCellFullnessPercentage()
+		{
+			int v = GetNumberOfDummyBytesInLastCell();
+			decimal v1 = v / 512m;
+			return (int)(v1 * 100);
+		}
 
 		/// <summary>
 		/// Tor sends data in chunks of 512 bytes, called cells,to make it harder for intermediaries to guess exactly how many bytes are being communicated at each step. 
 		/// A developer that intends to build an application on top of ToT MAY utilize this information to gain more efficient network usage.
 		/// </summary>
-		public int GetNumberOfDummyBytesInLastCell() => GetNumberOfCells() % 512;
+		public int GetNumberOfDummyBytesInLastCell() => 512 - (ToBytes().Length % 512);
 
 		#endregion
 

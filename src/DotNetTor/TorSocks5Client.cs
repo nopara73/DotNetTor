@@ -57,15 +57,18 @@ namespace DotNetTor
 
 		#region ConstructorsAndInitializers
 
-		internal TorSocks5Client(IPEndPoint endPoint)
+		/// <param name="ipEndPoint">Opt out Tor with null.</param>
+		internal TorSocks5Client(IPEndPoint ipEndPoint)
 		{
-			TorSocks5EndPoint = Guard.NotNull(nameof(endPoint), endPoint);
+			TorSocks5EndPoint = ipEndPoint;
 			TcpClient = new TcpClient();
 			AsyncLock = new AsyncLock();
 		}
 
 		internal async Task ConnectAsync()
 		{
+			if (TorSocks5EndPoint == null) return;
+
 			using (await AsyncLock.LockAsync())
 			{
 				await TcpClient.ConnectAsync(TorSocks5EndPoint.Address, TorSocks5EndPoint.Port).ConfigureAwait(false);
@@ -80,8 +83,30 @@ namespace DotNetTor
 		/// </summary>
 		internal async Task HandshakeAsync(bool isolateStream = true)
 		{
-			MethodsField methods;
 			if (!isolateStream)
+			{
+				await HandshakeAsync("").ConfigureAwait(false);
+			}
+			else
+			{
+				await HandshakeAsync(RandomString.Generate(21)).ConfigureAwait(false);
+			}
+		}
+
+		/// <summary>
+		/// IsolateSOCKSAuth must be on (on by default)
+		/// https://www.torproject.org/docs/tor-manual.html.en
+		/// https://gitweb.torproject.org/torspec.git/tree/socks-extensions.txt#n35
+		/// </summary>
+		/// <param name="identity">Isolates streams by identity. If identity is empty string, it won't isolate stream.</param>
+		internal async Task HandshakeAsync(string identity)
+		{
+			if (TorSocks5EndPoint == null) return;
+
+			Guard.NotNull(nameof(identity), identity);
+
+			MethodsField methods;
+			if (string.IsNullOrWhiteSpace(identity))
 			{
 				methods = new MethodsField(MethodField.NoAuthenticationRequired);
 			}
@@ -115,8 +140,8 @@ namespace DotNetTor
 				// Username / Password Authentication protocol, the Username / Password
 				// subnegotiation begins.  This begins with the client producing a
 				// Username / Password request:
-				var username = RandomString.Generate(21);
-				var password = RandomString.Generate(21);
+				var username = identity;
+				var password = identity;
 				var uName = new UNameField(username);
 				var passwd = new PasswdField(password);
 				var usernamePasswordRequest = new UsernamePasswordRequest(uName, passwd);
@@ -155,6 +180,17 @@ namespace DotNetTor
 		{
 			host = Guard.NotNullOrEmptyOrWhitespace(nameof(host), host, true);
 			Guard.MinimumAndNotNull(nameof(port), port, 0);
+			
+			if (TorSocks5EndPoint == null)
+			{
+				using (await AsyncLock.LockAsync())
+				{
+					await TcpClient.ConnectAsync(host, port).ConfigureAwait(false);
+					Stream = TcpClient.GetStream();
+				}
+
+				return;
+			}
 
 			var cmd = CmdField.Connect;
 
@@ -200,7 +236,7 @@ namespace DotNetTor
 		{
 			if (!IsConnected)
 			{
-				throw new ConnectionException($"`{nameof(TorSocks5Client)}` is not connected to `{TorSocks5EndPoint}`.");
+				throw new ConnectionException($"`{nameof(TorSocks5Client)}` is not connected to `{DestinationHost}:{DestinationPort}`.");
 			}
 		}
 
@@ -281,6 +317,12 @@ namespace DotNetTor
 			// https://gitweb.torproject.org/torspec.git/tree/socks-extensions.txt#n44
 
 			host = Guard.NotNullOrEmptyOrWhitespace(nameof(host), host, true);
+			
+			if (TorSocks5EndPoint == null)
+			{
+				var hostAddresses = await Dns.GetHostAddressesAsync(host);
+				return hostAddresses.First();
+			}
 
 			var cmd = CmdField.Resolve;
 
@@ -311,6 +353,13 @@ namespace DotNetTor
 			// https://gitweb.torproject.org/torspec.git/tree/socks-extensions.txt#n55
 
 			Guard.NotNull(nameof(iPv4), iPv4);
+			
+			if (TorSocks5EndPoint == null) // Only Tor is iPv4 dependent
+			{
+				var host = await Dns.GetHostEntryAsync(iPv4);
+				return host.HostName;
+			}
+
 			Guard.Same($"{nameof(iPv4)}.{nameof(iPv4.AddressFamily)}", AddressFamily.InterNetwork, iPv4.AddressFamily);
 
 			var cmd = CmdField.ResolvePtr;

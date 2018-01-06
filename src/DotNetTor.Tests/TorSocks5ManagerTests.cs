@@ -16,12 +16,14 @@ namespace DotNetTor.Tests
 		public async Task IsolatesStreamsAsync()
 		{
 			var manager = new TorSocks5Manager(Shared.TorSock5EndPoint);
+			var clearnetManager = new TorSocks5Manager(null);
 			var clients = new HashSet<TorSocks5Client>();
 			try
 			{
 				clients.Add(await manager.EstablishTcpConnectionAsync("api.ipify.org", 80, isolateStream: true));
 				clients.Add(await manager.EstablishTcpConnectionAsync("api.ipify.org", 80, isolateStream: true));
 				clients.Add(await manager.EstablishTcpConnectionAsync("api.ipify.org", 80, isolateStream: true));
+				clients.Add(await clearnetManager.EstablishTcpConnectionAsync("api.ipify.org", 80));
 
 
 				var ips = new HashSet<string>();
@@ -32,7 +34,39 @@ namespace DotNetTor.Tests
 					ips.Add(Encoding.ASCII.GetString(response).Split("\n").Last());
 				}
 
-				Assert.Equal(3, ips.Count);
+				Assert.Equal(4, ips.Count);
+			}
+			finally
+			{
+				foreach (var client in clients)
+				{
+					client?.Dispose();
+				}
+			}
+		}
+
+		[Fact]
+		public async Task IsolatesStreamsByIdentityAsync()
+		{
+			var manager = new TorSocks5Manager(Shared.TorSock5EndPoint);
+			var clients = new HashSet<TorSocks5Client>();
+			try
+			{
+				clients.Add(await manager.EstablishTcpConnectionAsync("api.ipify.org", 80, "alice"));
+				clients.Add(await manager.EstablishTcpConnectionAsync("api.ipify.org", 80, "bob"));
+				clients.Add(await manager.EstablishTcpConnectionAsync("api.ipify.org", 80, "alice"));
+				clients.Add(await manager.EstablishTcpConnectionAsync("api.ipify.org", 80, "bob"));
+
+
+				var ips = new HashSet<string>();
+				foreach (var client in clients)
+				{
+					var sendBuff = Encoding.UTF8.GetBytes("GET / HTTP/1.1\r\nHost:api.ipify.org\r\n\r\n");
+					byte[] response = await client.SendAsync(sendBuff);
+					ips.Add(Encoding.ASCII.GetString(response).Split("\n").Last());
+				}
+
+				Assert.Equal(2, ips.Count);
 			}
 			finally
 			{
@@ -135,11 +169,15 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanResolveAsync()
 		{
-			var manager = new TorSocks5Manager(Shared.TorSock5EndPoint);
-			var r1 = await manager.ReverseResolveAsync(IPAddress.Parse("192.64.147.228"), false);
-			var r2 = await manager.ResolveAsync("google.com", false);
-			Assert.NotNull(r1);
-			Assert.NotNull(r2);
+			var torManager = new TorSocks5Manager(Shared.TorSock5EndPoint);
+			var t1 = await torManager.ReverseResolveAsync(IPAddress.Parse("192.64.147.228"), false);
+			var t2 = await torManager.ResolveAsync("google.com", false);
+
+			var clearnetManager = new TorSocks5Manager(null);
+			var c1 = await clearnetManager.ReverseResolveAsync(IPAddress.Parse("192.64.147.228"), false);
+			var c2 = await clearnetManager.ResolveAsync("google.com", false);
+
+			Assert.Equal(c1, t1);
 		}
 
 		[Fact]

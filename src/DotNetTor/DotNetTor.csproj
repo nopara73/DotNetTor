@@ -31,6 +31,7 @@
 
   <ItemGroup>
     <PackageReference Include="Nito.AsyncEx.Coordination" Version="1.0.2" />
+    <PackageReference Include="System.Net.NameResolution" Version="4.3.0" />
     <PackageReference Include="System.Net.Security" Version="4.3.2" />
   </ItemGroup>
 

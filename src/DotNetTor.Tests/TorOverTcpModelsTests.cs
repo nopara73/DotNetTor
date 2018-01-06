@@ -169,6 +169,10 @@ namespace DotNetTor.Tests
 			Assert.Equal(TotPurpose.UnsuccessfulRequest, TotResponse.UnsuccessfulRequest.Purpose);
 
 			var x = new TotRequest("status");
+
+			Assert.Equal(97, x.GetLastCellFullnessPercentage());
+			Assert.Equal(1, x.GetNumberOfCells());
+			Assert.Equal(499, x.GetNumberOfDummyBytesInLastCell());
 		}
 	}
 }
