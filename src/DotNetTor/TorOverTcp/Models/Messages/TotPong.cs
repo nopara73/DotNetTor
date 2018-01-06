@@ -30,5 +30,28 @@ namespace DotNetTor.TorOverTcp.Models.Messages
 		}
 
 		#endregion
+
+		#region Serialization
+
+		public override void FromBytes(byte[] bytes)
+		{
+			Guard.NotNullOrEmpty(nameof(bytes), bytes);
+
+			base.FromBytes(bytes);
+
+			var expectedMessageType = TotMessageType.Pong;
+			if (MessageType != expectedMessageType)
+			{
+				throw new FormatException($"Wrong `{nameof(MessageType)}`. Expected: `{expectedMessageType}`. Actual: `{MessageType}`.");
+			}
+
+			var expectedPurpose = TotPurpose.Pong;
+			if (Purpose != expectedPurpose)
+			{
+				throw new FormatException($"Wrong `{nameof(Purpose)}`. Expected: `{expectedPurpose}`. Actual: `{Purpose}`.");
+			}
+		}
+
+		#endregion
 	}
 }

@@ -2,6 +2,7 @@
 using DotNetTor.TorOverTcp.Models.Messages.Bases;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace DotNetTor.TorOverTcp.Models.Messages
@@ -52,6 +53,30 @@ namespace DotNetTor.TorOverTcp.Models.Messages
 				&& purpose != TotPurpose.UnsuccessfulRequest)
 			{
 				throw new ArgumentException($"`{nameof(purpose)}` of `{nameof(TotResponse)}` can only be `{TotPurpose.Success}`, `{TotPurpose.BadRequest}`, `{TotPurpose.VersionMismatch}` or `{TotPurpose.UnsuccessfulRequest}`. Actual: `{purpose}`.");
+			}
+		}
+
+		#endregion
+
+		#region Serialization
+
+		public override void FromBytes(byte[] bytes)
+		{
+			Guard.NotNullOrEmpty(nameof(bytes), bytes);
+
+			base.FromBytes(bytes);
+
+			var expectedMessageType = TotMessageType.Response;
+			if (MessageType != expectedMessageType)
+			{
+				throw new FormatException($"Wrong `{nameof(MessageType)}`. Expected: `{expectedMessageType}`. Actual: `{MessageType}`.");
+			}
+
+			var validPurposes = new TotPurpose[] { TotPurpose.Success, TotPurpose.BadRequest, TotPurpose.VersionMismatch, TotPurpose.UnsuccessfulRequest };
+			
+			if (!validPurposes.Contains(Purpose))
+			{
+				throw new FormatException($"Wrong `{nameof(Purpose)}`. Value: `{Purpose}`.");
 			}
 		}
 

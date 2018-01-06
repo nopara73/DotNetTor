@@ -64,12 +64,12 @@ namespace DotNetTor
 			// A sender MUST NOT generate an "http" URI with an empty host identifier.
 			var host = Guard.NotNullOrEmptyOrWhitespace($"{nameof(request)}.{nameof(request.RequestUri)}.{nameof(request.RequestUri.DnsSafeHost)}", request.RequestUri.DnsSafeHost, trim: true);
 
-			using (await DisposeRequestLock.ReaderLockAsync())
-			using (var connectLockTask = await ConnectLock.LockAsync().ConfigureAwait(false)) // this makes sure clients with the same host don't try to connect concurrently, it gets released after connection established
+			using (await DisposeRequestLock.ReaderLockAsync(cancel).ConfigureAwait(false))
+			using (var connectLockTask = await ConnectLock.LockAsync(cancel).ConfigureAwait(false)) // this makes sure clients with the same host don't try to connect concurrently, it gets released after connection established
 			{
 				KeyValuePair<TorSocks5Client, AsyncLock> clientLockPair = TryFindClientLockPair(host, request.RequestUri.Port);
 				AsyncLock clientLock = clientLockPair.Value ?? new AsyncLock(); // this makes sure clients with the same host don't work concurrently
-				using (await clientLock.LockAsync().ConfigureAwait(false))
+				using (await clientLock.LockAsync(cancel).ConfigureAwait(false))
 				{
 					TorSocks5Client client;
 					// https://tools.ietf.org/html/rfc7230#section-2.6
@@ -88,6 +88,7 @@ namespace DotNetTor
 
 					if (client == null || !client.IsConnected)
 					{
+						cancel.ThrowIfCancellationRequested();
 						client = await TorSocks5Manager.EstablishTcpConnectionAsync(host, request.RequestUri.Port, isolateStream: true).ConfigureAwait(false);
 						cancel.ThrowIfCancellationRequested();
 
