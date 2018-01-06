@@ -89,7 +89,7 @@ For a `SubscribeRequest` to a `RequestResponse` channel the server MUST respond 
 
 ## 4. Keeping Channels Alive
 
-Tor keeps its circuits alive, as long as they are used. Potentially forever. If a circuit fails, Tor will switch to a new circuit immediately. To make sure is a `SubscribeNotify` channel all notifications are delivered, the developer MAY consider implementing a redundant `SubscribeNotify` channel on an isolated stream.  
+Tor keeps its circuits alive, as long as they are used. Potentially forever. If a circuit fails, Tor will switch to a new circuit immediately. To make sure in a `SubscribeNotify` channel all notifications are delivered, the developer MAY consider implementing a redundant `SubscribeNotify` channel on an isolated stream.  
 
 ### 4.1 Ping Pong
 
