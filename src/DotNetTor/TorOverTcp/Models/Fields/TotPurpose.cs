@@ -84,13 +84,13 @@ namespace DotNetTor.TorOverTcp.Models.Fields
 			{
 				if (bytes.Length < 1)
 				{
-					throw new FormatException($"`{nameof(purposeBytes)}.{nameof(purposeBytes.Length)}` cannot be less than 1. Actual: `{purposeBytes.Length}`.");
+					throw new FormatException($"{nameof(purposeBytes)}.{nameof(purposeBytes.Length)} cannot be less than 1. Actual: {purposeBytes.Length}.");
 				}
 
 				purposeBytes = bytes.Skip(1).ToArray();
 				if(bytes[0] != purposeBytes.Length)
 				{
-					throw new FormatException($"`{nameof(purposeBytes)}.{nameof(purposeBytes.Length)}` doesn't equal to the first byte's value. First byte: `{(int)bytes[0]}`. `{nameof(purposeBytes)}.{nameof(purposeBytes.Length)}`: `{purposeBytes.Length}`.");
+					throw new FormatException($"{nameof(purposeBytes)}.{nameof(purposeBytes.Length)} doesn't equal to the first byte's value. First byte: {(int)bytes[0]}. {nameof(purposeBytes)}.{nameof(purposeBytes.Length)}: {purposeBytes.Length}.");
 				}
 			}
 

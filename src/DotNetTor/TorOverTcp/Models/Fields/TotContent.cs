@@ -84,19 +84,19 @@ namespace DotNetTor.TorOverTcp.Models.Fields
 			{
 				if (bytes.Length < 4)
 				{
-					throw new FormatException($"`{nameof(contentBytes)}.{nameof(contentBytes.Length)}` cannot be less than 4. Actual: `{contentBytes.Length}`.");
+					throw new FormatException($"{nameof(contentBytes)}.{nameof(contentBytes.Length)} cannot be less than 4. Actual: {contentBytes.Length}.");
 				}
 
 				contentBytes = bytes.Skip(4).ToArray();
 				int startingLength = BitConverter.ToInt32(bytes.Take(4).ToArray(), 0);
 				// 536870912 byte is 512MB and the maximum number of bytes the Content field can hold.
 				// At deserialization, compliant implementations MUST validate the ContentLength field is within range.
-				if (startingLength < 0) throw new FormatException($"`{nameof(startingLength)}` must be minimum at least 0. Value: `{startingLength}`.");
-				if(startingLength > 536870912) throw new FormatException($"`{nameof(startingLength)}` must be minimum at maximum 536870912. Value: `{startingLength}`.");
+				if (startingLength < 0) throw new FormatException($"{nameof(startingLength)} must be minimum at least 0. Value: {startingLength}.");
+				if(startingLength > 536870912) throw new FormatException($"{nameof(startingLength)} must be minimum at maximum 536870912. Value: {startingLength}.");
 
 				if (startingLength != contentBytes.Length)
 				{
-					throw new FormatException($"`{nameof(contentBytes)}.{nameof(contentBytes.Length)}` doesn't equal to the signaled `{nameof(startingLength)}`. `{nameof(startingLength)}`: `{startingLength}`. `{nameof(contentBytes)}.{nameof(contentBytes.Length)}`: `{contentBytes.Length}`.");
+					throw new FormatException($"{nameof(contentBytes)}.{nameof(contentBytes.Length)} doesn't equal to the signaled {nameof(startingLength)}. {nameof(startingLength)}: {startingLength}. {nameof(contentBytes)}.{nameof(contentBytes.Length)}: {contentBytes.Length}.");
 				}
 			}
 

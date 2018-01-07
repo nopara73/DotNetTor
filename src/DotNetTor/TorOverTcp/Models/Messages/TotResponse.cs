@@ -52,7 +52,7 @@ namespace DotNetTor.TorOverTcp.Models.Messages
 				&& purpose != TotPurpose.VersionMismatch 
 				&& purpose != TotPurpose.UnsuccessfulRequest)
 			{
-				throw new ArgumentException($"`{nameof(purpose)}` of `{nameof(TotResponse)}` can only be `{TotPurpose.Success}`, `{TotPurpose.BadRequest}`, `{TotPurpose.VersionMismatch}` or `{TotPurpose.UnsuccessfulRequest}`. Actual: `{purpose}`.");
+				throw new ArgumentException($"{nameof(purpose)} of {nameof(TotResponse)} can only be {TotPurpose.Success}, {TotPurpose.BadRequest}, {TotPurpose.VersionMismatch} or {TotPurpose.UnsuccessfulRequest}. Actual: {purpose}.");
 			}
 		}
 
@@ -69,14 +69,14 @@ namespace DotNetTor.TorOverTcp.Models.Messages
 			var expectedMessageType = TotMessageType.Response;
 			if (MessageType != expectedMessageType)
 			{
-				throw new FormatException($"Wrong `{nameof(MessageType)}`. Expected: `{expectedMessageType}`. Actual: `{MessageType}`.");
+				throw new FormatException($"Wrong {nameof(MessageType)}. Expected: {expectedMessageType}. Actual: {MessageType}.");
 			}
 
 			var validPurposes = new TotPurpose[] { TotPurpose.Success, TotPurpose.BadRequest, TotPurpose.VersionMismatch, TotPurpose.UnsuccessfulRequest };
 			
 			if (!validPurposes.Contains(Purpose))
 			{
-				throw new FormatException($"Wrong `{nameof(Purpose)}`. Value: `{Purpose}`.");
+				throw new FormatException($"Wrong {nameof(Purpose)}. Value: {Purpose}.");
 			}
 		}
 

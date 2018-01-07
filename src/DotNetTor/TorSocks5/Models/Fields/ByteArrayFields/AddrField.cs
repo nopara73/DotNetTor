@@ -33,7 +33,7 @@ namespace DotNetTor.TorSocks5.Models.TorSocks5.Fields.ByteArrayFields
 				}
 				else
 				{
-					throw new NotSupportedException($"`{nameof(Atyp)}` is not supported. Value: `{Atyp}`.");
+					throw new NotSupportedException($"{nameof(Atyp)} is not supported. Value: {Atyp}.");
 				}
 			}
 		}
@@ -68,7 +68,7 @@ namespace DotNetTor.TorSocks5.Models.TorSocks5.Fields.ByteArrayFields
 				var numberOfOctets = domainBytes.Length;
 				if (numberOfOctets > 255)
 				{
-					throw new FormatException($"`{nameof(dstAddr)}` can be maximum 255 octets. Actual: `{numberOfOctets}` octets. Value: `{dstAddr}`.");
+					throw new FormatException($"{nameof(dstAddr)} can be maximum 255 octets. Actual: {numberOfOctets} octets. Value: {dstAddr}.");
 				}
 
 				bytes = ByteHelpers.Combine(new byte[] { (byte)numberOfOctets }, domainBytes);
@@ -79,7 +79,7 @@ namespace DotNetTor.TorSocks5.Models.TorSocks5.Fields.ByteArrayFields
 				var parts = dstAddr.Split(".", StringSplitOptions.RemoveEmptyEntries);
 				if(parts.Length != 4 || parts.Any(x => string.IsNullOrWhiteSpace(x)))
 				{
-					throw new FormatException($"`{nameof(dstAddr)}` must be have 4 parts. Actual: `{parts.Length}` parts. Value: `{dstAddr}`.");
+					throw new FormatException($"{nameof(dstAddr)} must be have 4 parts. Actual: {parts.Length} parts. Value: {dstAddr}.");
 				}
 
 				bytes = new byte[4];
@@ -89,19 +89,19 @@ namespace DotNetTor.TorSocks5.Models.TorSocks5.Fields.ByteArrayFields
 					{
 						if(partInt < 0 || partInt > 255)
 						{
-							throw new FormatException($"`Every part of `{nameof(dstAddr)}` must be between 0 and 255. The {i}. part is invalid: `{partInt}`. Value of `{nameof(dstAddr)}`: `{dstAddr}`");
+							throw new FormatException($"`Every part of {nameof(dstAddr)} must be between 0 and 255. The {i}. part is invalid: {partInt}. Value of {nameof(dstAddr)}: {dstAddr}");
 						}
 						bytes[i] = (byte)partInt;
 					}
 					else
 					{
-						throw new FormatException($"Couldn't parse the {i}. part of `{nameof(dstAddr)}` to int. Invalid part: `{partInt}`. Value of `{nameof(dstAddr)}`: `{dstAddr}`.");
+						throw new FormatException($"Couldn't parse the {i}. part of {nameof(dstAddr)} to int. Invalid part: {partInt}. Value of {nameof(dstAddr)}: {dstAddr}.");
 					}
 				}
 			}
 			else
 			{
-				throw new NotSupportedException($"`{nameof(atyp)}` is not supported. Value: `{atyp}`.");
+				throw new NotSupportedException($"{nameof(atyp)} is not supported. Value: {atyp}.");
 			}
 
 			Bytes = bytes;
@@ -126,7 +126,7 @@ namespace DotNetTor.TorSocks5.Models.TorSocks5.Fields.ByteArrayFields
 			}
 			else
 			{
-				throw new FormatException($"Couldn't read IPv4 or domain name from `{nameof(bytes)}`. Value: `{bytes}`.");
+				throw new FormatException($"Couldn't read IPv4 or domain name from {nameof(bytes)}. Value: {bytes}.");
 			}
 
 			Atyp = atyp;

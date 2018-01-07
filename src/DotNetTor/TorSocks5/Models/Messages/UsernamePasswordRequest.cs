@@ -66,7 +66,7 @@ namespace DotNetTor.TorSocks5.Models.Messages
 			int expectedPlenValue = bytes.Length - 3 + ULen.Value;
 			if (PLen.Value != expectedPlenValue)
 			{
-				throw new FormatException($"`{nameof(PLen)}.{nameof(PLen.Value)}` must be `{nameof(bytes)}.{nameof(bytes.Length)}` - 3 + `{nameof(ULen)}.{nameof(ULen.Value)}` = `{expectedPlenValue}`. Actual: `{PLen.Value}`.");
+				throw new FormatException($"{nameof(PLen)}.{nameof(PLen.Value)} must be {nameof(bytes)}.{nameof(bytes.Length)} - 3 + {nameof(ULen)}.{nameof(ULen.Value)} = {expectedPlenValue}. Actual: {PLen.Value}.");
 			}
 			Passwd.FromBytes(bytes.Skip(3 + ULen.Value).ToArray());
 		}

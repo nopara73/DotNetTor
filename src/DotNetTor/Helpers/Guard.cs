@@ -42,7 +42,7 @@ namespace System
 
 			if(!expected.Equals(actual))
 			{
-				throw new ArgumentException($"`Parameter must be `{expected}`. Actual: `{actual}`.", parameterName);
+				throw new ArgumentException($"`Parameter must be {expected}. Actual: {actual}.", parameterName);
 			}
 
 			return actual;
@@ -98,7 +98,7 @@ namespace System
 
 			if (value < smallest)
 			{
-				throw new ArgumentOutOfRangeException(parameterName, value, $"Parameter cannot be less than `{smallest}`.");
+				throw new ArgumentOutOfRangeException(parameterName, value, $"Parameter cannot be less than {smallest}.");
 			}
 
 			return (int)value;
@@ -110,7 +110,7 @@ namespace System
 
 			if (value > greatest)
 			{
-				throw new ArgumentOutOfRangeException(parameterName, value, $"Parameter cannot be greater than `{greatest}`.");
+				throw new ArgumentOutOfRangeException(parameterName, value, $"Parameter cannot be greater than {greatest}.");
 			}
 
 			return (int)value;

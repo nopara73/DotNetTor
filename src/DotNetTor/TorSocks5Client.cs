@@ -123,7 +123,7 @@ namespace DotNetTor
 			methodSelection.FromBytes(receiveBuffer);
 			if (methodSelection.Ver != VerField.Socks5)
 			{
-				throw new NotSupportedException($"`SOCKS{methodSelection.Ver.Value}` is not supported. Only SOCKS5 is supported.");
+				throw new NotSupportedException($"`SOCKS{methodSelection.Ver.Value} is not supported. Only SOCKS5 is supported.");
 			}
 			if (methodSelection.Method == MethodField.NoAcceptableMethods)
 			{
@@ -154,7 +154,7 @@ namespace DotNetTor
 				userNamePasswordResponse.FromBytes(receiveBuffer);
 				if (userNamePasswordResponse.Ver != usernamePasswordRequest.Ver)
 				{
-					throw new NotSupportedException($"Authentication version {userNamePasswordResponse.Ver.Value}` is not supported. Only version {usernamePasswordRequest.Ver} is supported.");
+					throw new NotSupportedException($"Authentication version {userNamePasswordResponse.Ver.Value} is not supported. Only version {usernamePasswordRequest.Ver} is supported.");
 				}
 
 				if (!userNamePasswordResponse.Status.IsSuccess()) // In Tor authentication is different, this will never happen;
@@ -236,7 +236,7 @@ namespace DotNetTor
 		{
 			if (!IsConnected)
 			{
-				throw new ConnectionException($"`{nameof(TorSocks5Client)}` is not connected to `{DestinationHost}:{DestinationPort}`.");
+				throw new ConnectionException($"{nameof(TorSocks5Client)} is not connected to {DestinationHost}:{DestinationPort}.");
 			}
 		}
 
@@ -266,22 +266,22 @@ namespace DotNetTor
 				// If receiveBufferSize is null, zero or negative or bigger than TcpClient.ReceiveBufferSize
 				// then work with TcpClient.ReceiveBufferSize
 				var tcpReceiveBuffSize = TcpClient.ReceiveBufferSize;
-				var actualReceiveBuffSize = 0;
+				var actualReceiveBufferSize = 0;
 				if (receiveBufferSize == null || receiveBufferSize <= 0 || receiveBufferSize > tcpReceiveBuffSize)
 				{
-					actualReceiveBuffSize = tcpReceiveBuffSize;
+					actualReceiveBufferSize = tcpReceiveBuffSize;
 				}
 				else
 				{
-					actualReceiveBuffSize = (int)receiveBufferSize;
+					actualReceiveBufferSize = (int)receiveBufferSize;
 				}
 
 				// Receive the response
-				var receiveBuffer = new byte[actualReceiveBuffSize];
-				int receiveCount = await stream.ReadAsync(receiveBuffer, 0, actualReceiveBuffSize).ConfigureAwait(false);
+				var receiveBuffer = new byte[actualReceiveBufferSize];
+				int receiveCount = await stream.ReadAsync(receiveBuffer, 0, actualReceiveBufferSize).ConfigureAwait(false);
 				if (receiveCount <= 0)
 				{
-					throw new ConnectionException($"Not connected to Tor SOCKS5 proxy: `{TorSocks5EndPoint}`.");
+					throw new ConnectionException($"Not connected to Tor SOCKS5 proxy: {TorSocks5EndPoint}.");
 				}
 				// if we could fit everything into our buffer, then return it
 				if(!stream.DataAvailable)
@@ -295,10 +295,10 @@ namespace DotNetTor
 				while (stream.DataAvailable)
 				{
 					Array.Clear(receiveBuffer, 0, receiveBuffer.Length);
-					receiveCount = await stream.ReadAsync(receiveBuffer, 0, actualReceiveBuffSize).ConfigureAwait(false);
+					receiveCount = await stream.ReadAsync(receiveBuffer, 0, actualReceiveBufferSize).ConfigureAwait(false);
 					if (receiveCount <= 0)
 					{
-						throw new ConnectionException($"Not connected to Tor SOCKS5 proxy: `{TorSocks5EndPoint}`.");
+						throw new ConnectionException($"Not connected to Tor SOCKS5 proxy: {TorSocks5EndPoint}.");
 					}
 					builder.Append(receiveBuffer.Take(receiveCount).ToArray());
 				}

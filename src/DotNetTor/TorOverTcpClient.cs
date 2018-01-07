@@ -97,7 +97,7 @@ namespace DotNetTor
 		{
 			if (expected != actual)
 			{
-				throw new TotRequestException($"Server responded with wrong version. Expected: `{expected}`. Actual: `{actual}`.");
+				throw new TotRequestException($"Server responded with wrong version. Expected: {expected}. Actual: {actual}.");
 			}
 		}
 
@@ -105,10 +105,10 @@ namespace DotNetTor
 		{
 			if (response != TotResponse.Success)
 			{
-				string errorMessage = $"Server responded with `{response.Purpose}`.";
+				string errorMessage = $"Server responded with {response.Purpose}.";
 				if (response.Content != TotContent.Empty)
 				{
-					errorMessage += $" Details: `{response.Content}`.";
+					errorMessage += $" Details: {response.Content}.";
 				}
 				throw new TotRequestException(errorMessage);
 			}

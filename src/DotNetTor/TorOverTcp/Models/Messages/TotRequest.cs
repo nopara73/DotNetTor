@@ -43,7 +43,7 @@ namespace DotNetTor.TorOverTcp.Models.Messages
 			var expectedMessageType = TotMessageType.Request;
 			if (MessageType != expectedMessageType)
 			{
-				throw new FormatException($"Wrong `{nameof(MessageType)}`. Expected: `{expectedMessageType}`. Actual: `{MessageType}`.");
+				throw new FormatException($"Wrong {nameof(MessageType)}. Expected: {expectedMessageType}. Actual: {MessageType}.");
 			}
 		}
 
