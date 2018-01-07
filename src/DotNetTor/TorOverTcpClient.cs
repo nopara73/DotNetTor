@@ -29,12 +29,42 @@ namespace DotNetTor
 
 		#endregion
 
-		#region Methods
+		#region ServerMethods
+		
+		/// <summary>
+		/// throws on failure
+		/// </summary>
+		public async Task RespondAsync(TotResponse response)
+		{
+			Guard.NotNull(nameof(response), response);
+
+			var stream = TorSocks5Client.Stream;
+
+			var responseBytes = response.ToBytes();
+			await stream.WriteAsync(responseBytes, 0, responseBytes.Length).ConfigureAwait(false);
+			await stream.FlushAsync().ConfigureAwait(false);
+		}
 
 		/// <summary>
 		/// throws on failure
 		/// </summary>
-		public async Task<TotContent> SendAsync(TotRequest request)
+		public async Task PongAsync()
+		{
+			var stream = TorSocks5Client.Stream;
+
+			var responseBytes = TotPong.Instance.ToBytes();
+			await stream.WriteAsync(responseBytes, 0, responseBytes.Length).ConfigureAwait(false);
+			await stream.FlushAsync().ConfigureAwait(false);
+		}
+
+		#endregion
+
+		#region ClientMethods
+
+		/// <summary>
+		/// throws on failure
+		/// </summary>
+		public async Task<TotContent> RequestAsync(TotRequest request)
 		{
 			Guard.NotNull(nameof(request), request);
 
@@ -103,7 +133,7 @@ namespace DotNetTor
 
 		private static void AssertSuccess(TotResponse response)
 		{
-			if (response != TotResponse.Success)
+			if (response.Purpose != TotPurpose.Success)
 			{
 				string errorMessage = $"Server responded with {response.Purpose}.";
 				if (response.Content != TotContent.Empty)

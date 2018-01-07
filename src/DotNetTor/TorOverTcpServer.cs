@@ -19,7 +19,7 @@ namespace DotNetTor
 
 		public TcpListener TcpListener { get; }
 		
-		public ConcurrentHashSet<TcpClient> Clients { get; }
+		public ConcurrentHashSet<TorOverTcpClient> Clients { get; }
 		public ConcurrentHashSet<Task> ClientListeners { get; }
 
 		private Task AcceptTcpConnectionsTask { get; set; }
@@ -33,7 +33,7 @@ namespace DotNetTor
 		{
 			Guard.NotNull(nameof(bindToEndPoint), bindToEndPoint);
 			TcpListener = new TcpListener(bindToEndPoint);
-			Clients = new ConcurrentHashSet<TcpClient>();
+			Clients = new ConcurrentHashSet<TorOverTcpClient>();
 			ClientListeners = new ConcurrentHashSet<Task>();
 			StopAcceptingTcpConnections = new CancellationTokenSource();
 		}
@@ -60,9 +60,12 @@ namespace DotNetTor
 
 				try
 				{
-					TcpClient client = await TcpListener.AcceptTcpClientAsync().WithAwaitCancellationAsync(cancel).ConfigureAwait(false);
-					Console.WriteLine($"Client connected: {client.Client.RemoteEndPoint}");
+					TcpClient tcpClient = await TcpListener.AcceptTcpClientAsync().WithAwaitCancellationAsync(cancel).ConfigureAwait(false);
+					Console.WriteLine($"Client connected: {tcpClient.Client.RemoteEndPoint}");
 					Console.WriteLine($"Number of clients: {Clients.Count}");
+
+					var ts5Client = new TorSocks5Client(tcpClient);
+					var client = new TorOverTcpClient(ts5Client);
 					Clients.Add(client);
 
 					// Start listening for incoming data
@@ -86,14 +89,14 @@ namespace DotNetTor
 			}
 		}
 
-		private async Task ListenClientAsync(TcpClient client, CancellationToken cancel)
+		private async Task ListenClientAsync(TorOverTcpClient client, CancellationToken cancel)
 		{
 			Guard.NotNull(nameof(client), client);
 			Guard.NotNull(nameof(cancel), cancel);
 
 			try
 			{
-				var stream = client.GetStream();
+				var stream = client.TorSocks5Client.TcpClient.GetStream();
 				var receiveBufferSize = 2048;
 				// Receive the response
 				var receiveBuffer = new byte[receiveBufferSize];
@@ -105,7 +108,7 @@ namespace DotNetTor
 					int receiveCount = await stream.ReadAsync(receiveBuffer, 0, receiveBufferSize, cancel).WithAwaitCancellationAsync(cancel).ConfigureAwait(false);
 					if (receiveCount <= 0)
 					{
-				RemoveClient(client);
+						RemoveClient(client);
 						break;
 					}
 					// if we could fit everything into our buffer, then return it
@@ -113,7 +116,7 @@ namespace DotNetTor
 					{
 						await HandleRequestAsync(client, receiveBuffer.Take(receiveCount).ToArray()).ConfigureAwait(false);
 						Array.Clear(receiveBuffer, 0, receiveBuffer.Length);
-						break;
+						continue;
 					}
 
 					// while we have data available, start building a bytearray
@@ -136,7 +139,7 @@ namespace DotNetTor
 					Array.Clear(receiveBuffer, 0, receiveBuffer.Length);
 				}
 			}
-			catch(OperationCanceledException)
+			catch (OperationCanceledException)
 			{
 				RemoveClient(client);
 			}
@@ -147,51 +150,50 @@ namespace DotNetTor
 			}
 		}
 
-		private async Task HandleRequestAsync(TcpClient client, byte[] bytes)
+		private async Task HandleRequestAsync(TorOverTcpClient client, byte[] bytes)
 		{
 			Guard.NotNull(nameof(client), client);
 			Guard.NotNullOrEmpty(nameof(bytes), bytes);
-			Guard.InRangeAndNotNull($"{nameof(bytes)}.{nameof(bytes.Length)}", bytes.Length, 7, 536870912 + 3 + 4 + 255);
 
-			var stream = client.GetStream();
+			try
+			{
+				var messageType = new TotMessageType();
+				messageType.FromByte(bytes[1]);
 
-			var messageType = new TotMessageType();
-			messageType.FromByte(bytes[1]);
-
-			if(messageType == TotMessageType.Ping)
-			{
-				var request = new TotPing();
-				request.FromBytes(bytes);
-
-				var response = TotPong.Instance;
-				var responseBytes = response.ToBytes();
-				await stream.WriteAsync(responseBytes, 0, responseBytes.Length).ConfigureAwait(false);
-				await stream.FlushAsync().ConfigureAwait(false);
+				if (messageType == TotMessageType.Ping)
+				{
+					var request = new TotPing();
+					request.FromBytes(bytes);
+					
+					await client.PongAsync();
+				}
+				else if (messageType == TotMessageType.Request)
+				{
+					var request = new TotRequest();
+					request.FromBytes(bytes);
+					OnRequestArrived(client, request);
+				}
+				else if (messageType == TotMessageType.SubscribeRequest)
+				{
+					var request = new TotSubscribeRequest();
+					request.FromBytes(bytes);
+					OnSubscribeRequestArrived(client, request);
+				}
+				else if (messageType == TotMessageType.UnsubscribeRequest)
+				{
+					var request = new TotUnsubscribeRequest();
+					request.FromBytes(bytes);
+					OnUnsubscribeRequestArrived(client, request);
+				}
+				else
+				{
+					var notSupportedMessageTypeResponse = new TotResponse(TotPurpose.BadRequest, new TotContent($"Message type is not supported. Value: {messageType}."));
+					await client.RespondAsync(notSupportedMessageTypeResponse);
+				}
 			}
-			else if (messageType == TotMessageType.Request)
+			catch
 			{
-				var request = new TotRequest();
-				request.FromBytes(bytes);
-				OnRequestArrived(request);
-			}
-			else if (messageType == TotMessageType.SubscribeRequest)
-			{
-				var request = new TotSubscribeRequest();
-				request.FromBytes(bytes);
-				OnSubscribeRequestArrived(request);
-			}
-			else if (messageType == TotMessageType.UnsubscribeRequest)
-			{
-				var request = new TotUnsubscribeRequest();
-				request.FromBytes(bytes);
-				OnUnsubscribeRequestArrived(request);
-			}
-			else
-			{
-				var notSupportedMessageType = new TotResponse(TotPurpose.BadRequest, new TotContent($"Message type is not supported. Value: {messageType}."));
-				var notSupportedMessageTypeBytes = TotResponse.BadRequest.ToBytes();
-				await stream.WriteAsync(notSupportedMessageTypeBytes, 0, notSupportedMessageTypeBytes.Length).ConfigureAwait(false);
-				await stream.FlushAsync().ConfigureAwait(false);
+				await client.RespondAsync(TotResponse.BadRequest);
 			}
 		}
 
@@ -200,13 +202,13 @@ namespace DotNetTor
 		#region Events
 
 		public event EventHandler<TotRequest> RequestArrived;
-		public void OnRequestArrived(TotRequest request) => RequestArrived?.Invoke(this, request);
+		public void OnRequestArrived(TorOverTcpClient client, TotRequest request) => RequestArrived?.Invoke(client, request);
 
 		public event EventHandler<TotSubscribeRequest> SubscribeRequestArrived;
-		public void OnSubscribeRequestArrived(TotSubscribeRequest request) => SubscribeRequestArrived?.Invoke(this, request);
+		public void OnSubscribeRequestArrived(TorOverTcpClient client, TotSubscribeRequest request) => SubscribeRequestArrived?.Invoke(client, request);
 
 		public event EventHandler<TotUnsubscribeRequest> UnsubscribeRequestArrived;
-		public void OnUnsubscribeRequestArrived(TotUnsubscribeRequest request) => UnsubscribeRequestArrived?.Invoke(this, request);
+		public void OnUnsubscribeRequestArrived(TorOverTcpClient client, TotUnsubscribeRequest request) => UnsubscribeRequestArrived?.Invoke(client, request);
 
 		#endregion
 
@@ -239,29 +241,9 @@ namespace DotNetTor
 			}
 		}
 
-		private void RemoveClient(TcpClient client)
+		private void RemoveClient(TorOverTcpClient client)
 		{
 			Clients.TryRemove(client);
-			DisposeTcpClient(client);
-		}
-
-		private static void DisposeTcpClient(TcpClient client)
-		{
-			try
-			{
-				if (client != null)
-				{
-					if (client.Connected)
-					{
-						client.GetStream().Dispose();
-					}
-					client?.Dispose();
-				}
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine(ex);
-			}
 			client?.Dispose();
 		}
 

@@ -25,7 +25,7 @@ namespace DotNetTor
 		public IPEndPoint TorSocks5EndPoint { get; private set; }
 
 		public Stream Stream { get; internal set; }
-		
+
 		public string DestinationHost { get; private set; }
 
 		public int DestinationPort { get; private set; }
@@ -63,6 +63,19 @@ namespace DotNetTor
 			TorSocks5EndPoint = ipEndPoint;
 			TcpClient = new TcpClient();
 			AsyncLock = new AsyncLock();
+		}
+		
+		/// <param name="tcpClient">Must be already connected.</param>
+		internal TorSocks5Client(TcpClient tcpClient)
+		{
+			Guard.NotNull(nameof(tcpClient), tcpClient);
+			TcpClient = tcpClient;
+			Stream = tcpClient.GetStream();
+			TorSocks5EndPoint = null;
+			var remoteParts = tcpClient.Client.RemoteEndPoint.ToString().Split(":");
+			DestinationHost = remoteParts[0];
+			DestinationPort = int.Parse(remoteParts[1]);
+			AssertConnected();
 		}
 
 		internal async Task ConnectAsync()
@@ -236,7 +249,7 @@ namespace DotNetTor
 		{
 			if (!IsConnected)
 			{
-				throw new ConnectionException($"{nameof(TorSocks5Client)} is not connected to {DestinationHost}:{DestinationPort}.");
+				throw new ConnectionException($"{nameof(TorSocks5Client)} is not connected to {TcpClient.Client.RemoteEndPoint}.");
 			}
 		}
 
