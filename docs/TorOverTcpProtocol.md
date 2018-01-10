@@ -37,9 +37,8 @@ ToT uses UTF8 byte encoding, except for its `Content` field. Encoding of the `Co
 
 `X'01'` - `Request`: Issued by the client. A `Response` MUST follow it.  
 `X'02'` - `Response`: Issued by the server. A `Request` MUST precede it.  
-`X'03'` - `SubscribeRequest`: Issued by the client. A `Response` MUST follow it.  
-`X'04'` - `UnsubscribeRequest`: Issued by the client. A `Response` MUST follow it.  
-`X'05'` - `Notification`: Issued by the server. It MUST be issued between a `SubscribeRequest` and an `UnsubscribeRequest`.  
+`X'03'` - `SubscribeRequest`: Issued by the client. A `Response` MUST follow it.   
+`X'05'` - `Notification`: Issued by the server. It MUST NOT be issued before a `SubscribeRequest`.  
 `X'06'` - `Ping`: A `Pong` MUST follow it.  
 `X'07'` - `Pong`: A `Ping` MUST precede it.
 
@@ -49,9 +48,9 @@ ToT uses UTF8 byte encoding, except for its `Content` field. Encoding of the `Co
 
 The `Purpose` of `Request` is arbitrary.
 
-#### 2.2.1 Purpose of SubscribeRequest, UnsubscribeRequest and Notification
+#### 2.2.1 Purpose of SubscribeRequest and Notification
 
-The `Purpose` of `SubscribeRequest`, `UnsubscribeRequest` and `Notification` is arbitrary, but clients and servers MUST implement the same `Purpose` for all three.
+The `Purpose` of `SubscribeRequest` and `Notification` is arbitrary, but clients and servers MUST implement the same `Purpose` for all three.
 
 #### 2.2.3 Purpose of Response
 
@@ -106,7 +105,7 @@ This ping-pong MAY be also used to quicktest network performance.
 
 ## 5. Closing the Channel
 
-Closing the TCP connection both in `RequestResponse` and `SubscribeNotify` channels are a proper way to close the channel. In a `SubscribeNotify` channel, the client MAY issue the `UnsubscribeRequest`s, before closing the TCP connection.
+Closing the TCP connection both in `RequestResponse` and `SubscribeNotify` channels are a proper way to close the channel.
 
 ## 6. Design Considerations
 
