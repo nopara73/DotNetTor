@@ -25,12 +25,7 @@ namespace DotNetTor.TorOverTcp.Models.Fields
 		public static TotMessageType SubscribeRequest => new TotMessageType(3);
 
 		/// <summary>
-		/// Issued by the client. A Response MUST follow it.
-		/// </summary>
-		public static TotMessageType UnsubscribeRequest => new TotMessageType(4);
-
-		/// <summary>
-		/// Issued by the server. It MUST be issued between a SubscribeRequest and an UnsubscribeRequest.
+		/// Issued by the server. It MUST NOT be issued before a SubscribeRequest.
 		/// </summary>
 		public static TotMessageType Notification => new TotMessageType(5);
 
@@ -67,7 +62,6 @@ namespace DotNetTor.TorOverTcp.Models.Fields
 			if (this == Request) return ToHex(xhhSyntax: true) + " " + nameof(Request);
 			if (this == Response) return ToHex(xhhSyntax: true) + " " + nameof(Response);
 			if (this == SubscribeRequest) return ToHex(xhhSyntax: true) + " " + nameof(SubscribeRequest);
-			if (this == UnsubscribeRequest) return ToHex(xhhSyntax: true) + " " + nameof(UnsubscribeRequest);
 			if (this == Notification) return ToHex(xhhSyntax: true) + " " + nameof(Notification);
 			if (this == Ping) return ToHex(xhhSyntax: true) + " " + nameof(Ping);
 			if (this == Pong) return ToHex(xhhSyntax: true) + " " + nameof(Pong);

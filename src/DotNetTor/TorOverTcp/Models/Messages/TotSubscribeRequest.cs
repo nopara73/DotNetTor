@@ -18,13 +18,13 @@ namespace DotNetTor.TorOverTcp.Models.Messages
 
 		}
 
-		/// <param name="purpose">The Purpose of SubscribeRequest, UnsubscribeRequest and Notification is arbitrary, but clients and servers MUST implement the same Purpose for all three.</param>
+		/// <param name="purpose">The Purpose of SubscribeRequest and Notification is arbitrary, but clients and servers MUST implement the same Purpose for all three.</param>
 		public TotSubscribeRequest(string purpose) : this(purpose, TotContent.Empty)
 		{
 
 		}
 
-		/// <param name="purpose">The Purpose of SubscribeRequest, UnsubscribeRequest and Notification is arbitrary, but clients and servers MUST implement the same Purpose for all three.</param>
+		/// <param name="purpose">The Purpose of SubscribeRequest and Notification is arbitrary, but clients and servers MUST implement the same Purpose for all three.</param>
 		public TotSubscribeRequest(string purpose, TotContent content) : base(TotMessageType.SubscribeRequest, new TotPurpose(purpose), content)
 		{
 

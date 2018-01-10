@@ -62,7 +62,7 @@ namespace DotNetTor
 			return client;
 		}
 
-		public async Task<TorOverTcpClient> EstablishTotConnectionAsync(IPEndPoint destination, bool isolateStream = true)
+		public async Task<TotClient> EstablishTotConnectionAsync(IPEndPoint destination, bool isolateStream = true)
 		{
 			Guard.NotNull(nameof(destination), destination);
 
@@ -70,11 +70,11 @@ namespace DotNetTor
 			await client.ConnectAsync();
 			await client.HandshakeAsync(isolateStream);
 			await client.ConnectToDestinationAsync(destination);
-			return new TorOverTcpClient(client);
+			return new TotClient(client);
 		}
 
 		/// <param name="identity">Isolates streams by identity.</param>
-		public async Task<TorOverTcpClient> EstablishTotConnectionAsync(IPEndPoint destination, string identity)
+		public async Task<TotClient> EstablishTotConnectionAsync(IPEndPoint destination, string identity)
 		{
 			identity = Guard.NotNullOrEmptyOrWhitespace(nameof(identity), identity, trim: true);
 			Guard.NotNull(nameof(destination), destination);
@@ -83,10 +83,10 @@ namespace DotNetTor
 			await client.ConnectAsync();
 			await client.HandshakeAsync(identity);
 			await client.ConnectToDestinationAsync(destination);
-			return new TorOverTcpClient(client);
+			return new TotClient(client);
 		}
 
-		public async Task<TorOverTcpClient> EstablishTotConnectionAsync(string host, int port, bool isolateStream = true)
+		public async Task<TotClient> EstablishTotConnectionAsync(string host, int port, bool isolateStream = true)
 		{
 			host = Guard.NotNullOrEmptyOrWhitespace(nameof(host), host, true);
 			Guard.MinimumAndNotNull(nameof(port), port, 0);
@@ -95,7 +95,7 @@ namespace DotNetTor
 			await client.ConnectAsync();
 			await client.HandshakeAsync(isolateStream);
 			await client.ConnectToDestinationAsync(host, port);
-			return new TorOverTcpClient(client);
+			return new TotClient(client);
 		}
 
 		/// <param name="identity">Isolates streams by identity.</param>

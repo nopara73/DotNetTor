@@ -10,6 +10,7 @@ using System.Net.Sockets;
 using System.Threading.Tasks;
 using DotNetTor.TorSocks5.Models.TorSocks5.Fields.ByteArrayFields;
 using System.IO;
+using DotNetTor.TorOverTcp.Models.Messages;
 
 namespace DotNetTor
 {
@@ -29,6 +30,8 @@ namespace DotNetTor
 		public string DestinationHost { get; private set; }
 
 		public int DestinationPort { get; private set; }
+
+		private IPEndPoint RemoteEndPoint { get; set; }
 
 		public bool IsConnected
 		{
@@ -51,7 +54,7 @@ namespace DotNetTor
 			}
 		}
 
-		private AsyncLock AsyncLock { get; }
+		internal AsyncLock AsyncLock { get; }
 
 		#endregion
 
@@ -70,22 +73,28 @@ namespace DotNetTor
 		{
 			Guard.NotNull(nameof(tcpClient), tcpClient);
 			TcpClient = tcpClient;
+			AsyncLock = new AsyncLock();
 			Stream = tcpClient.GetStream();
 			TorSocks5EndPoint = null;
-			var remoteParts = tcpClient.Client.RemoteEndPoint.ToString().Split(":");
-			DestinationHost = remoteParts[0];
-			DestinationPort = int.Parse(remoteParts[1]);
-			AssertConnected();
+			var remoteEndPoint = tcpClient.Client.RemoteEndPoint as IPEndPoint;
+			DestinationHost = remoteEndPoint.Address.ToString();
+			DestinationPort = remoteEndPoint.Port;
+			RemoteEndPoint = remoteEndPoint;
+			if (!IsConnected)
+			{
+				throw new ConnectionException($"{nameof(TorSocks5Client)} is not connected to {RemoteEndPoint}.");
+			}
 		}
 
 		internal async Task ConnectAsync()
 		{
 			if (TorSocks5EndPoint == null) return;
 
-			using (await AsyncLock.LockAsync())
+			using (await AsyncLock.LockAsync().ConfigureAwait(false))
 			{
 				await TcpClient.ConnectAsync(TorSocks5EndPoint.Address, TorSocks5EndPoint.Port).ConfigureAwait(false);
 				Stream = TcpClient.GetStream();
+				RemoteEndPoint = TcpClient.Client.RemoteEndPoint as IPEndPoint;
 			}
 		}
 
@@ -196,10 +205,13 @@ namespace DotNetTor
 			
 			if (TorSocks5EndPoint == null)
 			{
-				using (await AsyncLock.LockAsync())
+				using (await AsyncLock.LockAsync().ConfigureAwait(false))
 				{
+					TcpClient?.Dispose();
+					TcpClient = new TcpClient();
 					await TcpClient.ConnectAsync(host, port).ConfigureAwait(false);
 					Stream = TcpClient.GetStream();
+					RemoteEndPoint = TcpClient.Client.RemoteEndPoint as IPEndPoint;
 				}
 
 				return;
@@ -245,11 +257,24 @@ namespace DotNetTor
 			// the authentication method in use.
 		}
 		
-		public void AssertConnected()
+		public async Task AssertConnectedAsync()
 		{
 			if (!IsConnected)
 			{
-				throw new ConnectionException($"{nameof(TorSocks5Client)} is not connected to {TcpClient.Client.RemoteEndPoint}.");
+				// try reconnect, maybe the server came online already
+				try
+				{
+					await ConnectToDestinationAsync(RemoteEndPoint).ConfigureAwait(false);
+				}
+				// It throws SocketExceptionFactory+ExtendedSocketException, which I am unable to catch
+				catch (Exception ex) when (ex.Message.StartsWith("No connection could be made because the target machine actively refused it"))
+				{
+					throw new ConnectionException($"{nameof(TorSocks5Client)} is not connected to {RemoteEndPoint}.", ex);
+				}
+				if(!IsConnected)
+				{
+					throw new ConnectionException($"{nameof(TorSocks5Client)} is not connected to {RemoteEndPoint}.");
+				}
 			}
 		}
 
@@ -263,60 +288,87 @@ namespace DotNetTor
 		/// <param name="sendBuffer">Sent data</param>
 		/// <param name="receiveBufferSize">Maximum number of bytes expected to be received in the reply</param>
 		/// <returns>Reply</returns>
-		public async Task<byte[]> SendAsync(byte[] sendBuffer, int? receiveBufferSize = null)
+		public async Task<byte[]> SendAsync(byte[] sendBuffer, int? receiveBufferSize = null, bool fallback = false)
 		{
 			Guard.NotNullOrEmpty(nameof(sendBuffer), sendBuffer);
 
-			using (await AsyncLock.LockAsync())
+			try
 			{
-				AssertConnected();
-				var stream = TcpClient.GetStream();
+				await AssertConnectedAsync().ConfigureAwait(false);
 
-				// Write data to the stream
-				await stream.WriteAsync(sendBuffer, 0, sendBuffer.Length).ConfigureAwait(false);
-				await stream.FlushAsync().ConfigureAwait(false);
+				using (await AsyncLock.LockAsync().ConfigureAwait(false))
+				{
+					var stream = TcpClient.GetStream();
 
-				// If receiveBufferSize is null, zero or negative or bigger than TcpClient.ReceiveBufferSize
-				// then work with TcpClient.ReceiveBufferSize
-				var tcpReceiveBuffSize = TcpClient.ReceiveBufferSize;
-				var actualReceiveBufferSize = 0;
-				if (receiveBufferSize == null || receiveBufferSize <= 0 || receiveBufferSize > tcpReceiveBuffSize)
-				{
-					actualReceiveBufferSize = tcpReceiveBuffSize;
-				}
-				else
-				{
-					actualReceiveBufferSize = (int)receiveBufferSize;
-				}
+					// Write data to the stream
+					await stream.WriteAsync(sendBuffer, 0, sendBuffer.Length).ConfigureAwait(false);
+					await stream.FlushAsync().ConfigureAwait(false);
 
-				// Receive the response
-				var receiveBuffer = new byte[actualReceiveBufferSize];
-				int receiveCount = await stream.ReadAsync(receiveBuffer, 0, actualReceiveBufferSize).ConfigureAwait(false);
-				if (receiveCount <= 0)
-				{
-					throw new ConnectionException($"Not connected to Tor SOCKS5 proxy: {TorSocks5EndPoint}.");
-				}
-				// if we could fit everything into our buffer, then return it
-				if(!stream.DataAvailable)
-				{
-					return receiveBuffer.Take(receiveCount).ToArray();
-				}
+					// If receiveBufferSize is null, zero or negative or bigger than TcpClient.ReceiveBufferSize
+					// then work with TcpClient.ReceiveBufferSize
+					var tcpReceiveBuffSize = TcpClient.ReceiveBufferSize;
+					var actualReceiveBufferSize = 0;
+					if (receiveBufferSize == null || receiveBufferSize <= 0 || receiveBufferSize > tcpReceiveBuffSize)
+					{
+						actualReceiveBufferSize = tcpReceiveBuffSize;
+					}
+					else
+					{
+						actualReceiveBufferSize = (int)receiveBufferSize;
+					}
 
-				// while we have data available, start building a bytearray
-				var builder = new ByteArrayBuilder();
-				builder.Append(receiveBuffer.Take(receiveCount).ToArray());
-				while (stream.DataAvailable)
-				{
-					Array.Clear(receiveBuffer, 0, receiveBuffer.Length);
-					receiveCount = await stream.ReadAsync(receiveBuffer, 0, actualReceiveBufferSize).ConfigureAwait(false);
+					// Receive the response
+					var receiveBuffer = new byte[actualReceiveBufferSize];
+
+					int receiveCount = await stream.ReadAsync(receiveBuffer, 0, actualReceiveBufferSize).ConfigureAwait(false);
+
 					if (receiveCount <= 0)
 					{
 						throw new ConnectionException($"Not connected to Tor SOCKS5 proxy: {TorSocks5EndPoint}.");
 					}
-					builder.Append(receiveBuffer.Take(receiveCount).ToArray());
-				}
+					// if we could fit everything into our buffer, then return it
+					if (!stream.DataAvailable)
+					{
+						return receiveBuffer.Take(receiveCount).ToArray();
+					}
 
-				return builder.ToArray();
+					// while we have data available, start building a bytearray
+					var builder = new ByteArrayBuilder();
+					builder.Append(receiveBuffer.Take(receiveCount).ToArray());
+					while (stream.DataAvailable)
+					{
+						Array.Clear(receiveBuffer, 0, receiveBuffer.Length);
+						receiveCount = await stream.ReadAsync(receiveBuffer, 0, actualReceiveBufferSize).ConfigureAwait(false);
+						if (receiveCount <= 0)
+						{
+							throw new ConnectionException($"Not connected to Tor SOCKS5 proxy: {TorSocks5EndPoint}.");
+						}
+						builder.Append(receiveBuffer.Take(receiveCount).ToArray());
+					}
+
+					return builder.ToArray();
+				}
+			}
+			catch (IOException ex)
+			{
+				if (!fallback)
+				{
+					// try reconnect, maybe the server came online already
+					try
+					{
+						await ConnectToDestinationAsync(RemoteEndPoint).ConfigureAwait(false);
+					}
+					// It throws SocketExceptionFactory+ExtendedSocketException, which I am unable to catch
+					catch (Exception ex2) when (ex2.Message.StartsWith("No connection could be made because the target machine actively refused it"))
+					{
+						throw new ConnectionException($"{nameof(TorSocks5Client)} is not connected to {RemoteEndPoint}.", ex2);
+					}
+					return await SendAsync(sendBuffer, receiveBufferSize, fallback: true);
+				}
+				else
+				{
+					throw new ConnectionException($"{nameof(TorSocks5Client)} is not connected to {RemoteEndPoint}.", ex);
+				}
 			}
 		}
 

@@ -62,7 +62,6 @@ namespace DotNetTor.Tests
 			Assert.Equal("X'01'", TotMessageType.Request.ToHex(xhhSyntax: true));
 			Assert.Equal("02", TotMessageType.Response.ToHex(xhhSyntax: false));
 			Assert.Equal("03", TotMessageType.SubscribeRequest.ToHex());
-			Assert.Equal(4, TotMessageType.UnsubscribeRequest.ToByte());
 			Assert.Equal("X'05' Notification", TotMessageType.Notification.ToString());
 			Assert.Equal("X'06' Ping", TotMessageType.Ping.ToString());
 			Assert.Equal("X'07' Pong", TotMessageType.Pong.ToString());

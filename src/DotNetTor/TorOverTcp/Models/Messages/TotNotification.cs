@@ -7,7 +7,7 @@ using System.Text;
 namespace DotNetTor.TorOverTcp.Models.Messages
 {
 	/// <summary>
-	/// Issued by the server. It MUST be issued between a SubscribeRequest and an UnsubscribeRequest.
+	/// Issued by the server. It MUST NOT be issued before a SubscribeRequest.
 	/// </summary>
 	public class TotNotification : TotMessageBase
 	{
@@ -18,13 +18,13 @@ namespace DotNetTor.TorOverTcp.Models.Messages
 
 		}
 
-		/// <param name="purpose">The Purpose of SubscribeRequest, UnsubscribeRequest and Notification is arbitrary, but clients and servers MUST implement the same Purpose for all three.</param>
+		/// <param name="purpose">The Purpose of SubscribeRequest and Notification is arbitrary, but clients and servers MUST implement the same Purpose for all three.</param>
 		public TotNotification(string purpose) : this(purpose, TotContent.Empty)
 		{
 
 		}
 
-		/// <param name="purpose">The Purpose of SubscribeRequest, UnsubscribeRequest and Notification is arbitrary, but clients and servers MUST implement the same Purpose for all three.</param>
+		/// <param name="purpose">The Purpose of SubscribeRequest and Notification is arbitrary, but clients and servers MUST implement the same Purpose for all three.</param>
 		public TotNotification(string purpose, TotContent content) : base(TotMessageType.Notification, new TotPurpose(purpose), content)
 		{
 
