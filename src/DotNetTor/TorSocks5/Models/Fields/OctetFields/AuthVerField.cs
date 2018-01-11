@@ -1,4 +1,5 @@
-﻿using DotNetTor.Bases;
+﻿using DotNetEssentials;
+using DotNetTor.Bases;
 using System;
 
 namespace DotNetTor.TorSocks5.Models.Fields.OctetFields

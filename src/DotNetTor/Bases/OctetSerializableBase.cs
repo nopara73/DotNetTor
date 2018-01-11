@@ -1,4 +1,5 @@
-﻿using DotNetTor.Interfaces;
+﻿using DotNetEssentials;
+using DotNetTor.Interfaces;
 using System;
 
 namespace DotNetTor.Bases

@@ -1,4 +1,5 @@
-﻿using DotNetTor.Bases;
+﻿using DotNetEssentials;
+using DotNetTor.Bases;
 using DotNetTor.TorSocks5.TorSocks5.Models.Fields.ByteArrayFields;
 using System;
 

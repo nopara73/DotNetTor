@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using DotNetEssentials;
+using System.Linq;
 
 namespace System
 {

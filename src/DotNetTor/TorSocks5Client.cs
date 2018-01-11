@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using DotNetTor.TorSocks5.Models.TorSocks5.Fields.ByteArrayFields;
 using System.IO;
 using DotNetTor.TorOverTcp.Models.Messages;
+using DotNetEssentials;
 
 namespace DotNetTor
 {

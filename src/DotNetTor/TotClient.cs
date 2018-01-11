@@ -1,4 +1,5 @@
 ﻿using ConcurrentCollections;
+using DotNetEssentials;
 using DotNetTor.Exceptions;
 using DotNetTor.TorOverTcp.Models;
 using DotNetTor.TorOverTcp.Models.Fields;

@@ -1,4 +1,5 @@
-﻿using DotNetTor.Bases;
+﻿using DotNetEssentials;
+using DotNetTor.Bases;
 using DotNetTor.TorOverTcp.Models.Fields;
 using System;
 using System.Collections.Generic;

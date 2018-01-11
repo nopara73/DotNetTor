@@ -3,6 +3,7 @@ using DotNetTor.TorSocks5.TorSocks5.Models.Fields.ByteArrayFields;
 using DotNetTor.TorSocks5.Models.Fields.OctetFields;
 using System;
 using System.Linq;
+using DotNetEssentials;
 
 namespace DotNetTor.TorSocks5.Models.Messages
 {

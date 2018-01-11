@@ -1,6 +1,7 @@
 ﻿using DotNetTor.Bases;
 using System;
 using DotNetTor.TorSocks5.Models.TorSocks5.Fields.ByteArrayFields;
+using DotNetEssentials;
 
 namespace DotNetTor.TorSocks5.Models.Fields.OctetFields
 {

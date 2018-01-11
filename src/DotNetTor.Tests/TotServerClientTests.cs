@@ -1,6 +1,7 @@
 ﻿using DotNetTor.Exceptions;
 using DotNetTor.TorOverTcp.Models.Fields;
 using DotNetTor.TorOverTcp.Models.Messages;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -237,7 +238,7 @@ namespace DotNetTor.Tests
 			var server = new TotServer(serverEndPoint);
 			server.RequestArrived += Server_RequestArrivedAsync;
 			var manager = new TorSocks5Manager(null);
-
+			
 			try
 			{
 				await server.StartAsync();
