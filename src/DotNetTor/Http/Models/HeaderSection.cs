@@ -117,7 +117,7 @@ namespace DotNetTor.Http.Models
 			{
 				if (allParts.Count > 1)
 				{
-					throw new InvalidDataException("Invalid Content-Length");
+					throw new InvalidDataException("Invalid Content-Length.");
 				}
 				hs.Fields.RemoveAll(x => x.Name == "Content-Length");
 				hs.Fields.Add(new HeaderField("Content-Length", allParts.First()));

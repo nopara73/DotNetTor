@@ -1,4 +1,5 @@
 ﻿using DotNetEssentials;
+using DotNetEssentials.Logging;
 using DotNetTor.Http.Models;
 using Nito.AsyncEx;
 using System;
@@ -174,8 +175,9 @@ namespace DotNetTor
 						await client.Stream.WriteAsync(bytes, 0, bytes.Length, cancel).ConfigureAwait(false);
 						cancel.ThrowIfCancellationRequested();
 					}
-					catch (NullReferenceException) // dotnet brainfart
+					catch (NullReferenceException ex) // dotnet brainfart
 					{
+						Logger.LogTrace<TorSocks5Handler>(ex);
 						throw new OperationCanceledException();
 					}
 
@@ -234,7 +236,7 @@ namespace DotNetTor
 					}
 					catch (Exception ex)
 					{
-						Console.WriteLine(ex);
+						Logger.LogWarning<TorSocks5Handler>(ex, LogLevel.Debug);
 					}
 					finally
 					{
@@ -246,7 +248,7 @@ namespace DotNetTor
 			}
 			catch(Exception ex)
 			{
-				Console.WriteLine(ex);
+				Logger.LogWarning<TorSocks5Handler>(ex, LogLevel.Debug);
 			}
 		}
 

@@ -28,7 +28,7 @@ namespace DotNetTor.Http.Models
 				var code = int.Parse(codeString);
 				if (!HttpStatusCodeHelper.IsValidCode(code))
 				{
-					throw new NotSupportedException($"Invalid HTTP status code: {code}");
+					throw new NotSupportedException($"Invalid HTTP status code: {code}.");
 				}
 
 				var statusCode = (HttpStatusCode)code;
@@ -44,7 +44,7 @@ namespace DotNetTor.Http.Models
 			}
 			catch (Exception ex)
 			{
-				throw new NotSupportedException($"Invalid {nameof(StatusLine)}: {statusLineString}", ex);
+				throw new NotSupportedException($"Invalid {nameof(StatusLine)}: {statusLineString}.", ex);
 			}
 		}
 	}

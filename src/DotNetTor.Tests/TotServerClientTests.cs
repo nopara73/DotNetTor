@@ -1,4 +1,5 @@
-﻿using DotNetTor.Exceptions;
+﻿using DotNetEssentials.Logging;
+using DotNetTor.Exceptions;
 using DotNetTor.TorOverTcp.Models.Fields;
 using DotNetTor.TorOverTcp.Models.Messages;
 using Microsoft.Extensions.Logging;
@@ -181,8 +182,9 @@ namespace DotNetTor.Tests
 					await client.RespondAsync(response);
 				}
 			}
-			catch (Exception)
+			catch (Exception ex)
 			{
+				Logger.LogTrace<TotServerClientTests>(ex);
 				var response = TotResponse.BadRequest;
 				await client.RespondAsync(response);
 			}

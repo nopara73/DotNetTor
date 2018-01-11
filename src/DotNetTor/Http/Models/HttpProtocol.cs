@@ -15,11 +15,11 @@ namespace DotNetTor.Http.Models
 			try
 			{
 				var parts = protocolString.Trim().Split(new char[] { '/' });
-				if(parts.Length != 2) throw new FormatException($"Wrong {nameof(HttpProtocol)} format: {protocolString}");
+				if(parts.Length != 2) throw new FormatException($"Wrong {nameof(HttpProtocol)} format: {protocolString}.");
 
 				if(parts[1].Split(new char[] { '.' }).Length != 2)
 				{
-					throw new FormatException($"Wrong {nameof(HttpProtocol)} format: {protocolString}");
+					throw new FormatException($"Wrong {nameof(HttpProtocol)} format: {protocolString}.");
 				}
 
 				Version = new Version(parts[1]);
@@ -27,12 +27,12 @@ namespace DotNetTor.Http.Models
 				string protocol = GetProtocol(protocolString);
 				if (protocol != Protocol)
 				{
-					throw new NotSupportedException($"Wrong protocol {nameof(HttpProtocol)}: {protocolString}");
+					throw new NotSupportedException($"Wrong protocol {nameof(HttpProtocol)}: {protocolString}.");
 				}
 			}
 			catch(Exception ex)
 			{
-				throw new FormatException($"Wrong {nameof(HttpProtocol)} format: {protocolString}", ex);
+				throw new FormatException($"Wrong {nameof(HttpProtocol)} format: {protocolString}.", ex);
 			}			
 		}
 

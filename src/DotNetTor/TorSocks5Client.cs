@@ -12,6 +12,7 @@ using DotNetTor.TorSocks5.Models.TorSocks5.Fields.ByteArrayFields;
 using System.IO;
 using DotNetTor.TorOverTcp.Models.Messages;
 using DotNetEssentials;
+using DotNetEssentials.Logging;
 
 namespace DotNetTor
 {
@@ -49,7 +50,7 @@ namespace DotNetTor
 				}
 				catch (Exception ex)
 				{
-					Console.WriteLine(ex);
+					Logger.LogWarning<TorSocks5Client>(ex, LogLevel.Debug);
 					return false;
 				}
 			}
@@ -93,7 +94,15 @@ namespace DotNetTor
 
 			using (await AsyncLock.LockAsync().ConfigureAwait(false))
 			{
-				await TcpClient.ConnectAsync(TorSocks5EndPoint.Address, TorSocks5EndPoint.Port).ConfigureAwait(false);
+				try
+				{
+					await TcpClient.ConnectAsync(TorSocks5EndPoint.Address, TorSocks5EndPoint.Port).ConfigureAwait(false);
+				}
+				// ex.Message must be checked, because I'm having difficulty catching SocketExceptionFactory+ExtendedSocketException
+				catch (Exception ex) when (ex.Message.StartsWith("No connection could be made because the target machine actively refused it"))
+				{
+					throw new ConnectionException($"Couldn't connect to Tor SOCKSPort at {TorSocks5EndPoint.Address}:{TorSocks5EndPoint.Port}. Is Tor running?", ex);
+				}
 				Stream = TcpClient.GetStream();
 				RemoteEndPoint = TcpClient.Client.RemoteEndPoint as IPEndPoint;
 			}
@@ -501,7 +510,7 @@ namespace DotNetTor
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine(ex);
+				Logger.LogWarning<TorSocks5Client>(ex, LogLevel.Debug);
 			}
 			finally
 			{

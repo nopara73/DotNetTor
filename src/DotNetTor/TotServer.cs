@@ -1,5 +1,6 @@
 ﻿using ConcurrentCollections;
 using DotNetEssentials;
+using DotNetEssentials.Logging;
 using DotNetTor.Exceptions;
 using DotNetTor.TorOverTcp.Models.Fields;
 using DotNetTor.TorOverTcp.Models.Messages;
@@ -80,8 +81,9 @@ namespace DotNetTor
 				try
 				{
 					tcpClient = await TcpListener.AcceptTcpClientAsync().WithAwaitCancellationAsync(cancel).ConfigureAwait(false);
-					Console.WriteLine($"Client connected: {tcpClient.Client.RemoteEndPoint}");
-					Console.WriteLine($"Number of clients: {Clients.Count}");
+					
+					Logger.LogInfo<TotServer>($"Client connected: {tcpClient.Client.RemoteEndPoint}");
+					Logger.LogInfo<TotServer>($"Number of clients: {Clients.Count}");
 
 					ts5Client = new TorSocks5Client(tcpClient);
 					client = new TotClient(ts5Client);
@@ -91,20 +93,22 @@ namespace DotNetTor
 					Task task = ListenClientAsync(client, StopAcceptingTcpConnections.Token);
 					ClientListeners.Add(task);
 				}
-				catch (ObjectDisposedException)
+				catch (ObjectDisposedException ex)
 				{
 					// This happens at TcpListener.Stop()
-					Console.WriteLine("Server stopped listening for TCP connections.");
+					Logger.LogInfo<TotServer>("Server stopped listening for TCP connections.");
+					Logger.LogTrace<TotServer>(ex);
 				}
-				catch (OperationCanceledException)
+				catch (OperationCanceledException ex)
 				{
 					// This happens when cancelling the await of AcceptTcpClientAsync()
-					Console.WriteLine("Server stopped listening for TCP connections.");
+					Logger.LogInfo<TotServer>("Server stopped listening for TCP connections.");
+					Logger.LogTrace<TotServer>(ex);
 				}
 				catch (Exception ex)
 				{
-					Console.WriteLine(ex);
-					if(client != null)
+					Logger.LogWarning<TotServer>(ex, LogLevel.Debug);
+					if (client != null)
 					{
 						RemoveClient(client);
 					}
@@ -195,13 +199,14 @@ namespace DotNetTor
 					Array.Clear(receiveBuffer, 0, receiveBuffer.Length);
 				}
 			}
-			catch (OperationCanceledException)
+			catch (OperationCanceledException ex)
 			{
+				Logger.LogTrace<TotServer>(ex);
 				RemoveClient(client);
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine(ex);
+				Logger.LogTrace<TotServer>(ex);
 				RemoveClient(client);
 			}
 		}
@@ -260,8 +265,9 @@ namespace DotNetTor
 					await client.RespondAsync(notSupportedMessageTypeResponse).ConfigureAwait(false);
 				}
 			}
-			catch
+			catch(Exception ex)
 			{
+				Logger.LogTrace<TotServer>(ex);
 				await client.RespondAsync(TotResponse.BadRequest).ConfigureAwait(false);
 			}
 		}
@@ -310,7 +316,7 @@ namespace DotNetTor
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine(ex);
+				Logger.LogWarning<TotServer>(ex, LogLevel.Debug);
 			}
 		}
 
@@ -324,7 +330,7 @@ namespace DotNetTor
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine(ex);
+				Logger.LogTrace<TotServer>(ex);
 				return client;
 			}
 		}
@@ -361,7 +367,7 @@ namespace DotNetTor
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine(ex);
+				Logger.LogWarning<TotServer>(ex, LogLevel.Debug);
 			}
 		}
 
@@ -375,7 +381,7 @@ namespace DotNetTor
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine(ex);
+				Logger.LogTrace<TotServer>(ex.ToString());
 				return client;
 			}
 		}
@@ -393,7 +399,7 @@ namespace DotNetTor
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine(ex);
+				Logger.LogWarning<TotServer>(ex, LogLevel.Debug);
 			}
 
 			if (ClientListeners != null)
@@ -410,7 +416,7 @@ namespace DotNetTor
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine(ex);
+				Logger.LogWarning<TotServer>(ex, LogLevel.Debug);
 			}
 
 			StopAcceptingTcpConnections?.Dispose();

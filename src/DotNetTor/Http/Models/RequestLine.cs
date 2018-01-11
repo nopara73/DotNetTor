@@ -16,7 +16,7 @@ namespace DotNetTor.Http.Models
 			Method = method;
 			// https://tools.ietf.org/html/rfc7230#section-2.7.1
 			// A sender MUST NOT generate an "http" URI with an empty host identifier.
-			if (uri.DnsSafeHost == "") throw new HttpRequestException("Host identifier is empty");
+			if (uri.DnsSafeHost == "") throw new HttpRequestException("Host identifier is empty.");
 			URI = uri;
 			Protocol = protocol;
 
@@ -39,7 +39,7 @@ namespace DotNetTor.Http.Models
 			}
 			catch (Exception ex)
 			{
-				throw new NotSupportedException($"Invalid {nameof(RequestLine)}", ex);
+				throw new NotSupportedException($"Invalid {nameof(RequestLine)}.", ex);
 			}
 		}
 	}

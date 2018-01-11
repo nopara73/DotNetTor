@@ -1,4 +1,5 @@
-﻿using DotNetTor.Http;
+﻿using DotNetEssentials.Logging;
+using DotNetTor.Http;
 using DotNetTor.Http.Models;
 using System.Collections.Generic;
 using System.IO;
@@ -38,7 +39,7 @@ namespace System.Net.Http
 			}
 
 			var startLine = bab.ToString(Encoding.ASCII);
-			if (startLine == null || startLine == "") throw new FormatException($"{nameof(startLine)} cannot be null or empty");
+			if (startLine == null || startLine == "") throw new FormatException($"{nameof(startLine)} cannot be null or empty.");
 			return startLine;
 		}
 
@@ -50,7 +51,7 @@ namespace System.Net.Http
 			{
 				string header = await ReadCRLFLineAsync(stream, Encoding.ASCII, ctsToken);
 
-				if (header == null) throw new FormatException($"Malformed HTTP message: End of headers must be CRLF");
+				if (header == null) throw new FormatException($"Malformed HTTP message: End of headers must be CRLF.");
 				if (header == "")
 				{
 					// 2 CRLF was read in row so it's the end of the headers
@@ -68,7 +69,7 @@ namespace System.Net.Http
 					// header field is received or the header section is terminated).
 					if (char.IsWhiteSpace(header[0]))
 					{
-						throw new FormatException($"Invalid HTTP message: Cannot be whitespace between the start line and the headers");
+						throw new FormatException($"Invalid HTTP message: Cannot be whitespace between the start line and the headers.");
 					}
 					firstRead = false;
 				}
@@ -254,11 +255,11 @@ namespace System.Net.Http
 		{
 			if(responseHeaders == null && requestHeaders == null)
 			{
-				throw new ArgumentException("response and request headers cannot be both null");
+				throw new ArgumentException("Response and request headers cannot be both null.");
 			}
 			if (responseHeaders != null && requestHeaders != null)
 			{
-				throw new ArgumentException("either response or request headers has to be null");
+				throw new ArgumentException("Either response or request headers has to be null.");
 			}
 
 			// https://tools.ietf.org/html/rfc7230#section-4.1.3
@@ -301,7 +302,7 @@ namespace System.Net.Http
 				var chunkData = await ReadBytesTillLengthAsync(stream, chunkSize, ctsToken).ConfigureAwait(false);
 				if (await ReadCRLFLineAsync(stream, Encoding.ASCII, ctsToken).ConfigureAwait(false) != "")
 				{
-					throw new FormatException("Chunk does not end with CRLF");
+					throw new FormatException("Chunk does not end with CRLF.");
 				}
 
 				foreach (var b in chunkData)
@@ -445,9 +446,9 @@ namespace System.Net.Http
 			{
 				Convert.ToInt32(length);
 			}
-			catch (OverflowException)
+			catch (OverflowException ex)
 			{
-				throw new NotSupportedException($"Content-Length too long: {length}");
+				throw new NotSupportedException($"Content-Length too long: {length}.", ex);
 			}
 
 			var allData = new byte[(int)length];
@@ -465,7 +466,7 @@ namespace System.Net.Http
 				// supposedly chunked transfer coding fails, MUST record the message as
 				// incomplete.Cache requirements for incomplete responses are defined
 				// in Section 3 of[RFC7234].
-				throw new NotSupportedException($"Incomplete message. Expected length: {length}, actual: {num}");
+				throw new NotSupportedException($"Incomplete message. Expected length: {length}, actual: {num}.");
 			}
 			return allData;
 		}
@@ -483,7 +484,7 @@ namespace System.Net.Http
 			if (contentHeaders.Contains("Content-Length"))
 			{
 				if (contentHeaders.ContentLength < 0)
-					throw new HttpRequestException("Content-Length MUST be bigger than zero");
+					throw new HttpRequestException("Content-Length MUST be bigger than zero.");
 			}
 		}
 

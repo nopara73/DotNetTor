@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using DotNetTor.Exceptions;
 using System.Net;
+using DotNetEssentials.Logging;
 
 namespace DotNetTor.Example
 {
@@ -13,11 +14,21 @@ namespace DotNetTor.Example
 		private static async Task Main()
 #pragma warning restore IDE1006 // Naming Styles
 		{
-			await DoARandomRequestAsync();
-			await RequestWith3IpAsync();
-			await CanRequestDifferentDomainsWithSameHandlerAsync();
+			try
+			{
+				Logger.SetTypes(LogMode.Console);
+				Logger.SetMinimumLevel(LogLevel.Info);
 
-			Console.WriteLine("Press a key to exit..");
+				await DoARandomRequestAsync();
+				await RequestWith3IpAsync();
+				await CanRequestDifferentDomainsWithSameHandlerAsync();
+			}
+			catch (Exception ex)
+			{
+				Logger.LogCritical(ex, LogLevel.Debug, "");
+			}
+
+			Logger.LogInfo("Press a key to exit..");
 			Console.ReadKey();
 		}
 
@@ -27,7 +38,7 @@ namespace DotNetTor.Example
 			{
 				HttpResponseMessage message = await httpClient.GetAsync("http://api.qbit.ninja/whatisit/what%20is%20my%20future");
 				var content = await message.Content.ReadAsStringAsync();
-				Console.WriteLine(content);
+				Logger.LogInfo(content);
 			}
 		}
 
@@ -40,7 +51,7 @@ namespace DotNetTor.Example
 			{
 				var message = await httpClient.GetAsync(requestUri);
 				var content = await message.Content.ReadAsStringAsync();
-				Console.WriteLine($"Your real IP: \t\t{content}");
+				Logger.LogInfo($"Your real IP: \t\t{content}");
 			}
 
 			// 2. Get Tor IP
@@ -48,7 +59,7 @@ namespace DotNetTor.Example
 			{
 				var message = await httpClient.GetAsync(requestUri);
 				var content = await message.Content.ReadAsStringAsync();
-				Console.WriteLine($"Your Tor IP: \t\t{content}");
+				Logger.LogInfo($"Your Tor IP: \t\t{content}");
 
 				// 3. Change Tor IP
 				var controlPortClient = new TorControlClient("127.0.0.1", controlPort: 9051, password: "ILoveBitcoin21");
@@ -57,7 +68,7 @@ namespace DotNetTor.Example
 				// 4. Get changed Tor IP
 				message = await httpClient.GetAsync(requestUri);
 				content = await message.Content.ReadAsStringAsync();
-				Console.WriteLine($"Your other Tor IP: \t{content}");
+				Logger.LogInfo($"Your other Tor IP: \t{content}");
 			}
 		}
 		private static async Task CanRequestDifferentDomainsWithSameHandlerAsync()
@@ -66,19 +77,11 @@ namespace DotNetTor.Example
 			{
 				var message = await httpClient.GetAsync("https://api.ipify.org/");
 				var content = await message.Content.ReadAsStringAsync();
-				Console.WriteLine($"Your Tor IP: \t\t{content}");
+				Logger.LogInfo($"Your Tor IP: \t\t{content}");
 
-				try
-				{
-					message = await httpClient.GetAsync("http://api.qbit.ninja/whatisit/what%20is%20my%20future");
-					content = await message.Content.ReadAsStringAsync();
-					Console.WriteLine(content);
-				}
-				catch (AggregateException ex) when (ex.InnerException is TorException)
-				{
-					Console.WriteLine("Don't do this!");
-					Console.WriteLine(ex.InnerException.Message);
-				}
+				message = await httpClient.GetAsync("http://api.qbit.ninja/whatisit/what%20is%20my%20future");
+				content = await message.Content.ReadAsStringAsync();
+				Logger.LogInfo(content);
 			}
 		}
 	}

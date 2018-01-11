@@ -27,7 +27,7 @@ namespace DotNetTor.Http.Models
 				// startLineString must end here
 				if (reader.Read() != -1)
 				{
-					throw new Exception($"Wrong {startLineString} provided");
+					throw new Exception($"Wrong {startLineString} provided.");
 				}
 			}
 
@@ -47,7 +47,7 @@ namespace DotNetTor.Http.Models
 					{
 						if (part == null)
 						{
-							throw new Exception($"Wrong {startLineString} provided");
+							throw new Exception($"Wrong {startLineString} provided.");
 						}
 
 						var rest = reader.ReadToEnd();

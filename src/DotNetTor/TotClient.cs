@@ -1,5 +1,6 @@
 ﻿using ConcurrentCollections;
 using DotNetEssentials;
+using DotNetEssentials.Logging;
 using DotNetTor.Exceptions;
 using DotNetTor.TorOverTcp.Models;
 using DotNetTor.TorOverTcp.Models.Fields;
@@ -256,13 +257,12 @@ namespace DotNetTor
 					Array.Clear(receiveBuffer, 0, receiveBuffer.Length);
 				}
 			}
-			catch (OperationCanceledException)
+			catch (OperationCanceledException ex)
 			{
-				// Ignore, if code manually cancels it, it must have a good reason
+				Logger.LogTrace<TotClient>(ex);
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine(ex);
 				throw new ConnectionException($"Disconnected from the server: {TorSocks5Client.TcpClient.Client.RemoteEndPoint}.", ex);
 			}
 		}
@@ -295,8 +295,8 @@ namespace DotNetTor
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine(ex);
 				// swallow and log and listen for more notification
+				Logger.LogWarning<TotClient>(ex, LogLevel.Debug);
 			}
 		}
 

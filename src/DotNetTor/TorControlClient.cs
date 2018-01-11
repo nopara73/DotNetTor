@@ -54,7 +54,7 @@ namespace DotNetTor
 				{
 					return false;
 				}
-				else throw new TorException($"Wrong response to 'GETINFO status/circuit-established': '{response}'");
+				else throw new TorException($"Wrong response to 'GETINFO status/circuit-established': '{response}'.");
 			}
 		}
 
@@ -81,7 +81,7 @@ namespace DotNetTor
 				}
 				catch (Exception ex)
 				{
-					throw new TorException("Couldn't change circuit", ex);
+					throw new TorException("Couldn't change circuit.", ex);
 				}
 				finally
 				{
@@ -125,13 +125,13 @@ namespace DotNetTor
 
 				var firstTask = await Task.WhenAny(receiveTask, timeoutTask).ConfigureAwait(false);
 
-				if (firstTask == timeoutTask) throw new TimeoutException($"Did not receive the expected {nameof(eventStartsWith)} : {eventStartsWith} within the specified {nameof(timeout)} : {timeout}");
+				if (firstTask == timeoutTask) throw new TimeoutException($"Did not receive the expected {nameof(eventStartsWith)} : {eventStartsWith} within the specified {nameof(timeout)} : {timeout}.");
 
 				int receivedCount = await receiveTask.ConfigureAwait(false);
 
 				if (receivedCount <= 0)
 				{
-					throw new InvalidOperationException("Not connected to Tor Control port");
+					throw new InvalidOperationException("Not connected to Tor Control port.");
 				}
 
 				var response = Encoding.ASCII.GetString(buffer, 0, receivedCount);
@@ -174,7 +174,7 @@ namespace DotNetTor
 				}
 				catch (Exception ex)
 				{
-					throw new TorException($"Failed to send command to Tor Control Port: {nameof(command)} : {command}", ex);
+					throw new TorException($"Failed to send command to Tor Control Port: {nameof(command)} : {command}.", ex);
 				}
 
 				var bufferBytes = new byte[TcpClient.ReceiveBufferSize];
@@ -183,7 +183,7 @@ namespace DotNetTor
 					var receivedCount = await stream.ReadAsync(bufferBytes, 0, bufferBytes.Length).ConfigureAwait(false);
 					if (receivedCount <= 0)
 					{
-						throw new InvalidOperationException("Not connected to Tor Control port");
+						throw new InvalidOperationException("Not connected to Tor Control port.");
 					}
 
 					var response = Encoding.ASCII.GetString(bufferBytes, 0, receivedCount);
@@ -197,7 +197,7 @@ namespace DotNetTor
 					{
 						if (!responseLines.Any(x => x.StartsWith("250 OK", StringComparison.OrdinalIgnoreCase)))
 						throw new TorException(
-							$"Unexpected {nameof(response)} from Tor Control Port to sent {nameof(command)} : {command} , {nameof(response)} : {response}");
+							$"Unexpected {nameof(response)} from Tor Control Port to sent {nameof(command)} : {command} , {nameof(response)} : {response}.");
 
 					}
 
@@ -218,7 +218,7 @@ namespace DotNetTor
 								else
 								{
 									throw new TorException(
-										$"Didn't receive 650 SIGNAL {what} confirmation from Tor Control Port to sent {nameof(command)} : {command} , {nameof(response)} : {response}");
+										$"Didn't receive 650 SIGNAL {what} confirmation from Tor Control Port to sent {nameof(command)} : {command} , {nameof(response)} : {response}.");
 								}
 							}
 						}
@@ -242,7 +242,7 @@ namespace DotNetTor
 				catch (Exception ex)
 				{
 					throw new TorException(
-						$"Didn't receive response for the sent {nameof(command)} from Tor Control Port: {nameof(command)} : {command}", ex);
+						$"Didn't receive response for the sent {nameof(command)} from Tor Control Port: {nameof(command)} : {command}.", ex);
 				}
 			}
 			finally

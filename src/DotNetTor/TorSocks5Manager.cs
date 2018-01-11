@@ -17,7 +17,7 @@ namespace DotNetTor
 
 		#region ConstructorsAndInitializers
 
-		/// <param name="ipEndPoint">Opt out Tor with null.</param>
+		/// <param name="endPoint">Opt out Tor with null.</param>
 		public TorSocks5Manager(IPEndPoint endPoint)
 		{
 			TorSocks5EndPoint = endPoint;
