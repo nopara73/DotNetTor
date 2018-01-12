@@ -14,9 +14,15 @@ using Xunit;
 
 namespace DotNetTor.Tests
 {
-	[Collection("PrePostTestCollection")]
-	public class TotServerClientTests
+	public class TotServerClientTests : IClassFixture<SharedFixture>
 	{
+		private SharedFixture SharedFixture { get; }
+
+		public TotServerClientTests(SharedFixture fixture)
+		{
+			SharedFixture = fixture;
+		}
+
 		[Fact]
 		public async Task BlockingPingTestAsync()
 		{

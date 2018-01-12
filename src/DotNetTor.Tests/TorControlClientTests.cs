@@ -6,26 +6,32 @@ using Xunit;
 namespace DotNetTor.Tests
 {
 	// For proper configuraion see https://github.com/nopara73/DotNetTor
-	[Collection("PrePostTestCollection")]
-	public class TorControlClientTests
-    {
-		[Fact]
-		private static async Task IsCircuitEstablishedAsync()
+	public class TorControlClientTests : IClassFixture<SharedFixture>
+	{
+		private SharedFixture SharedFixture { get; }
+
+		public TorControlClientTests(SharedFixture fixture)
 		{
-			var controlPortClient = new TorControlClient(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
+			SharedFixture = fixture;
+		}
+
+		[Fact]
+		private async Task IsCircuitEstablishedAsync()
+		{
+			var controlPortClient = new TorControlClient(SharedFixture.HostAddress, SharedFixture.ControlPort, SharedFixture.ControlPortPassword);
 			var yes = await controlPortClient.IsCircuitEstablishedAsync();
 			Assert.True(yes);
 		}
 
 		[Fact]
-	    private static async Task CanChangeCircuitMultipleTimesAsync()
+	    private async Task CanChangeCircuitMultipleTimesAsync()
 	    {
 		    var requestUri = "https://api.ipify.org/";
 
 		    // 1. Get Tor IP
 		    IPAddress currIp = await GetTorIpAsync(requestUri);
 
-		    var controlPortClient = new TorControlClient(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
+		    var controlPortClient = new TorControlClient(SharedFixture.HostAddress, SharedFixture.ControlPort, SharedFixture.ControlPortPassword);
 		    for (int i = 0; i < 3; i++)
 		    {
 			    IPAddress prevIp = currIp;
@@ -40,9 +46,9 @@ namespace DotNetTor.Tests
 		    }
 	    }
 
-	    private static async Task<IPAddress> GetTorIpAsync(string requestUri)
+	    private async Task<IPAddress> GetTorIpAsync(string requestUri)
 	    {
-			var handler = new TorSocks5Handler(Shared.TorSock5EndPoint);
+			var handler = new TorSocks5Handler(SharedFixture.TorSock5EndPoint);
 
 			IPAddress torIp;
 		    using (var httpClient = new HttpClient(handler))
@@ -56,14 +62,14 @@ namespace DotNetTor.Tests
 	    }
 
 	    [Fact]
-	    private static async Task CanChangeCircuitAsync()
+	    private async Task CanChangeCircuitAsync()
 	    {
 		    var requestUri = "https://api.ipify.org/";
 		    IPAddress torIp;
 		    IPAddress changedIp;
 
 			// 1. Get Tor IP
-			var handler = new TorSocks5Handler(Shared.TorSock5EndPoint);
+			var handler = new TorSocks5Handler(SharedFixture.TorSock5EndPoint);
 			using (var httpClient = new HttpClient(handler))
 			{
 				var content = await (await httpClient.GetAsync(requestUri)).Content.ReadAsStringAsync();
@@ -72,11 +78,11 @@ namespace DotNetTor.Tests
 			}
 
 			// 2. Change Tor IP
-			var controlPortClient = new TorControlClient(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
+			var controlPortClient = new TorControlClient(SharedFixture.HostAddress, SharedFixture.ControlPort, SharedFixture.ControlPortPassword);
 			await controlPortClient.ChangeCircuitAsync();
 
 			// 3. Get changed Tor IP
-			var handler2 = new TorSocks5Handler(Shared.TorSock5EndPoint);
+			var handler2 = new TorSocks5Handler(SharedFixture.TorSock5EndPoint);
 			using (var httpClient = new HttpClient(handler2))
 			{
 				var content = await (await httpClient.GetAsync(requestUri)).Content.ReadAsStringAsync();
@@ -88,22 +94,23 @@ namespace DotNetTor.Tests
 	    }
 
 		[Fact]
-		private static async Task CanSendCustomCommandAsync()
+		private async Task CanSendCustomCommandAsync()
 		{
-			var controlPortClient = new TorControlClient(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
+			var controlPortClient = new TorControlClient(SharedFixture.HostAddress, SharedFixture.ControlPort, SharedFixture.ControlPortPassword);
 			var res = await controlPortClient.SendCommandAsync("GETCONF SOCKSPORT");
+			res = res.Replace('-', ' ');
 			Assert.StartsWith("250 SocksPort", res);
 		}
 
 		[Fact]
-		private static async Task CanChangeCircuitWithinSameHttpClientAsync()
+		private async Task CanChangeCircuitWithinSameHttpClientAsync()
 		{
 			var requestUri = "https://api.ipify.org/";
 			IPAddress torIp;
 			IPAddress changedIp;
 
 			// 1. Get Tor IP
-			var handler = new TorSocks5Handler(Shared.TorSock5EndPoint);
+			var handler = new TorSocks5Handler(SharedFixture.TorSock5EndPoint);
 			using (var httpClient = new HttpClient(handler))
 			{
 				var content =
@@ -113,7 +120,7 @@ namespace DotNetTor.Tests
 				Assert.True(gotIp);
 
 				// 2. Change Tor IP
-				var controlPortClient = new TorControlClient(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
+				var controlPortClient = new TorControlClient(SharedFixture.HostAddress, SharedFixture.ControlPort, SharedFixture.ControlPortPassword);
 				await controlPortClient.ChangeCircuitAsync();
 			
 				// 3. Get changed Tor IP

@@ -10,13 +10,19 @@ using Xunit;
 
 namespace DotNetTor.Tests
 {
-	[Collection("PrePostTestCollection")]
-	public class TorSocks5ManagerTests
+	public class TorSocks5ManagerTests : IClassFixture<SharedFixture>
 	{
+		private SharedFixture SharedFixture { get; }
+
+		public TorSocks5ManagerTests(SharedFixture fixture)
+		{
+			SharedFixture = fixture;
+		}
+
 		[Fact]
 		public async Task IsolatesStreamsAsync()
 		{
-			var manager = new TorSocks5Manager(Shared.TorSock5EndPoint);
+			var manager = new TorSocks5Manager(SharedFixture.TorSock5EndPoint);
 			var clearnetManager = new TorSocks5Manager(null);
 			var clients = new HashSet<TorSocks5Client>();
 			try
@@ -49,7 +55,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task IsolatesStreamsByIdentityAsync()
 		{
-			var manager = new TorSocks5Manager(Shared.TorSock5EndPoint);
+			var manager = new TorSocks5Manager(SharedFixture.TorSock5EndPoint);
 			var clients = new HashSet<TorSocks5Client>();
 			try
 			{
@@ -81,7 +87,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task DoesntIsolateStreamsAsync()
 		{
-			var manager = new TorSocks5Manager(Shared.TorSock5EndPoint);
+			var manager = new TorSocks5Manager(SharedFixture.TorSock5EndPoint);
 			var clients = new HashSet<TorSocks5Client>();
 			try
 			{
@@ -113,7 +119,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task ReceiveBufferProperlySetAsync()
 		{
-			var manager = new TorSocks5Manager(Shared.TorSock5EndPoint);
+			var manager = new TorSocks5Manager(SharedFixture.TorSock5EndPoint);
 			using (var client = await manager.EstablishTcpConnectionAsync("api.ipify.org", 80, isolateStream: false))
 			{
 				var sendBuff = Encoding.UTF8.GetBytes("GET / HTTP/1.1\r\nHost:api.ipify.org\r\n\r\n");
@@ -149,7 +155,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanConnectDomainAndIpAsync()
 		{
-			var manager = new TorSocks5Manager(Shared.TorSock5EndPoint);
+			var manager = new TorSocks5Manager(SharedFixture.TorSock5EndPoint);
 
 			TorSocks5Client c1 = null;
 			TorSocks5Client c2 = null;
@@ -158,7 +164,6 @@ namespace DotNetTor.Tests
 				c1 = await manager.EstablishTcpConnectionAsync(new IPEndPoint(IPAddress.Parse("192.64.147.228"), 80));
 				c2 = await manager.EstablishTcpConnectionAsync("google.com", 443);
 				c2 = await manager.EstablishTcpConnectionAsync("facebookcorewwwi.onion", 80);
-				c2 = await manager.EstablishTcpConnectionAsync("facebookcorewwwi.onion", 443);
 			}
 			finally
 			{
@@ -170,7 +175,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanResolveAsync()
 		{
-			var torManager = new TorSocks5Manager(Shared.TorSock5EndPoint);
+			var torManager = new TorSocks5Manager(SharedFixture.TorSock5EndPoint);
 			var t1 = await torManager.ReverseResolveAsync(IPAddress.Parse("192.64.147.228"), false);
 			var t2 = await torManager.ResolveAsync("google.com", false);
 
@@ -184,7 +189,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task ThrowsProperExceptionsAsync()
 		{
-			var manager = new TorSocks5Manager(Shared.TorSock5EndPoint);
+			var manager = new TorSocks5Manager(SharedFixture.TorSock5EndPoint);
 			await Assert.ThrowsAsync<TorSocks5FailureResponseException>(async () 
 				=> await manager.ReverseResolveAsync(IPAddress.Parse("0.64.147.228"), isolateStream: false));
 			await Assert.ThrowsAsync<TorSocks5FailureResponseException>(async ()
@@ -205,7 +210,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanAsyncronouslyConnectAndSendDataAndResolveAsync()
 		{
-			var manager = new TorSocks5Manager(Shared.TorSock5EndPoint);
+			var manager = new TorSocks5Manager(SharedFixture.TorSock5EndPoint);
 			var connectionTasks = new List<Task<TorSocks5Client>>();
 			try
 			{

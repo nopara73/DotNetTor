@@ -7,14 +7,20 @@ using Xunit;
 namespace DotNetTor.Tests
 {
 	// For proper configuraion see https://github.com/nopara73/DotNetTor
-	[Collection("PrePostTestCollection")]
-	public class TorSocks5HandlerTests
+	public class TorSocks5HandlerTests : IClassFixture<SharedFixture>
 	{
+		private SharedFixture SharedFixture { get; }
+
+		public TorSocks5HandlerTests(SharedFixture fixture)
+		{
+			SharedFixture = fixture;
+		}
+
 		[Fact]
 		public async Task CanDoBasicRequestAsync()
 		{
 			var requestUri = "http://api.qbit.ninja/whatisit/what%20is%20my%20future";
-			using (var handler = new TorSocks5Handler(Shared.TorSock5EndPoint))
+			using (var handler = new TorSocks5Handler(SharedFixture.TorSock5EndPoint))
 			using (var httpClient = new HttpClient(handler))
 			{
 				HttpResponseMessage message = await httpClient.GetAsync(requestUri);
@@ -29,7 +35,7 @@ namespace DotNetTor.Tests
 		{
 			// YOU HAVE TO SET THE HTTP CLIENT NOT TO DISPOSE THE HANDLER
 			var requestUri = "http://api.qbit.ninja/whatisit/what%20is%20my%20future";
-			var handler = new TorSocks5Handler(Shared.TorSock5EndPoint);
+			var handler = new TorSocks5Handler(SharedFixture.TorSock5EndPoint);
 			using (var httpClient = new HttpClient(handler, disposeHandler: false))
 			{
 				HttpResponseMessage message = await httpClient.GetAsync(requestUri);
@@ -56,7 +62,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanRequestDifferentWithSameHandlerAsync()
 		{
-			using (var handler = new TorSocks5Handler(Shared.TorSock5EndPoint))
+			using (var handler = new TorSocks5Handler(SharedFixture.TorSock5EndPoint))
 			using (var httpClient = new HttpClient(handler))
 			{
 				HttpResponseMessage message =
@@ -77,7 +83,7 @@ namespace DotNetTor.Tests
 		}
 
 		[Fact]
-		private static async Task TorIpIsNotTheRealOneAsync()
+		private async Task TorIpIsNotTheRealOneAsync()
 		{
 			var requestUri = "https://api.ipify.org/";
 			IPAddress realIp;
@@ -92,7 +98,7 @@ namespace DotNetTor.Tests
 			}
 
 			// 2. Get Tor IP
-			using (var handler = new TorSocks5Handler(Shared.TorSock5EndPoint))
+			using (var handler = new TorSocks5Handler(SharedFixture.TorSock5EndPoint))
 			using (var httpClient = new HttpClient(handler))
 			{
 				var content =
@@ -109,7 +115,7 @@ namespace DotNetTor.Tests
 		public async Task CanDoHttpsAsync()
 		{
 			var requestUri = "https://slack.com/api/api.test";
-			using (var handler = new TorSocks5Handler(Shared.TorSock5EndPoint))
+			using (var handler = new TorSocks5Handler(SharedFixture.TorSock5EndPoint))
 			using (var httpClient = new HttpClient(handler))
 			{
 				var content =
@@ -123,7 +129,7 @@ namespace DotNetTor.Tests
 		public async Task CanDoIpAddressAsync()
 		{
 			var requestUri = "http://172.217.6.142";
-			using (var handler = new TorSocks5Handler(Shared.TorSock5EndPoint))
+			using (var handler = new TorSocks5Handler(SharedFixture.TorSock5EndPoint))
 			using (var httpClient = new HttpClient(handler))
 			{
 				var content =
@@ -138,7 +144,7 @@ namespace DotNetTor.Tests
 		{
 			var firstRequest = "http://api.qbit.ninja/transactions/38d4cfeb57d6685753b7a3b3534c3cb576c34ca7344cd4582f9613ebf0c2b02a?format=json&headeronly=true";
 
-			using (var handler = new TorSocks5Handler(Shared.TorSock5EndPoint))
+			using (var handler = new TorSocks5Handler(SharedFixture.TorSock5EndPoint))
 			using (var httpClient = new HttpClient(handler))
 			{
 				await (await httpClient.GetAsync(firstRequest)).Content.ReadAsStringAsync();
@@ -150,7 +156,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanRequestInRowHttpsAsync()
 		{
-			using (var handler = new TorSocks5Handler(Shared.TorSock5EndPoint))
+			using (var handler = new TorSocks5Handler(SharedFixture.TorSock5EndPoint))
 			{
 				for (int i = 0; i < 2; i++)
 				{
@@ -173,7 +179,7 @@ namespace DotNetTor.Tests
 				);
 			await Assert.ThrowsAsync<TorException>(
 				async () =>
-					await new TorControlClient(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword + "a").ChangeCircuitAsync()
+					await new TorControlClient(SharedFixture.HostAddress, SharedFixture.ControlPort, SharedFixture.ControlPortPassword + "a").ChangeCircuitAsync()
 			);
 		}
 
@@ -182,7 +188,7 @@ namespace DotNetTor.Tests
 		{
 			var requestUri = "http://msydqstlz2kzerdg.onion/";
 
-			using (var handler = new TorSocks5Handler(Shared.TorSock5EndPoint))
+			using (var handler = new TorSocks5Handler(SharedFixture.TorSock5EndPoint))
 			using (var httpClient = new HttpClient(handler))
 			{
 				var content =

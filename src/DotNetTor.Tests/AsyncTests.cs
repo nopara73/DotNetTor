@@ -9,13 +9,19 @@ using NBitcoin;
 namespace DotNetTor.Tests
 {
 	// For proper configuraion see https://github.com/nopara73/DotNetTor
-	[Collection("PrePostTestCollection")]
-	public class AsyncTests
+	public class AsyncTests : IClassFixture<SharedFixture>
 	{
+		private SharedFixture SharedFixture { get; }
+
+		public AsyncTests(SharedFixture fixture)
+		{
+			SharedFixture = fixture;
+		}
+
 		[Fact]
 		public async Task CanDoRequest1Async()
 		{
-			var handler = new TorSocks5Handler(Shared.TorSock5EndPoint);
+			var handler = new TorSocks5Handler(SharedFixture.TorSock5EndPoint);
 			using (var client = new HttpClient(handler))
 			{
 				var contents = await QBitTestAsync(client, 1);
@@ -28,7 +34,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanRequestChunkEncodedAsync()
 		{
-			var handler = new TorSocks5Handler(Shared.TorSock5EndPoint);
+			var handler = new TorSocks5Handler(SharedFixture.TorSock5EndPoint);
 			using (var client = new HttpClient(handler))
 			{
 				var response = await client.GetAsync("https://jigsaw.w3.org/HTTP/ChunkedScript");
@@ -39,7 +45,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task TestMicrosoftNCSIAsync()
 		{
-			var handler = new TorSocks5Handler(Shared.TorSock5EndPoint);
+			var handler = new TorSocks5Handler(SharedFixture.TorSock5EndPoint);
 			using (var client = new HttpClient(handler))
 			{
 				var response = await client.GetAsync("http://www.msftncsi.com/ncsi.txt");
@@ -50,7 +56,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanRequestGzipEncodedAsync()
 		{
-			using (var handler = new TorSocks5Handler(Shared.TorSock5EndPoint))
+			using (var handler = new TorSocks5Handler(SharedFixture.TorSock5EndPoint))
 			{
 				var client = new QBitNinjaClient(Network.Main);
 				client.SetHttpMessageHandler(handler);
@@ -65,7 +71,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanDoRequest2Async()
 		{
-			var handler = new TorSocks5Handler(Shared.TorSock5EndPoint);
+			var handler = new TorSocks5Handler(SharedFixture.TorSock5EndPoint);
 			using (var client = new HttpClient(handler))
 			{
 				var contents = await QBitTestAsync(client, 2);
@@ -78,7 +84,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanDoRequestManyAsync()
 		{
-			var handler = new TorSocks5Handler(Shared.TorSock5EndPoint);
+			var handler = new TorSocks5Handler(SharedFixture.TorSock5EndPoint);
 			using (var client = new HttpClient(handler))
 			{
 				var contents = await QBitTestAsync(client, 15);
@@ -91,7 +97,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanDoRequestManyDifferentAsync()
 		{
-			var handler = new TorSocks5Handler(Shared.TorSock5EndPoint);
+			var handler = new TorSocks5Handler(SharedFixture.TorSock5EndPoint);
 			using (var client = new HttpClient(handler))
 			{
 				await QBitTestAsync(client, 10, alterRequests: true);
@@ -100,7 +106,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanDoHttpsRequestManyAsync()
 		{
-			var handler = new TorSocks5Handler(Shared.TorSock5EndPoint);
+			var handler = new TorSocks5Handler(SharedFixture.TorSock5EndPoint);
 			using (var client = new HttpClient(handler))
 			{
 				var contents = await QBitTestAsync(client, 15, https: true);
@@ -114,7 +120,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanDoHttpsRequest1Async()
 		{
-			var handler = new TorSocks5Handler(Shared.TorSock5EndPoint);
+			var handler = new TorSocks5Handler(SharedFixture.TorSock5EndPoint);
 			using (var client = new HttpClient(handler))
 			{
 				var request = "https://api.qbit.ninja/whatisit/what%20is%20my%20future";

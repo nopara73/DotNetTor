@@ -11,15 +11,22 @@ using DotNetEssentials.Logging;
 namespace DotNetTor.Tests
 {
 	// For proper configuraion see https://github.com/nopara73/DotNetTor
-	[Collection("PrePostTestCollection")]
-	public class PostTests
+	public class PostTests : IClassFixture<SharedFixture>
 	{
 		private static HttpClient _client;
+
+		private SharedFixture SharedFixture { get; }
+
+		public PostTests(SharedFixture fixture)
+		{
+			SharedFixture = fixture;
+		}
+
 
 		[Fact]
 		public async Task CanDoBasicPostRequestAsync()
 		{
-			using (_client = new HttpClient(new TorSocks5Handler(Shared.TorSock5EndPoint)))
+			using (_client = new HttpClient(new TorSocks5Handler(SharedFixture.TorSock5EndPoint)))
 			{
 				HttpContent content = new FormUrlEncodedContent(new[]
 				{
@@ -36,7 +43,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanCancelAsync()
 		{
-			using (_client = new HttpClient(new TorSocks5Handler(Shared.TorSock5EndPoint)))
+			using (_client = new HttpClient(new TorSocks5Handler(SharedFixture.TorSock5EndPoint)))
 			{
 				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 1, times: 1);
 				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 4, times: 1);
@@ -83,7 +90,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanDoBasicPostRequestWithNonAsciiCharsAsync()
 		{
-			using (_client = new HttpClient(new TorSocks5Handler(Shared.TorSock5EndPoint)))
+			using (_client = new HttpClient(new TorSocks5Handler(SharedFixture.TorSock5EndPoint)))
 			{
 				string json = "Hello ñ";
 				var httpContent = new StringContent(json, Encoding.UTF8, "application/json");
@@ -98,7 +105,7 @@ namespace DotNetTor.Tests
 		[Fact]
 		public async Task CanDoBasicPostHttpsRequestAsync()
 		{
-			using (_client = new HttpClient(new TorSocks5Handler(Shared.TorSock5EndPoint)))
+			using (_client = new HttpClient(new TorSocks5Handler(SharedFixture.TorSock5EndPoint)))
 			{
 				HttpContent content = new StringContent("{\"hex\": \"01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff2d03a58605204d696e656420627920416e74506f6f6c20757361311f10b53620558903d80272a70c0000724c0600ffffffff010f9e5096000000001976a9142ef12bd2ac1416406d0e132e5bc8d0b02df3861b88ac00000000\"}");
 

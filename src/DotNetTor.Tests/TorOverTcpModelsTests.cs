@@ -10,9 +10,15 @@ using Xunit;
 
 namespace DotNetTor.Tests
 {
-	[Collection("PrePostTestCollection")]
-	public class TorOverTcpModelsTests
-    {
+	public class TorOverTcpModelsTests : IClassFixture<SharedFixture>
+	{
+		private SharedFixture SharedFixture { get; }
+
+		public TorOverTcpModelsTests(SharedFixture fixture)
+		{
+			SharedFixture = fixture;
+		}
+
 		[Fact]
 		public void TotVersionTest()
 		{

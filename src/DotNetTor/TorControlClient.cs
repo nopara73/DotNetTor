@@ -112,10 +112,8 @@ namespace DotNetTor
 		/// <summary>
 		/// Waits for the specified event. Also consumes all responses.
 		/// </summary>
-		/// <param name="eventStartsWith"></param>
-		/// <param name="timeout"></param>
 		/// <returns>Full event</returns>
-		private async Task<string> WaitForEventAsync(string eventStartsWith, TimeSpan timeout, CancellationToken ctsToken)
+		private async Task<string> WaitForEventAsync(string code, string command, TimeSpan timeout, CancellationToken ctsToken)
 		{
 			var timeoutTask = Task.Delay(timeout, ctsToken);
 			while (true)
@@ -125,7 +123,7 @@ namespace DotNetTor
 
 				var firstTask = await Task.WhenAny(receiveTask, timeoutTask).ConfigureAwait(false);
 
-				if (firstTask == timeoutTask) throw new TimeoutException($"Did not receive the expected {nameof(eventStartsWith)} : {eventStartsWith} within the specified {nameof(timeout)} : {timeout}.");
+				if (firstTask == timeoutTask) throw new TimeoutException($"Did not receive the expected {nameof(code)} and {nameof(command)} : { code } { command } within the specified {nameof(timeout)} : {timeout}.");
 
 				int receivedCount = await receiveTask.ConfigureAwait(false);
 
@@ -135,7 +133,7 @@ namespace DotNetTor
 				}
 
 				var response = Encoding.ASCII.GetString(buffer, 0, receivedCount);
-				if (response.StartsWith(eventStartsWith, StringComparison.OrdinalIgnoreCase))
+				if (response.StartsWith($"{code} {command}", StringComparison.OrdinalIgnoreCase) || response.StartsWith($"{code}-{command}", StringComparison.OrdinalIgnoreCase))
 				{
 					return response;
 				}
@@ -195,7 +193,7 @@ namespace DotNetTor
 						|| command.StartsWith("SIGNAL", StringComparison.OrdinalIgnoreCase)
 						|| command.StartsWith("GETINFO", StringComparison.OrdinalIgnoreCase))
 					{
-						if (!responseLines.Any(x => x.StartsWith("250 OK", StringComparison.OrdinalIgnoreCase)))
+						if (!responseLines.Any(x => x.StartsWith("250 OK", StringComparison.OrdinalIgnoreCase) || x.StartsWith("250-OK", StringComparison.OrdinalIgnoreCase)))
 						throw new TorException(
 							$"Unexpected {nameof(response)} from Tor Control Port to sent {nameof(command)} : {command} , {nameof(response)} : {response}.");
 
@@ -208,12 +206,12 @@ namespace DotNetTor
 						{
 							command = command.Replace("\r\n", "");
 							var what = new List<string>(command.Split(' '))[1];
-							if (!responseLines.Any(x => x.StartsWith($"650 SIGNAL {what}", StringComparison.OrdinalIgnoreCase)))
+							if (!responseLines.Any(x => x.StartsWith($"650 SIGNAL {what}", StringComparison.OrdinalIgnoreCase) || x.StartsWith($"650-SIGNAL {what}", StringComparison.OrdinalIgnoreCase)))
 							{
 								// NEWNYM may be rate-limited (usually around 10 seconds, the max I've seen is 2 minutes)
 								if (what.StartsWith("NEWNYM", StringComparison.OrdinalIgnoreCase))
 								{
-									await WaitForEventAsync("650 SIGNAL NEWNYM", TimeSpan.FromMinutes(3), ctsToken).ConfigureAwait(false);
+									await WaitForEventAsync("650", "SIGNAL NEWNYM", TimeSpan.FromMinutes(3), ctsToken).ConfigureAwait(false);
 								}
 								else
 								{
