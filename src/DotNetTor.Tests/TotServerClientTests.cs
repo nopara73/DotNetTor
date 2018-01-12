@@ -35,10 +35,10 @@ namespace DotNetTor.Tests
 
 				for (int i = 0; i < 3; i++)
 				{
-					using (TotClient client = await manager.EstablishTotConnectionAsync(serverEndPoint))
-					{
-						await client.PingAsync();
-					}
+
+					TotClient client = await manager.EstablishTotConnectionAsync(serverEndPoint);
+					await client.PingAsync();
+					await client.DisposeAsync();
 				}
 			}
 			finally
@@ -59,7 +59,7 @@ namespace DotNetTor.Tests
 
 			await server.DisposeAsync();
 
-			client?.Dispose();
+			await client.DisposeAsync();
 
 			server = new TotServer(serverEndPoint);
 			server.Start();
@@ -76,36 +76,34 @@ namespace DotNetTor.Tests
 			{
 				server.Start();
 
-				using (TotClient client = await manager.EstablishTotConnectionAsync(serverEndPoint))
-				{
-					await client.PingAsync();
-				}
+				TotClient client = await manager.EstablishTotConnectionAsync(serverEndPoint);
+				await client.PingAsync();
+				await client.DisposeAsync();
 
 				await server.DisposeAsync();
 
 				server = new TotServer(serverEndPoint);
 				server.Start();
 
-				using (TotClient client = await manager.EstablishTotConnectionAsync(serverEndPoint))
-				{
-					await client.PingAsync();
+				client = await manager.EstablishTotConnectionAsync(serverEndPoint);
+				await client.PingAsync();
 
-					await server.DisposeAsync();
+				await server.DisposeAsync();
 
-					server = new TotServer(serverEndPoint);
-					server.Start();
+				server = new TotServer(serverEndPoint);
+				server.Start();
 
-					await client.PingAsync();
+				await client.PingAsync();
 
-					await server.DisposeAsync();
+				await server.DisposeAsync();
 
-					await Assert.ThrowsAsync<ConnectionException>(async () => await client.PingAsync());
+				await Assert.ThrowsAsync<ConnectionException>(async () => await client.PingAsync());
 
-					server = new TotServer(serverEndPoint);
-					server.Start();
+				server = new TotServer(serverEndPoint);
+				server.Start();
 
-					await client.PingAsync();
-				}
+				await client.PingAsync();
+				await client.DisposeAsync();
 			}
 			finally
 			{
@@ -144,9 +142,9 @@ namespace DotNetTor.Tests
 			finally
 			{
 				await server.DisposeAsync();
-				foreach(var client in clients)
+				foreach (var client in clients)
 				{
-					client?.Dispose();
+					await client.DisposeAsync();
 				}
 			}
 		}
@@ -162,30 +160,30 @@ namespace DotNetTor.Tests
 			{
 				server.Start();
 
-				using (TotClient client = await manager.EstablishTotConnectionAsync(serverEndPoint))
+				TotClient client = await manager.EstablishTotConnectionAsync(serverEndPoint);
+
+				var response = await client.RequestAsync(new TotRequest("hello"));
+				Assert.Equal("world", response.ToString());
+				response = await client.RequestAsync(new TotRequest("hello"));
+				Assert.Equal("world", response.ToString());
+				await Assert.ThrowsAsync<TotRequestException>(async () => await client.RequestAsync(new TotRequest("hell")));
+				var r1 = new TotRequest("hello");
+				var bytes = r1.ToBytes();
+				bytes[0] = 2; // change the version to 2
+				var r2 = new TotRequest();
+				r2.FromBytes(bytes);
+				var thrownVersionMismatchException = false;
+				try
 				{
-					var response = await client.RequestAsync(new TotRequest("hello"));
-					Assert.Equal("world", response.ToString());
-					response = await client.RequestAsync(new TotRequest("hello"));
-					Assert.Equal("world", response.ToString());
-					await Assert.ThrowsAsync<TotRequestException>(async () => await client.RequestAsync(new TotRequest("hell")));
-					var r1 = new TotRequest("hello");
-					var bytes = r1.ToBytes();
-					bytes[0] = 2; // change the version to 2
-					var r2 = new TotRequest();
-					r2.FromBytes(bytes);
-					var thrownVersionMismatchException = false;
-					try
-					{
-						await client.RequestAsync(r2);
-					}
-					catch(Exception ex)
-					{
-						thrownVersionMismatchException = true;
-						Assert.Equal("Server responded with wrong version. Expected: X'02'. Actual: X'01'.", ex.Message);
-					}
-					Assert.True(thrownVersionMismatchException);
+					await client.RequestAsync(r2);
 				}
+				catch (Exception ex)
+				{
+					thrownVersionMismatchException = true;
+					Assert.Equal("Server responded with wrong version. Expected: X'02'. Actual: X'01'.", ex.Message);
+				}
+				Assert.True(thrownVersionMismatchException);
+				await client.DisposeAsync();
 			}
 			finally
 			{
@@ -232,16 +230,17 @@ namespace DotNetTor.Tests
 				server.RegisterSubscription("bar");
 				server.RegisterSubscription("buz");
 
-				using (TotClient client = await manager.EstablishTotConnectionAsync(serverEndPoint))
-				{
-					await Assert.ThrowsAsync<TotRequestException>(async () => await client.SubscribeAsync("foo2"));
-					await client.SubscribeAsync("foo");
+				TotClient client = await manager.EstablishTotConnectionAsync(serverEndPoint);
 
-					await server.PingAllSubscribersAsync();
+				await Assert.ThrowsAsync<TotRequestException>(async () => await client.SubscribeAsync("foo2"));
+				await client.SubscribeAsync("foo");
 
-					await client.SubscribeAsync("bar");
-					await client.SubscribeAsync("buz");
-				}
+				await server.PingAllSubscribersAsync();
+
+				await client.SubscribeAsync("bar");
+				await client.SubscribeAsync("buz");
+
+				await client.DisposeAsync();
 			}
 			finally
 			{
@@ -268,35 +267,39 @@ namespace DotNetTor.Tests
 			var server = new TotServer(serverEndPoint);
 			server.RequestArrived += Server_RequestArrivedAsync;
 			var manager = new TorSocks5Manager(null);
-			
+
 			try
 			{
 				server.Start();
 				server.RegisterSubscription("foo");
 
-				using (TotClient requesterClient = await manager.EstablishTotConnectionAsync(serverEndPoint))
-				using (TotClient subscriberClient = await manager.EstablishTotConnectionAsync(serverEndPoint))
-				using (TotClient badRequesterClient = await manager.EstablishTotConnectionAsync(serverEndPoint))
-				using (TotClient badSubscriberClient = await manager.EstablishTotConnectionAsync(serverEndPoint))
-				{
-					var responseContent = await requesterClient.RequestAsync(new TotRequest("hello"));
-					string worldString = responseContent.ToString();
-					Assert.Equal("world", worldString);					
-					await Assert.ThrowsAsync<InvalidOperationException>(async () => await requesterClient.SubscribeAsync("foo"));
-					
-					await subscriberClient.SubscribeAsync("foo");
-					await Assert.ThrowsAsync<InvalidOperationException>(async () => await subscriberClient.RequestAsync(new TotRequest("hello")));
-					
-					await Assert.ThrowsAsync<TotRequestException>(async () => await badRequesterClient.RequestAsync(new TotRequest("hello2")));
-					await Assert.ThrowsAsync<InvalidOperationException>(async () => await badRequesterClient.SubscribeAsync("foo"));
-					responseContent = await badRequesterClient.RequestAsync(new TotRequest("hello"));
-					worldString = responseContent.ToString();
-					Assert.Equal("world", worldString);
+				TotClient requesterClient = await manager.EstablishTotConnectionAsync(serverEndPoint);
+				TotClient subscriberClient = await manager.EstablishTotConnectionAsync(serverEndPoint);
+				TotClient badRequesterClient = await manager.EstablishTotConnectionAsync(serverEndPoint);
+				TotClient badSubscriberClient = await manager.EstablishTotConnectionAsync(serverEndPoint);
 
-					await Assert.ThrowsAsync<TotRequestException>(async () => await badSubscriberClient.SubscribeAsync("foo2"));
-					await Assert.ThrowsAsync<InvalidOperationException>(async () => await badSubscriberClient.RequestAsync(new TotRequest("hello")));
-					await badSubscriberClient.SubscribeAsync("foo");
-				}
+				var responseContent = await requesterClient.RequestAsync(new TotRequest("hello"));
+				string worldString = responseContent.ToString();
+				Assert.Equal("world", worldString);
+				await Assert.ThrowsAsync<InvalidOperationException>(async () => await requesterClient.SubscribeAsync("foo"));
+
+				await subscriberClient.SubscribeAsync("foo");
+				await Assert.ThrowsAsync<InvalidOperationException>(async () => await subscriberClient.RequestAsync(new TotRequest("hello")));
+
+				await Assert.ThrowsAsync<TotRequestException>(async () => await badRequesterClient.RequestAsync(new TotRequest("hello2")));
+				await Assert.ThrowsAsync<InvalidOperationException>(async () => await badRequesterClient.SubscribeAsync("foo"));
+				responseContent = await badRequesterClient.RequestAsync(new TotRequest("hello"));
+				worldString = responseContent.ToString();
+				Assert.Equal("world", worldString);
+
+				await Assert.ThrowsAsync<TotRequestException>(async () => await badSubscriberClient.SubscribeAsync("foo2"));
+				await Assert.ThrowsAsync<InvalidOperationException>(async () => await badSubscriberClient.RequestAsync(new TotRequest("hello")));
+				await badSubscriberClient.SubscribeAsync("foo");
+
+				await requesterClient.DisposeAsync();
+				await subscriberClient.DisposeAsync();
+				await badRequesterClient.DisposeAsync();
+				await badSubscriberClient.DisposeAsync();
 			}
 			finally
 			{
@@ -318,19 +321,20 @@ namespace DotNetTor.Tests
 			{
 				server.Start();
 
-				using (TotClient client = await manager.EstablishTotConnectionAsync(serverEndPoint))
-				{
-					await Assert.ThrowsAsync<TotRequestException>(async () => await client.SubscribeAsync("foo"));
-					Assert.Empty(server.Subscriptions);
-					server.RegisterSubscription("foo");
-					Assert.Single(server.Subscriptions);
-					Assert.Empty(server.Subscriptions.Single().Value);
-					await client.SubscribeAsync("foo");
-					Assert.Single(server.Subscriptions);
-					Assert.Single(server.Subscriptions.Single().Value);
-					await server.NotifyAllSubscribersAsync(new TotNotification("foo", new TotContent("bar")));
-					Assert.Single(server.Subscriptions.Single().Value);
-				}
+				TotClient client = await manager.EstablishTotConnectionAsync(serverEndPoint);
+				await Assert.ThrowsAsync<TotRequestException>(async () => await client.SubscribeAsync("foo"));
+				Assert.Empty(server.Subscriptions);
+				server.RegisterSubscription("foo");
+				Assert.Single(server.Subscriptions);
+				Assert.Empty(server.Subscriptions.Single().Value);
+				await client.SubscribeAsync("foo");
+				Assert.Single(server.Subscriptions);
+				Assert.Single(server.Subscriptions.Single().Value);
+				await server.NotifyAllSubscribersAsync(new TotNotification("foo", new TotContent("bar")));
+				Assert.Single(server.Subscriptions.Single().Value);
+				await client.DisposeAsync();
+
+
 				await Task.Delay(1000); // make sure the server already remove the client from the subscribers
 				Assert.Single(server.Subscriptions);
 				Assert.Empty(server.Subscriptions.Single().Value);
@@ -344,7 +348,7 @@ namespace DotNetTor.Tests
 				var subscriptionJobs = new List<Task>();
 				foreach (var cTask in connectionTasks)
 				{
-					TotClient client = await cTask;
+					client = await cTask;
 					clients.Add(client);
 					client.NotificationArrived += Client_FooBarNotificationArrived;
 					subscriptionJobs.Add(client.SubscribeAsync("foo"));
@@ -374,7 +378,7 @@ namespace DotNetTor.Tests
 				foreach (var client in clients)
 				{
 					client.NotificationArrived -= Client_FooBarNotificationArrived;
-					client?.Dispose();
+					await client.DisposeAsync();
 				}
 			}
 		}

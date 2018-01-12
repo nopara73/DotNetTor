@@ -28,6 +28,8 @@ namespace DotNetTor
 
 		private ConcurrentHashSet<Task> ClientListeners { get; set; }
 
+		private AsyncLock RemoveClientAsyncLock { get; }
+
 		/// <summary>
 		/// string: Subscription Purpose, collection: subscribers
 		/// </summary>
@@ -52,6 +54,7 @@ namespace DotNetTor
 			Guard.NotNull(nameof(bindToEndPoint), bindToEndPoint);
 			TcpListener = new TcpListener(bindToEndPoint);
 			ClientsAsyncLock = new AsyncLock();
+			RemoveClientAsyncLock = new AsyncLock();
 		}
 
 		public void Start()
@@ -125,7 +128,7 @@ namespace DotNetTor
 					Logger.LogWarning<TotServer>(ex, LogLevel.Debug);
 					if (client != null)
 					{
-						RemoveClient(client);
+						await RemoveClientAsync(client).ConfigureAwait(false);
 					}
 					ts5Client?.Dispose();
 					tcpClient?.Dispose();
@@ -182,7 +185,7 @@ namespace DotNetTor
 						int receiveCount = await stream.ReadAsync(receiveBuffer, 0, receiveBufferSize, cancel).ConfigureAwait(false);
 						if (receiveCount <= 0)
 						{
-							RemoveClient(client);
+							await RemoveClientAsync(client).ConfigureAwait(false);
 							break;
 						}
 						// if we could fit everything into our buffer, then return it
@@ -202,7 +205,7 @@ namespace DotNetTor
 							receiveCount = await stream.ReadAsync(receiveBuffer, 0, receiveBufferSize, cancel).ConfigureAwait(false);
 							if (receiveCount <= 0)
 							{
-								RemoveClient(client);
+								await RemoveClientAsync(client).ConfigureAwait(false);
 								break;
 							}
 							builder.Append(receiveBuffer.Take(receiveCount).ToArray());
@@ -217,12 +220,12 @@ namespace DotNetTor
 			catch (OperationCanceledException ex)
 			{
 				Logger.LogTrace<TotServer>(ex);
-				RemoveClient(client);
+				await RemoveClientAsync(client).ConfigureAwait(false);
 			}
 			catch (Exception ex)
 			{
 				Logger.LogTrace<TotServer>(ex);
-				RemoveClient(client);
+				await RemoveClientAsync(client).ConfigureAwait(false);
 			}
 		}
 
@@ -325,7 +328,7 @@ namespace DotNetTor
 					var client = await task.ConfigureAwait(false);
 					if (client != null)
 					{
-						RemoveClient(client);
+						await RemoveClientAsync(client).ConfigureAwait(false);
 					}
 				}
 			}
@@ -376,7 +379,7 @@ namespace DotNetTor
 					var client = await task.ConfigureAwait(false);
 					if (client != null)
 					{
-						RemoveClient(client);
+						await RemoveClientAsync(client).ConfigureAwait(false);
 					}
 				}
 			}
@@ -442,23 +445,32 @@ namespace DotNetTor
 			StopAcceptingTcpConnections = null; // otherwise warning
 		}
 		
-		private void RemoveClient(TotClient client)
+		private async Task RemoveClientAsync(TotClient client)
 		{
-			foreach (var subscription in Subscriptions)
+			if (client == null) return;
+
+			using (await RemoveClientAsyncLock.LockAsync().ConfigureAwait(false))
 			{
-				subscription.Value.TryRemove(client);
-			}
-			using (ClientsAsyncLock.Lock())
-			{
-				Clients.Remove(client);
-				var tcpClient = client.TorSocks5Client.TcpClient;
-				if (tcpClient != null)
+				foreach (var subscription in Subscriptions)
 				{
-					Logger.LogInfo<TotServer>($"Client removed: {tcpClient.Client.RemoteEndPoint}.\nNumber of clients: {Clients.Count}.");
+					subscription.Value.TryRemove(client);
+				}
+				using (await ClientsAsyncLock.LockAsync().ConfigureAwait(false))
+				{
+					Clients.Remove(client);
+					var tcpClient = client.TorSocks5Client.TcpClient;
+					if (tcpClient != null)
+					{
+						Logger.LogInfo<TotServer>($"Client removed: {tcpClient.Client.RemoteEndPoint}.\nNumber of clients: {Clients.Count}.");
+					}
+				}
+
+				if (client != null)
+				{
+					await client.DisposeAsync().ConfigureAwait(false);
+					client = null;
 				}
 			}
-
-			client?.Dispose();
 		}
 
 		#endregion

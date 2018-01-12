@@ -19,7 +19,7 @@ namespace DotNetTor
 	/// <summary>
 	/// Create an instance with the TorSocks5Manager
 	/// </summary>
-	public class TotClient : IDisposable
+	public class TotClient
     {
 		#region PropertiesAndMembers
 
@@ -375,38 +375,22 @@ namespace DotNetTor
 
 		#region IDisposable Support
 
-		private volatile bool _disposedValue = false; // To detect redundant calls
-
-		protected virtual void Dispose(bool disposing)
+		public async Task DisposeAsync()
 		{
-			if (!_disposedValue)
+			try
 			{
-				if (disposing)
+				StopListeningForNotifications?.Cancel();
+				if(NotificationArrived != null)
 				{
-					TorSocks5Client?.Dispose();
-					StopListeningForNotifications?.Dispose();
+					await NotificationListenerTask.ConfigureAwait(false);
 				}
-
-				// TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-				// TODO: set large fields to null.
-
-				_disposedValue = true;
+				StopListeningForNotifications?.Dispose();
 			}
-		}
-
-		// TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-		// ~TorOverTcpClient() {
-		//   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-		//   Dispose(false);
-		// }
-
-		// This code added to correctly implement the disposable pattern.
-		public void Dispose()
-		{
-			// Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-			Dispose(true);
-			// TODO: uncomment the following line if the finalizer is overridden above.
-			// GC.SuppressFinalize(this);
+			catch(Exception ex)
+			{
+				Logger.LogWarning<TotClient>(ex, LogLevel.Debug);
+			}
+			TorSocks5Client?.Dispose();
 		}
 
 		#endregion
