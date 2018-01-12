@@ -56,14 +56,13 @@ namespace DotNetTor.Tests
 
 			server.Start();
 			TotClient client = await manager.EstablishTotConnectionAsync(serverEndPoint);
+			client?.Dispose();
 
 			await server.DisposeAsync();
 
 			server = new TotServer(serverEndPoint);
 			server.Start();
 			await server.DisposeAsync();
-
-			client?.Dispose();
 		}
 
 		[Fact]
