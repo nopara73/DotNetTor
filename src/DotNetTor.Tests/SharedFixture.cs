@@ -25,7 +25,7 @@ namespace DotNetTor.Tests
 			ControlPortPassword = "ILoveBitcoin21";
 
 			Logger.SetMinimumLevel(LogLevel.Trace);
-			Logger.SetTypes(LogMode.Debug, LogMode.File);
+			Logger.SetModes(LogMode.Debug, LogMode.File);
 			Logger.SetFilePath("TestLogs.txt");
 		}
 
