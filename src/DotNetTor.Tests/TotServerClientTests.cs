@@ -15,6 +15,7 @@ using Xunit;
 
 namespace DotNetTor.Tests
 {
+	[Collection("PrePostTestCollection")]
 	public class TotServerClientTests
 	{
 		[Fact]

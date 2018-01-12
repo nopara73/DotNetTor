@@ -11,6 +11,7 @@ using DotNetEssentials.Logging;
 namespace DotNetTor.Tests
 {
 	// For proper configuraion see https://github.com/nopara73/DotNetTor
+	[Collection("PrePostTestCollection")]
 	public class PostTests
 	{
 		private static HttpClient _client;
@@ -37,11 +38,11 @@ namespace DotNetTor.Tests
 		{
 			using (_client = new HttpClient(new TorSocks5Handler(Shared.TorSock5EndPoint)))
 			{
-				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 1, times: 6);
-				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 4, times: 5);
-				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 16, times: 4);
-				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 64, times: 3);
-				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 256, times: 2);
+				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 1, times: 1);
+				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 4, times: 1);
+				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 16, times: 1);
+				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 64, times: 1);
+				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 256, times: 1);
 				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 1024, times: 1);
 			}
 		}

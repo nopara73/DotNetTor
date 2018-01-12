@@ -10,6 +10,7 @@ using Xunit;
 
 namespace DotNetTor.Tests
 {
+	[Collection("PrePostTestCollection")]
 	public class TorSocks5ManagerTests
 	{
 		[Fact]

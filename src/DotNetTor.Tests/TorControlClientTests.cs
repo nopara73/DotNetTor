@@ -6,6 +6,7 @@ using Xunit;
 namespace DotNetTor.Tests
 {
 	// For proper configuraion see https://github.com/nopara73/DotNetTor
+	[Collection("PrePostTestCollection")]
 	public class TorControlClientTests
     {
 		[Fact]
@@ -25,7 +26,7 @@ namespace DotNetTor.Tests
 		    IPAddress currIp = await GetTorIpAsync(requestUri);
 
 		    var controlPortClient = new TorControlClient(Shared.HostAddress, Shared.ControlPort, Shared.ControlPortPassword);
-		    for (int i = 0; i < 5; i++)
+		    for (int i = 0; i < 3; i++)
 		    {
 			    IPAddress prevIp = currIp;
 			    // Change Tor IP

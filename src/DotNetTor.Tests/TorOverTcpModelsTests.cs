@@ -10,7 +10,8 @@ using Xunit;
 
 namespace DotNetTor.Tests
 {
-    public class TorOverTcpModelsTests
+	[Collection("PrePostTestCollection")]
+	public class TorOverTcpModelsTests
     {
 		[Fact]
 		public void TotVersionTest()

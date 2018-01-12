@@ -9,6 +9,7 @@ using NBitcoin;
 namespace DotNetTor.Tests
 {
 	// For proper configuraion see https://github.com/nopara73/DotNetTor
+	[Collection("PrePostTestCollection")]
 	public class AsyncTests
 	{
 		[Fact]
