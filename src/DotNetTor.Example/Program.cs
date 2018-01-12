@@ -16,7 +16,7 @@ namespace DotNetTor.Example
 		{
 			try
 			{
-				Logger.SetTypes(LogMode.Console);
+				Logger.SetModes(LogMode.Console);
 				Logger.SetMinimumLevel(LogLevel.Info);
 
 				await DoARandomRequestAsync();
