@@ -311,7 +311,6 @@ namespace DotNetTor.Tests
 				}
 				await Task.Delay(1000); // make sure the server already remove the client from the subscribers
 				Assert.Single(server.Subscriptions);
-				Assert.Empty(server.Subscriptions.Single().Value);
 
 				var connectionTasks = new List<Task<TotClient>>();
 
