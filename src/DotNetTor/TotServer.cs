@@ -54,13 +54,11 @@ namespace DotNetTor
 			ClientsAsyncLock = new AsyncLock();
 		}
 
-		public async Task StartAsync()
+		public void Start()
 		{
-			await StopAsync().ConfigureAwait(false);
-
 			using (ClientsAsyncLock.Lock())
 			{
-				if(Clients != null)
+				if (Clients != null)
 				{
 					Clients.Clear();
 				}
@@ -407,7 +405,7 @@ namespace DotNetTor
 
 		#region Cleanup
 
-		public async Task StopAsync()
+		public async Task DisposeAsync()
 		{
 			try
 			{
@@ -433,7 +431,7 @@ namespace DotNetTor
 			try
 			{
 				TcpListener?.Stop();
-				Logger.LogInfo<TotServer>("Server stopped");
+				Logger.LogInfo<TotServer>("Server stopped.");
 			}
 			catch (Exception ex)
 			{

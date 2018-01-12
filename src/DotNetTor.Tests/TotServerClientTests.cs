@@ -31,7 +31,7 @@ namespace DotNetTor.Tests
 			var manager = new TorSocks5Manager(null);
 			try
 			{
-				await server.StartAsync();
+				server.Start();
 
 				for (int i = 0; i < 3; i++)
 				{
@@ -43,7 +43,7 @@ namespace DotNetTor.Tests
 			}
 			finally
 			{
-				await server.StopAsync();
+				await server.DisposeAsync();
 			}
 		}
 
@@ -54,13 +54,14 @@ namespace DotNetTor.Tests
 			var server = new TotServer(serverEndPoint);
 			var manager = new TorSocks5Manager(null);
 
-			await server.StartAsync();
+			server.Start();
 			TotClient client = await manager.EstablishTotConnectionAsync(serverEndPoint);
 
-			await server.StopAsync();
+			await server.DisposeAsync();
 
-			await server.StartAsync();
-			await server.StopAsync();
+			server = new TotServer(serverEndPoint);
+			server.Start();
+			await server.DisposeAsync();
 
 			client?.Dispose();
 		}
@@ -73,39 +74,42 @@ namespace DotNetTor.Tests
 			var manager = new TorSocks5Manager(null);
 			try
 			{
-				await server.StartAsync();
+				server.Start();
 
 				using (TotClient client = await manager.EstablishTotConnectionAsync(serverEndPoint))
 				{
 					await client.PingAsync();
 				}
 
-				await server.StopAsync();
+				await server.DisposeAsync();
 
-				await server.StartAsync();
+				server = new TotServer(serverEndPoint);
+				server.Start();
 
 				using (TotClient client = await manager.EstablishTotConnectionAsync(serverEndPoint))
 				{
 					await client.PingAsync();
 
-					await server.StopAsync();
+					await server.DisposeAsync();
 
-					await server.StartAsync();
+					server = new TotServer(serverEndPoint);
+					server.Start();
 
 					await client.PingAsync();
 
-					await server.StopAsync();
+					await server.DisposeAsync();
 
 					await Assert.ThrowsAsync<ConnectionException>(async () => await client.PingAsync());
 
-					await server.StartAsync();
+					server = new TotServer(serverEndPoint);
+					server.Start();
 
 					await client.PingAsync();
 				}
 			}
 			finally
 			{
-				await server.StopAsync();
+				await server.DisposeAsync();
 			}
 		}
 
@@ -118,7 +122,7 @@ namespace DotNetTor.Tests
 			var clients = new List<TotClient>();
 			try
 			{
-				await server.StartAsync();
+				server.Start();
 
 				var connectionTasks = new List<Task<TotClient>>();
 
@@ -139,7 +143,7 @@ namespace DotNetTor.Tests
 			}
 			finally
 			{
-				await server.StopAsync();
+				await server.DisposeAsync();
 				foreach(var client in clients)
 				{
 					client?.Dispose();
@@ -156,7 +160,7 @@ namespace DotNetTor.Tests
 			var manager = new TorSocks5Manager(null);
 			try
 			{
-				await server.StartAsync();
+				server.Start();
 
 				using (TotClient client = await manager.EstablishTotConnectionAsync(serverEndPoint))
 				{
@@ -186,7 +190,7 @@ namespace DotNetTor.Tests
 			finally
 			{
 				server.RequestArrived -= Server_RequestArrivedAsync;
-				await server.StopAsync();
+				await server.DisposeAsync();
 			}
 		}
 
@@ -223,7 +227,7 @@ namespace DotNetTor.Tests
 
 			try
 			{
-				await server.StartAsync();
+				server.Start();
 				server.RegisterSubscription("foo");
 				server.RegisterSubscription("bar");
 				server.RegisterSubscription("buz");
@@ -241,7 +245,7 @@ namespace DotNetTor.Tests
 			}
 			finally
 			{
-				await server.StopAsync();
+				await server.DisposeAsync();
 			}
 		}
 
@@ -267,7 +271,7 @@ namespace DotNetTor.Tests
 			
 			try
 			{
-				await server.StartAsync();
+				server.Start();
 				server.RegisterSubscription("foo");
 
 				using (TotClient requesterClient = await manager.EstablishTotConnectionAsync(serverEndPoint))
@@ -297,7 +301,7 @@ namespace DotNetTor.Tests
 			finally
 			{
 				server.RequestArrived -= Server_RequestArrivedAsync;
-				await server.StopAsync();
+				await server.DisposeAsync();
 			}
 		}
 
@@ -312,7 +316,7 @@ namespace DotNetTor.Tests
 			var clients = new List<TotClient>();
 			try
 			{
-				await server.StartAsync();
+				server.Start();
 
 				using (TotClient client = await manager.EstablishTotConnectionAsync(serverEndPoint))
 				{
@@ -366,7 +370,7 @@ namespace DotNetTor.Tests
 			}
 			finally
 			{
-				await server.StopAsync();
+				await server.DisposeAsync();
 				foreach (var client in clients)
 				{
 					client.NotificationArrived -= Client_FooBarNotificationArrived;
