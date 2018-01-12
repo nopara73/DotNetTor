@@ -390,6 +390,7 @@ namespace DotNetTor
 			{
 				Logger.LogWarning<TotClient>(ex, LogLevel.Debug);
 			}
+			TorSocks5Client.TcpClient.Client.Shutdown(System.Net.Sockets.SocketShutdown.Both);
 			TorSocks5Client?.Dispose();
 		}
 
