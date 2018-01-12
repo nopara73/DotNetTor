@@ -163,7 +163,7 @@ namespace DotNetTor.Tests
 			{
 				c1 = await manager.EstablishTcpConnectionAsync(new IPEndPoint(IPAddress.Parse("192.64.147.228"), 80));
 				c2 = await manager.EstablishTcpConnectionAsync("google.com", 443);
-				c2 = await manager.EstablishTcpConnectionAsync("facebookcorewwwi.onion", 80);
+				c2 = await manager.EstablishTcpConnectionAsync("facebookcorewwwi.onion", 443);
 			}
 			finally
 			{
