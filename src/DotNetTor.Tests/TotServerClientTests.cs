@@ -48,6 +48,18 @@ namespace DotNetTor.Tests
 		}
 
 		[Fact]
+		public async Task ServerStartStopStartAsync()
+		{
+			var serverEndPoint = new IPEndPoint(IPAddress.Loopback, 5280);
+			var server = new TotServer(serverEndPoint);
+
+			await server.StartAsync();
+			await server.StopAsync();
+			await server.StartAsync();
+			await server.StopAsync();
+		}
+
+		[Fact]
 		public async Task AutoReconnectsTestAsync()
 		{
 			var serverEndPoint = new IPEndPoint(IPAddress.Loopback, 5280);
