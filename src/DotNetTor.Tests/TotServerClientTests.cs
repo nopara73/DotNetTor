@@ -52,8 +52,11 @@ namespace DotNetTor.Tests
 		{
 			var serverEndPoint = new IPEndPoint(IPAddress.Loopback, 5280);
 			var server = new TotServer(serverEndPoint);
+			var manager = new TorSocks5Manager(null);
 
 			await server.StartAsync();
+			TotClient client = await manager.EstablishTotConnectionAsync(serverEndPoint);
+
 			await server.StopAsync();
 			await server.StartAsync();
 			await server.StopAsync();
