@@ -394,27 +394,20 @@ namespace DotNetTor
 		{
 			try
 			{
-				try
-				{
-					StopAcceptingTcpConnections?.Cancel();
-					await AcceptTcpConnectionsTask.ConfigureAwait(false);
-				}
-				catch (Exception ex)
-				{
-					Logger.LogWarning<TotServer>(ex, LogLevel.Debug);
-				}
-
-				if (ClientListeners != null)
-				{
-					foreach (var clientListener in ClientListeners)
-					{
-						await clientListener.ConfigureAwait(false);
-					}
-				}
+				StopAcceptingTcpConnections?.Cancel();
+				await AcceptTcpConnectionsTask.ConfigureAwait(false);				
 			}
-			catch
+			catch (Exception ex)
 			{
+				Logger.LogWarning<TotServer>(ex, LogLevel.Debug);
+			}
 
+			if (ClientListeners != null)
+			{
+				foreach (var clientListener in ClientListeners)
+				{
+					await clientListener.ConfigureAwait(false);
+				}
 			}
 
 			try
