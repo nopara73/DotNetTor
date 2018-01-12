@@ -41,7 +41,7 @@ namespace DotNetTor.Tests
 					ips.Add(Encoding.ASCII.GetString(response).Split("\n").Last());
 				}
 
-				Assert.Equal(4, ips.Count);
+				Assert.True(ips.Count >= 3);
 			}
 			finally
 			{
@@ -73,7 +73,7 @@ namespace DotNetTor.Tests
 					ips.Add(Encoding.ASCII.GetString(response).Split("\n").Last());
 				}
 
-				Assert.Equal(2, ips.Count);
+				Assert.True(ips.Count >= 2);
 			}
 			finally
 			{
