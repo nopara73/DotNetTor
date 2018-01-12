@@ -55,13 +55,13 @@ namespace DotNetTor.Tests
 			var manager = new TorSocks5Manager(null);
 
 			await server.StartAsync();
-			TotClient client = await manager.EstablishTotConnectionAsync(serverEndPoint);
+			//TotClient client = await manager.EstablishTotConnectionAsync(serverEndPoint);
 
 			await server.StopAsync();
 			await server.StartAsync();
 			await server.StopAsync();
 
-			client?.Dispose();
+			//client?.Dispose();
 		}
 
 		[Fact]
