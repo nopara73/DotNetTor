@@ -71,7 +71,7 @@ namespace DotNetTor
 			TcpClient = new TcpClient();
 			AsyncLock = new AsyncLock();
 		}
-		
+
 		/// <param name="tcpClient">Must be already connected.</param>
 		internal TorSocks5Client(TcpClient tcpClient)
 		{
@@ -214,7 +214,7 @@ namespace DotNetTor
 		{
 			host = Guard.NotNullOrEmptyOrWhitespace(nameof(host), host, true);
 			Guard.MinimumAndNotNull(nameof(port), port, 0);
-			
+
 			if (TorSocks5EndPoint == null)
 			{
 				using (await AsyncLock.LockAsync().ConfigureAwait(false))
@@ -268,7 +268,7 @@ namespace DotNetTor
 			// the client, the server MUST encapsulate the data as appropriate for 
 			// the authentication method in use.
 		}
-		
+
 		public async Task AssertConnectedAsync()
 		{
 			if (!IsConnected)
@@ -283,7 +283,7 @@ namespace DotNetTor
 				{
 					throw new ConnectionException($"{nameof(TorSocks5Client)} is not connected to {RemoteEndPoint}.", ex);
 				}
-				if(!IsConnected)
+				if (!IsConnected)
 				{
 					throw new ConnectionException($"{nameof(TorSocks5Client)} is not connected to {RemoteEndPoint}.");
 				}
@@ -394,7 +394,7 @@ namespace DotNetTor
 			// https://gitweb.torproject.org/torspec.git/tree/socks-extensions.txt#n44
 
 			host = Guard.NotNullOrEmptyOrWhitespace(nameof(host), host, true);
-			
+
 			if (TorSocks5EndPoint == null)
 			{
 				var hostAddresses = await Dns.GetHostAddressesAsync(host);
@@ -430,7 +430,7 @@ namespace DotNetTor
 			// https://gitweb.torproject.org/torspec.git/tree/socks-extensions.txt#n55
 
 			Guard.NotNull(nameof(iPv4), iPv4);
-			
+
 			if (TorSocks5EndPoint == null) // Only Tor is iPv4 dependent
 			{
 				var host = await Dns.GetHostEntryAsync(iPv4);
@@ -501,7 +501,7 @@ namespace DotNetTor
 		{
 			try
 			{
-				if(TcpClient != null)
+				if (TcpClient != null)
 				{
 					if (TcpClient.Connected)
 					{
