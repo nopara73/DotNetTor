@@ -58,6 +58,8 @@ namespace DotNetTor.Tests
 			TotClient client = await manager.EstablishTotConnectionAsync(serverEndPoint);
 
 			await server.StopAsync();
+
+			server = new TotServer(serverEndPoint);
 			await server.StartAsync();
 			await server.StopAsync();
 
