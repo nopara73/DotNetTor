@@ -433,6 +433,7 @@ namespace DotNetTor
 			try
 			{
 				TcpListener?.Stop();
+				Logger.LogInfo<TotServer>("Server stopped");
 			}
 			catch (Exception ex)
 			{
