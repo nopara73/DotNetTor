@@ -309,7 +309,7 @@ namespace DotNetTor.Tests
 					await server.NotifyAllSubscribersAsync(new TotNotification("foo", new TotContent("bar")));
 					Assert.Single(server.Subscriptions.Single().Value);
 				}
-				await Task.Delay(10000); // make sure the server already remove the client from the subscribers
+				await Task.Delay(1000); // make sure the server already remove the client from the subscribers
 				Assert.Single(server.Subscriptions);
 				Assert.Empty(server.Subscriptions.Single().Value);
 
