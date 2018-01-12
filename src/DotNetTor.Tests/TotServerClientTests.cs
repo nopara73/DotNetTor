@@ -60,6 +60,8 @@ namespace DotNetTor.Tests
 			await server.StopAsync();
 			await server.StartAsync();
 			await server.StopAsync();
+
+			client?.Dispose();
 		}
 
 		[Fact]
