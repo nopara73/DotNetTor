@@ -4,6 +4,7 @@ using DotNetEssentials.Logging;
 using DotNetTor.Exceptions;
 using DotNetTor.TorOverTcp.Models.Fields;
 using DotNetTor.TorOverTcp.Models.Messages;
+using Nito.AsyncEx;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -22,8 +23,10 @@ namespace DotNetTor
 
 		public TcpListener TcpListener { get; }
 		
-		public ConcurrentHashSet<TotClient> Clients { get; private set; }
-		public ConcurrentHashSet<Task> ClientListeners { get; private set; }
+		private HashSet<TotClient> Clients { get; set; }
+		private AsyncLock ClientsAsyncLock { get; }
+
+		private ConcurrentHashSet<Task> ClientListeners { get; set; }
 
 		/// <summary>
 		/// string: Subscription Purpose, collection: subscribers
@@ -47,14 +50,25 @@ namespace DotNetTor
 		public TotServer(IPEndPoint bindToEndPoint)
 		{
 			Guard.NotNull(nameof(bindToEndPoint), bindToEndPoint);
-			TcpListener = new TcpListener(bindToEndPoint);			
+			TcpListener = new TcpListener(bindToEndPoint);
+			ClientsAsyncLock = new AsyncLock();
 		}
 
 		public async Task StartAsync()
 		{
 			await StopAsync().ConfigureAwait(false);
-			
-			Clients = new ConcurrentHashSet<TotClient>();
+
+			using (ClientsAsyncLock.Lock())
+			{
+				if(Clients != null)
+				{
+					Clients.Clear();
+				}
+				else
+				{
+					Clients = new HashSet<TotClient>();
+				}
+			}
 			ClientListeners = new ConcurrentHashSet<Task>();
 
 			StopAcceptingTcpConnections = new CancellationTokenSource();
@@ -81,13 +95,16 @@ namespace DotNetTor
 				try
 				{
 					tcpClient = await TcpListener.AcceptTcpClientAsync().WithAwaitCancellationAsync(cancel).ConfigureAwait(false);
-					
-					Logger.LogInfo<TotServer>($"Client connected: {tcpClient.Client.RemoteEndPoint}");
-					Logger.LogInfo<TotServer>($"Number of clients: {Clients.Count}");
-
+										
 					ts5Client = new TorSocks5Client(tcpClient);
 					client = new TotClient(ts5Client);
-					Clients.Add(client);
+
+					using (await ClientsAsyncLock.LockAsync())
+					{
+						Clients.Add(client);
+
+						Logger.LogInfo<TotServer>($"Client connected: {tcpClient.Client.RemoteEndPoint}.\nNumber of clients: {Clients.Count}.");
+					}
 
 					// Start listening for incoming data
 					Task task = ListenClientAsync(client, StopAcceptingTcpConnections.Token);
@@ -395,7 +412,10 @@ namespace DotNetTor
 			try
 			{
 				StopAcceptingTcpConnections?.Cancel();
-				await AcceptTcpConnectionsTask.ConfigureAwait(false);				
+				if (AcceptTcpConnectionsTask != null)
+				{
+					await AcceptTcpConnectionsTask.ConfigureAwait(false);
+				}
 			}
 			catch (Exception ex)
 			{
@@ -420,15 +440,25 @@ namespace DotNetTor
 			}
 
 			StopAcceptingTcpConnections?.Dispose();
+			StopAcceptingTcpConnections = null; // otherwise warning
 		}
-
+		
 		private void RemoveClient(TotClient client)
 		{
-			foreach(var subscription in Subscriptions)
+			foreach (var subscription in Subscriptions)
 			{
 				subscription.Value.TryRemove(client);
 			}
-			Clients.TryRemove(client);
+			using (ClientsAsyncLock.Lock())
+			{
+				Clients.Remove(client);
+				var tcpClient = client.TorSocks5Client.TcpClient;
+				if (tcpClient != null)
+				{
+					Logger.LogInfo<TotServer>($"Client removed: {tcpClient.Client.RemoteEndPoint}.\nNumber of clients: {Clients.Count}.");
+				}
+			}
+
 			client?.Dispose();
 		}
 

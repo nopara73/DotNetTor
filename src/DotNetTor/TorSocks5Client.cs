@@ -41,12 +41,14 @@ namespace DotNetTor
 			{
 				try
 				{
-					if (TcpClient == null || TcpClient.GetStream() == null)
+					if (TcpClient == null || !TcpClient.Connected || TcpClient.GetStream() == null)
 					{
 						return false;
 					}
-
-					return TcpClient.Connected;
+					else
+					{
+						return true;
+					}
 				}
 				catch (Exception ex)
 				{
