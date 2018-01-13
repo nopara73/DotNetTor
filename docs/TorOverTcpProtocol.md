@@ -23,10 +23,6 @@ Unless otherwise noted, the decimal numbers appearing in packet-format diagrams 
 
 ### 1.4 Requirements
 
-#### 1.4.1 UTF8
-
-ToT uses UTF8 byte encoding, except for its `Content` field. Encoding of the `Content` field is arbitrary, the server and the client must have mutual understanding. When this document specifies the content as string, it means UTF8 encoding.
-
 ## 2. Message Format
 
 | Version | MessageType | PurposeLength | Purpose | ContentLength | Content      |
