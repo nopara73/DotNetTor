@@ -5,7 +5,7 @@ using Xunit;
 
 namespace DotNetTor.Tests
 {
-	// For proper configuraion see https://github.com/nopara73/DotNetTor
+	// Make sure Tor is in your path and it's not running
 	public class TorControlClientTests : IClassFixture<SharedFixture>
 	{
 		private SharedFixture SharedFixture { get; }

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace DotNetTor.Tests
 {
@@ -15,23 +16,54 @@ namespace DotNetTor.Tests
 		public string ControlPortPassword { get; set; }
 		public IPEndPoint TorSock5EndPoint => new IPEndPoint(IPAddress.Parse(HostAddress), SocksPort);
 
+		private Process TorProcess { get; set; }
+
 		public SharedFixture()
 		{
 			// Initialize tests...
+
+			Logger.SetMinimumLevel(LogLevel.Trace);
+			Logger.SetModes(LogMode.Debug, LogMode.File);
+			Logger.SetFilePath("TestLogs.txt");
 
 			HostAddress = "127.0.0.1";
 			SocksPort = 9050;
 			ControlPort = 9051;
 			ControlPortPassword = "ILoveBitcoin21";
 
-			Logger.SetMinimumLevel(LogLevel.Trace);
-			Logger.SetModes(LogMode.Debug, LogMode.File);
-			Logger.SetFilePath("TestLogs.txt");
+			TorProcess = null;
+			var torControl = new TorControlClient(HostAddress, ControlPort, ControlPortPassword);
+			try
+			{
+				torControl.IsCircuitEstablishedAsync().GetAwaiter().GetResult();
+			}
+			catch
+			{
+
+				var torProcessStartInfo = new ProcessStartInfo("tor")
+				{
+					Arguments = $"SOCKSPort {SocksPort} ControlPort {ControlPort} HashedControlPassword 16:0978DBAF70EEB5C46063F3F6FD8CBC7A86DF70D2206916C1E2AE29EAF6",
+					UseShellExecute = false,
+					CreateNoWindow = true,
+					RedirectStandardOutput = true
+				};
+
+				TorProcess = Process.Start(torProcessStartInfo);
+
+				Task.Delay(3000).GetAwaiter().GetResult();
+				var established = false;
+				while (!established)
+				{
+					established = torControl.IsCircuitEstablishedAsync().GetAwaiter().GetResult();
+				}
+			}
 		}
 
 		public void Dispose()
 		{
 			// Cleanup tests...
+
+			TorProcess?.Kill();
 		}
 	}
 }
