@@ -1,5 +1,14 @@
 # DotNetTor
-Library implementation of essential Tor features in .NET Core.
+Stable and performant Tor library in .NET Core.
+
+| Windows | Linux & OSX
+| :---- | :------ |
+[![Windows build status][1]][2] | [![Linux & OSX build status][3]][4] |
+
+[1]: https://ci.appveyor.com/api/projects/status/fudiuiwk709naj21?svg=true
+[2]: https://ci.appveyor.com/project/nopara73/dotnettor
+[3]: https://travis-ci.org/nopara73/DotNetTor.svg?branch=master
+[4]: https://travis-ci.org/nopara73/DotNetTor
 
 ## See quickstart tutorial on [CodeProject](https://www.codeproject.com/script/Articles/ArticleVersion.aspx?waid=225577&aid=1161078)
   
