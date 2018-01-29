@@ -5,5 +5,5 @@ build_script:
   - dotnet build
 
 test_script:
-  - cd DotNetTor.Tests
+  - cd src\DotNetTor.Tests
   - dotnet test
