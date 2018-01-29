@@ -5,6 +5,8 @@ using Xunit;
 using System.Text.RegularExpressions;
 using QBitNinja.Client;
 using NBitcoin;
+using System;
+using System.Net;
 
 namespace DotNetTor.Tests
 {
@@ -16,6 +18,18 @@ namespace DotNetTor.Tests
 		public AsyncTests(SharedFixture fixture)
 		{
 			SharedFixture = fixture;
+		}
+
+		[Fact]
+		public async Task CanGetTwiceAsync()
+		{
+			using (var httpClient = new HttpClient(new TorSocks5Handler(SharedFixture.TorSock5EndPoint)))
+			{
+				Uri IndexPage = new Uri("https://icanhazip.com/");
+
+				await httpClient.GetAsync(IndexPage);
+				await httpClient.GetAsync(IndexPage);
+			}
 		}
 
 		[Fact]
