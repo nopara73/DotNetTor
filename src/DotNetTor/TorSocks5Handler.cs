@@ -19,7 +19,7 @@ using System.Threading.Tasks;
 
 namespace DotNetTor
 {
-	public class TorSocks5Handler : HttpMessageHandler
+	public class TorSocks5Handler : HttpClientHandler
 	{
 		#region PropertiesAndMembers
 
