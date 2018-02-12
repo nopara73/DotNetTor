@@ -1,6 +1,7 @@
 ﻿using System;
 using static DotNetTor.Http.Constants;
 using System.Net;
+using DotNetEssentials.Logging;
 
 namespace DotNetTor.Http.Models
 {
@@ -44,6 +45,7 @@ namespace DotNetTor.Http.Models
 			}
 			catch (Exception ex)
 			{
+				Logger.LogDebug<StatusLine>(ex);
 				throw new NotSupportedException($"Invalid {nameof(StatusLine)}: {statusLineString}.", ex);
 			}
 		}
