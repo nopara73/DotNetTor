@@ -3,6 +3,7 @@ using System;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DotNetTor
@@ -27,54 +28,100 @@ namespace DotNetTor
 
 		#region Methods
 
-		public async Task<TorSocks5Client> EstablishTcpConnectionAsync(IPEndPoint destination, bool isolateStream = true)
+		public async Task<TorSocks5Client> EstablishTcpConnectionAsync(IPEndPoint destination, bool isolateStream = true, CancellationToken cancel = default)
 		{
 			Guard.NotNull(nameof(destination), destination);
 
 			var client = new TorSocks5Client(TorSocks5EndPoint);
-			await client.ConnectAsync().ConfigureAwait(false);
-			await client.HandshakeAsync(isolateStream).ConfigureAwait(false);
-			await client.ConnectToDestinationAsync(destination).ConfigureAwait(false);
-			return client;
+
+			try
+			{
+				await client.ConnectAsync().ConfigureAwait(false);
+				cancel.ThrowIfCancellationRequested();
+				await client.HandshakeAsync(isolateStream).ConfigureAwait(false);
+				cancel.ThrowIfCancellationRequested();
+				await client.ConnectToDestinationAsync(destination).ConfigureAwait(false);
+				cancel.ThrowIfCancellationRequested();
+				return client;
+			}
+			catch(OperationCanceledException)
+			{
+				client?.Dispose();
+				throw;
+			}
 		}
-		
+
 		/// <param name="identity">Isolates streams by identity.</param>
-		public async Task<TorSocks5Client> EstablishTcpConnectionAsync(IPEndPoint destination, string identity)
+		public async Task<TorSocks5Client> EstablishTcpConnectionAsync(IPEndPoint destination, string identity, CancellationToken cancel = default)
 		{
 			identity = Guard.NotNullOrEmptyOrWhitespace(nameof(identity), identity, trim: true);
 			Guard.NotNull(nameof(destination), destination);
 
 			var client = new TorSocks5Client(TorSocks5EndPoint);
-			await client.ConnectAsync().ConfigureAwait(false);
-			await client.HandshakeAsync(identity).ConfigureAwait(false);
-			await client.ConnectToDestinationAsync(destination).ConfigureAwait(false);
-			return client;
+
+			try
+			{
+				await client.ConnectAsync().ConfigureAwait(false);
+				cancel.ThrowIfCancellationRequested();
+				await client.HandshakeAsync(identity).ConfigureAwait(false);
+				cancel.ThrowIfCancellationRequested();
+				await client.ConnectToDestinationAsync(destination).ConfigureAwait(false);
+				cancel.ThrowIfCancellationRequested();
+				return client;
+			}
+			catch (OperationCanceledException)
+			{
+				client?.Dispose();
+				throw;
+			}
 		}
 
-		public async Task<TorSocks5Client> EstablishTcpConnectionAsync(string host, int port, bool isolateStream = true)
+		public async Task<TorSocks5Client> EstablishTcpConnectionAsync(string host, int port, bool isolateStream = true, CancellationToken cancel = default)
 		{
 			host = Guard.NotNullOrEmptyOrWhitespace(nameof(host), host, true);
 			Guard.MinimumAndNotNull(nameof(port), port, 0);
 
 			var client = new TorSocks5Client(TorSocks5EndPoint);
-			await client.ConnectAsync();
-			await client.HandshakeAsync(isolateStream);
-			await client.ConnectToDestinationAsync(host, port);
-			return client;
+			try
+			{
+				await client.ConnectAsync();
+				cancel.ThrowIfCancellationRequested();
+				await client.HandshakeAsync(isolateStream);
+				cancel.ThrowIfCancellationRequested();
+				await client.ConnectToDestinationAsync(host, port);
+				cancel.ThrowIfCancellationRequested();
+				return client;
+			}
+			catch (OperationCanceledException)
+			{
+				client?.Dispose();
+				throw;
+			}
 		}
 
 		/// <param name="identity">Isolates streams by identity.</param>
-		public async Task<TorSocks5Client> EstablishTcpConnectionAsync(string host, int port, string identity)
+		public async Task<TorSocks5Client> EstablishTcpConnectionAsync(string host, int port, string identity, CancellationToken cancel = default)
 		{
 			identity = Guard.NotNullOrEmptyOrWhitespace(nameof(identity), identity, trim: true);
 			host = Guard.NotNullOrEmptyOrWhitespace(nameof(host), host, true);
 			Guard.MinimumAndNotNull(nameof(port), port, 0);
 
 			var client = new TorSocks5Client(TorSocks5EndPoint);
-			await client.ConnectAsync();
-			await client.HandshakeAsync(identity);
-			await client.ConnectToDestinationAsync(host, port);
-			return client;
+			try
+			{
+				await client.ConnectAsync();
+				cancel.ThrowIfCancellationRequested();
+				await client.HandshakeAsync(identity);
+				cancel.ThrowIfCancellationRequested();
+				await client.ConnectToDestinationAsync(host, port);
+				cancel.ThrowIfCancellationRequested();
+				return client;
+			}
+			catch (OperationCanceledException)
+			{
+				client?.Dispose();
+				throw;
+			}
 		}
 
 		/// <summary>
