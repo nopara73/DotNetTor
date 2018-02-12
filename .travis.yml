@@ -15,4 +15,5 @@ before_install:
   
 script:
   - cd src/DotNetTor.Tests
+  - sleep 5
   - dotnet test
