@@ -9,7 +9,8 @@ matrix:
     - os: osx
     
 before_install:
-  - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get install -y tor; else brew install tor; fi
+  - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get -qq update & sudo apt-get install -y tor; else brew install tor; fi
+  - sudo killall tor
   - tor SOCKSPort 9050 ControlPort 9051 HashedControlPassword 16:0978DBAF70EEB5C46063F3F6FD8CBC7A86DF70D2206916C1E2AE29EAF6
 
 script:
