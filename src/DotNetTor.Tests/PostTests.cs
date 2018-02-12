@@ -46,9 +46,6 @@ namespace DotNetTor.Tests
 			using (_client = new HttpClient(new TorSocks5Handler(SharedFixture.TorSock5EndPoint)))
 			{
 				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 1, times: 1);
-				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 4, times: 1);
-				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 16, times: 1);
-				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 64, times: 1);
 				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 256, times: 1);
 				await TestRequestsWithTimeoutAsync(_client, delayTillCancellation: 1024, times: 1);
 			}
