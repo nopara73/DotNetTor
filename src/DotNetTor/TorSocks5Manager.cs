@@ -32,9 +32,9 @@ namespace DotNetTor
 			Guard.NotNull(nameof(destination), destination);
 
 			var client = new TorSocks5Client(TorSocks5EndPoint);
-			await client.ConnectAsync();
-			await client.HandshakeAsync(isolateStream);
-			await client.ConnectToDestinationAsync(destination);
+			await client.ConnectAsync().ConfigureAwait(false);
+			await client.HandshakeAsync(isolateStream).ConfigureAwait(false);
+			await client.ConnectToDestinationAsync(destination).ConfigureAwait(false);
 			return client;
 		}
 		
@@ -45,9 +45,9 @@ namespace DotNetTor
 			Guard.NotNull(nameof(destination), destination);
 
 			var client = new TorSocks5Client(TorSocks5EndPoint);
-			await client.ConnectAsync();
-			await client.HandshakeAsync(identity);
-			await client.ConnectToDestinationAsync(destination);
+			await client.ConnectAsync().ConfigureAwait(false);
+			await client.HandshakeAsync(identity).ConfigureAwait(false);
+			await client.ConnectToDestinationAsync(destination).ConfigureAwait(false);
 			return client;
 		}
 
