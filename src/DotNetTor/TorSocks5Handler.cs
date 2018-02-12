@@ -102,7 +102,7 @@ namespace DotNetTor
 
 				client = clientLockPair.Key;
 
-				if (client != null && !client.IsConnected)
+				if (client != null && (!client.IsConnected || !RuntimeInformation.IsOSPlatform(OSPlatform.Windows))) // bug: something is wrong with osx and linux here!
 				{
 					Connections.TryRemove(client, out AsyncLock al);
 					client?.Dispose();
