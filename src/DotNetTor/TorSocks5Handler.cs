@@ -30,6 +30,7 @@ namespace DotNetTor
 		public IPEndPoint TorSocks5EndPoint => TorSocks5Manager?.TorSocks5EndPoint;
 
 		private AsyncLock ConnectLock { get; }
+		private AsyncLock LinuxOsxLock { get; }
 		private AsyncReaderWriterLock DisposeRequestLock { get; }
 
 		#endregion
@@ -45,6 +46,8 @@ namespace DotNetTor
 			Connections = new ConcurrentDictionary<TorSocks5Client, AsyncLock>();
 
 			ConnectLock = new AsyncLock();
+
+			LinuxOsxLock = new AsyncLock();
 
 			DisposeRequestLock = new AsyncReaderWriterLock();
 
@@ -66,9 +69,15 @@ namespace DotNetTor
 			// A sender MUST NOT generate an "http" URI with an empty host identifier.
 			var host = Guard.NotNullOrEmptyOrWhitespace($"{nameof(request)}.{nameof(request.RequestUri)}.{nameof(request.RequestUri.DnsSafeHost)}", request.RequestUri.DnsSafeHost, trim: true);
 
+			using (var linuxOsxLock = await LinuxOsxLock.LockAsync(cancel).ConfigureAwait(false)) // Linux and OSX is terrible, rather do everything in sync, if windows, it'll be released right away, this must be in effect to bypass this linuxosxbug: if (client != null && (!client.IsConnected || !RuntimeInformation.IsOSPlatform(OSPlatform.Windows)))
 			using (await DisposeRequestLock.ReaderLockAsync(cancel).ConfigureAwait(false))
 			using (var connectLockTask = await ConnectLock.LockAsync(cancel).ConfigureAwait(false)) // this makes sure clients with the same host don't try to connect concurrently, it gets released after connection established
 			{
+				if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+				{
+					linuxOsxLock.Dispose();
+				}
+
 				KeyValuePair<TorSocks5Client, AsyncLock> clientLockPair = TryFindClientLockPair(host, request.RequestUri.Port);
 				AsyncLock clientLock = clientLockPair.Value ?? new AsyncLock(); // this makes sure clients with the same host don't work concurrently
 				using (await clientLock.LockAsync(cancel).ConfigureAwait(false))
@@ -102,7 +111,7 @@ namespace DotNetTor
 
 				client = clientLockPair.Key;
 
-				if (client != null && !client.IsConnected)
+				if (client != null && (!client.IsConnected || !RuntimeInformation.IsOSPlatform(OSPlatform.Windows))) // Linux and OSX bug, this line only works if LinuxOsxLock is in effect
 				{
 					Connections.TryRemove(client, out AsyncLock al);
 					client?.Dispose();
