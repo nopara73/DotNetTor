@@ -1,4 +1,5 @@
 ﻿using DotNetEssentials.Logging;
+using DotNetTor.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -52,10 +53,13 @@ namespace DotNetTor.Tests
 
 				Task.Delay(3000).GetAwaiter().GetResult();
 				var established = false;
+				var count = 0;
 				while (!established)
 				{
+					if (count >= 21) throw new TorException("Couldn't establish circuit in time.");
 					established = torControl.IsCircuitEstablishedAsync().GetAwaiter().GetResult();
 					Task.Delay(1000).GetAwaiter().GetResult();
+					count++;
 				}
 			}
 		}
