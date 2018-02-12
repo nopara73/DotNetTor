@@ -55,6 +55,7 @@ namespace DotNetTor.Tests
 				while (!established)
 				{
 					established = torControl.IsCircuitEstablishedAsync().GetAwaiter().GetResult();
+					Task.Delay(1000).GetAwaiter().GetResult();
 				}
 			}
 		}
