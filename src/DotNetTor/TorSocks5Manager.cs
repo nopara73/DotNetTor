@@ -84,11 +84,11 @@ namespace DotNetTor
 			var client = new TorSocks5Client(TorSocks5EndPoint);
 			try
 			{
-				await client.ConnectAsync();
+				await client.ConnectAsync().ConfigureAwait(false);
 				cancel.ThrowIfCancellationRequested();
-				await client.HandshakeAsync(isolateStream);
+				await client.HandshakeAsync(isolateStream).ConfigureAwait(false);
 				cancel.ThrowIfCancellationRequested();
-				await client.ConnectToDestinationAsync(host, port);
+				await client.ConnectToDestinationAsync(host, port).ConfigureAwait(false);
 				cancel.ThrowIfCancellationRequested();
 				return client;
 			}
@@ -109,11 +109,11 @@ namespace DotNetTor
 			var client = new TorSocks5Client(TorSocks5EndPoint);
 			try
 			{
-				await client.ConnectAsync();
+				await client.ConnectAsync().ConfigureAwait(false);
 				cancel.ThrowIfCancellationRequested();
-				await client.HandshakeAsync(identity);
+				await client.HandshakeAsync(identity).ConfigureAwait(false);
 				cancel.ThrowIfCancellationRequested();
-				await client.ConnectToDestinationAsync(host, port);
+				await client.ConnectToDestinationAsync(host, port).ConfigureAwait(false);
 				cancel.ThrowIfCancellationRequested();
 				return client;
 			}
@@ -135,9 +135,9 @@ namespace DotNetTor
 			
 			using (var client = new TorSocks5Client(TorSocks5EndPoint))
 			{
-				await client.ConnectAsync();
-				await client.HandshakeAsync(isolateStream);
-				return await client.ResolveAsync(host);
+				await client.ConnectAsync().ConfigureAwait(false);
+				await client.HandshakeAsync(isolateStream).ConfigureAwait(false);
+				return await client.ResolveAsync(host).ConfigureAwait(false);
 			}
 		}
 
@@ -150,9 +150,9 @@ namespace DotNetTor
 			
 			using (var client = new TorSocks5Client(TorSocks5EndPoint))
 			{
-				await client.ConnectAsync();
-				await client.HandshakeAsync(isolateStream);
-				return await client.ReverseResolveAsync(iPv4);
+				await client.ConnectAsync().ConfigureAwait(false);
+				await client.HandshakeAsync(isolateStream).ConfigureAwait(false);
+				return await client.ReverseResolveAsync(iPv4).ConfigureAwait(false);
 			}
 		}
 
