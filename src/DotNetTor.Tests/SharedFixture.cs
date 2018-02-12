@@ -23,7 +23,7 @@ namespace DotNetTor.Tests
 		{
 			// Initialize tests...
 
-			Logger.SetMinimumLevel(LogLevel.Trace);
+			Logger.SetMinimumLevel(LogLevel.Debug);
 			Logger.SetModes(LogMode.Debug, LogMode.File);
 			Logger.SetFilePath("TestLogs.txt");
 
